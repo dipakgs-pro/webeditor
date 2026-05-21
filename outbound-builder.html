@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Campaign Builder — Gallabox</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_gb.css">
+<style>
+:root{
+  --blue:#0057FF;--blue-d:#0040CC;
+  --blue-s:#EEF4FF;--blue-g:#F5F8FF;
+  --navy:#0B1628;--navy-m:#1C2D4A;
+  --white:#fff;--off:#F7F9FC;
+  --border:#E4EAF4;--border-d:#C8D4E8;
+  --text:#1C2D4A;--muted:#6B7FA8;
+  --green:#00C566;--green-s:#E6FAF1;
+  --amber:#F59E0B;--amber-s:#FEF3C7;
+  --red:#EF4444;--red-s:#FEE2E2;
+  --purple:#7C3AED;--purple-s:#EDE9FE;
+  --r:12px;--r-sm:8px;
+  --sh:0 2px 12px rgba(0,57,255,.08);
+  --sh-md:0 8px 32px rgba(0,57,255,.12);
+}
+:root{
+  --blue:var(--gb);--blue-d:var(--gb-d);--blue-s:var(--gb-s);--blue-b:var(--gb-b);
+  --green:var(--ok);--green-s:var(--ok-s);--amber:var(--warn);--amber-s:var(--warn-s);
+  --red:var(--err);--red-s:var(--err-s);--navy:var(--n900);--navy-m:var(--n700);
+  --text:var(--ink);--muted:var(--n500);--border-d:var(--n300);
+  --font-body:var(--fb);--font-head:var(--fh);--r:10px;--r-sm:8px;
+  --sh-m:0 8px 32px rgba(15,23,42,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select,textarea{font-family:'DM Sans',sans-serif;cursor:pointer}
+
+/* LAYOUT */
+.app{display:flex;height:100vh;overflow:hidden}
+#gb-sb{flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.screen.on{display:flex}
+
+/* TOPBAR */
+.tb{height:52px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:8px;flex-shrink:0;z-index:10}
+.tb-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--navy)}
+.tb-sep{width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r-sm);font-size:12.5px;font-weight:600;border:1.5px solid transparent;transition:all .14s;cursor:pointer;font-family:var(--fb)}
+.btn-p{background:linear-gradient(180deg,#2E6FFB 0%,var(--blue) 100%);color:#fff;border-color:transparent;box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 1px 2px rgba(20,65,196,.32),0 4px 12px rgba(27,88,227,.22)}
+.btn-p:hover{background:linear-gradient(180deg,var(--blue) 0%,var(--blue-d) 100%)}
+.btn-s{background:var(--white);color:var(--navy-m);border-color:var(--border-d)}
+.btn-s:hover{background:var(--off)}
+.btn-g{background:transparent;color:var(--muted);border-color:transparent}
+.btn-g:hover{background:var(--off);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.35;pointer-events:none}
+#publish-btn{background:linear-gradient(180deg,#22c55e 0%,var(--ok) 100%);color:#fff;border-color:transparent;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 1px 2px rgba(20,130,60,.3),0 4px 12px rgba(22,163,74,.22)}
+#publish-btn:hover{background:linear-gradient(180deg,var(--ok) 0%,#15803d 100%)}
+
+/* STATUS */
+.status{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.status.live{background:#DCFCE7;color:#16A34A}.status.draft{background:var(--off);color:var(--muted);border:1px solid var(--border)}.status.paused{background:#FEF3C7;color:#92400E}
+.cdot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-b{background:var(--blue-s);color:var(--blue)}
+
+/* HEALTH STRIP */
+.health-strip{height:36px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;flex-shrink:0}
+.hs-item{display:flex;align-items:center;gap:5px;padding:0 12px}
+.hs-item:first-child{padding-left:0}
+.hs-key{font-size:11px;color:var(--n500);font-weight:500}
+.hs-val{font-size:12.5px;font-weight:800;color:var(--n900);font-family:var(--fh)}
+.hs-val.ok{color:var(--ok)}.hs-val.blue{color:var(--gb)}.hs-val.purple{color:var(--purple)}
+.hs-sep{width:1px;height:16px;background:var(--border);flex-shrink:0}
+
+/* BUILDER SHELL — 2 panel layout */
+.builder-shell{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* LEFT: STEP LIST */
+.steplist{width:272px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.steplist-hd{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--off)}
+.steplist-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--n500)}
+.steplist-body{flex:1;overflow-y:auto;padding:8px 8px 20px}
+
+/* Step row */
+.step{display:flex;align-items:flex-start;gap:9px;padding:8px 7px;border-radius:9px;cursor:pointer;transition:all .13s;border:1.5px solid transparent}
+.step:hover{background:var(--off)}
+.step.on{background:var(--gb-s);border-color:var(--gb-b)}
+.step-bullet{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;border:1.5px solid;margin-top:1px;line-height:1}
+.step-bullet.entry{background:var(--n900);color:#fff;border-color:var(--n900)}
+.step-bullet.message{background:var(--gb-s);color:var(--gb);border-color:var(--gb-b)}
+.step-bullet.condition{background:var(--warn-s);color:var(--warn);border-color:#FED7AA}
+.step-bullet.wait{background:var(--n50);color:var(--n500);border-color:var(--n200)}
+.step-bullet.action{background:var(--purple-s);color:var(--purple);border-color:#DDD6FE}
+.step-bullet.experiment{background:#F0F9FF;color:#0284C7;border-color:#BAE6FD}
+.step-bullet.exit{background:var(--err-s);color:var(--err);border-color:#FECACA}
+.step-bullet.dropped{background:#FFF7ED;color:#92400E;border-color:#FED7AA}
+.step-info{flex:1;min-width:0}
+.step-name{font-size:12.5px;font-weight:600;color:var(--n900);line-height:1.35}
+.step.on .step-name{color:var(--gb-d)}
+.step-meta{font-size:11px;color:var(--n500);margin-top:2px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.step-del{opacity:0;background:none;border:none;color:var(--n400);cursor:pointer;font-size:15px;padding:2px 4px;border-radius:4px;line-height:1;flex-shrink:0;transition:all .12s;margin-top:2px}
+.step:hover .step-del{opacity:1}
+.step-del:hover{color:var(--err);background:var(--err-s)}
+
+/* Connectors */
+.step-conn{display:flex;padding-left:20px;margin:1px 0}
+.step-conn-line{width:1.5px;height:10px;background:var(--n200);border-radius:1px}
+
+/* Branch lanes */
+.step-branch-wrap{margin-left:12px;border-left:1.5px dashed var(--n200);padding-left:9px;margin-top:2px;margin-bottom:2px}
+.step-branch-lbl{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700;margin:3px 0 4px}
+.step-branch-lbl.yes{background:var(--ok-s);color:var(--ok)}
+.step-branch-lbl.no{background:var(--err-s);color:var(--err)}
+
+/* Add step button */
+.step-add-row{display:flex;flex-direction:column;align-items:flex-start;padding-left:20px}
+.step-add-btn{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;border:1.5px dashed var(--n300);background:transparent;color:var(--n500);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .14s;font-family:var(--fb);margin-top:2px}
+.step-add-btn:hover{border-color:var(--gb);color:var(--gb);background:var(--gb-s)}
+
+/* CENTER + RIGHT: editor area */
+.editor-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;background:#F0F3F8}
+
+/* Editor head (tabs bar) */
+.editor-head{height:48px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:8px;flex-shrink:0}
+.editor-crumb{font-size:12.5px;color:var(--n500);display:flex;align-items:center;gap:5px}
+.editor-crumb b{color:var(--n900);font-weight:700}
+.editor-tabs{display:flex;gap:2px;margin-left:auto}
+.editor-tab{padding:5px 11px;border-radius:6px;border:none;background:transparent;font-size:12px;font-weight:600;color:var(--n500);cursor:pointer;transition:all .13s;font-family:var(--fb)}
+.editor-tab:hover{background:var(--n100);color:var(--n700)}
+.editor-tab.on{background:var(--gb-s);color:var(--gb)}
+.editor-tab-empty{display:none}
+
+/* Stage: 2-col config + preview */
+.editor-stage{flex:1;overflow:hidden;display:grid;grid-template-columns:1fr 328px;min-height:0}
+.stage-config{overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.stage-preview{border-left:1px solid var(--border);background:#F7F9FC;overflow-y:auto;display:flex;flex-direction:column}
+.stage-preview-inner{display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 14px;position:sticky;top:0}
+
+/* Editor empty state (no node selected) */
+.editor-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:56px 24px;text-align:center;color:var(--n500);gap:14px}
+.editor-empty-icon{width:56px;height:56px;border-radius:14px;background:var(--white);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;opacity:.5}
+.editor-empty-text{font-size:13px;line-height:1.65;max-width:220px}
+
+/* Editor section (white card blocks inside stage-config) */
+.editor-section{background:var(--white);border:1px solid var(--border);border-radius:11px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+.editor-section-head{padding:11px 14px;background:linear-gradient(180deg,#fff 0%,#FBFBFE 100%);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.editor-section-title{font-size:12px;font-weight:800;color:var(--n900);display:flex;align-items:center;gap:6px}
+.editor-section-body{padding:14px}
+
+/* Helper hints */
+.helper{display:flex;align-items:flex-start;gap:7px;padding:9px 11px;background:linear-gradient(180deg,var(--gb-s) 0%,rgba(239,244,255,.4) 100%);border-radius:8px;font-size:11.5px;color:var(--n700);line-height:1.5;border:1px solid rgba(27,88,227,.1)}
+.helper-warn{background:linear-gradient(180deg,var(--warn-s) 0%,rgba(255,251,235,.4) 100%);border-color:rgba(217,119,6,.15)}
+.helper-icon{font-size:13px;flex-shrink:0;margin-top:1px}
+
+/* Progressive disclosure */
+.adv{border-top:1px dashed var(--border);margin-top:12px}
+.adv-trigger{display:inline-flex;align-items:center;gap:5px;padding:7px 0 3px;background:transparent;border:none;color:var(--n500);font-size:12px;font-weight:600;cursor:pointer;transition:color .13s;font-family:var(--fb)}
+.adv-trigger:hover{color:var(--gb)}
+.adv-trigger .chev{display:inline-block;transition:transform .18s}
+.adv.open .adv-trigger .chev{transform:rotate(90deg)}
+.adv-body{max-height:0;overflow:hidden;transition:max-height .22s ease,opacity .18s;opacity:0}
+.adv.open .adv-body{max-height:900px;opacity:1;padding-top:8px}
+
+/* Var pill */
+.var-pill{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;background:var(--purple-s);color:var(--purple);border-radius:4px;font-family:monospace;font-size:11.5px;font-weight:600}
+
+/* Vchip (validation) */
+.vchip{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;font-size:10.5px;font-weight:700}
+.vchip.ok{background:var(--ok-s);color:var(--ok)}
+.vchip.warn{background:var(--warn-s);color:var(--warn)}
+.vchip.err{background:var(--err-s);color:var(--err)}
+.vchip.mcp{background:#0F1117;color:#fff}
+
+/* Entry type source cards */
+.entry-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.entry-type-card{padding:11px 12px;border-radius:9px;border:1.5px solid var(--border);cursor:pointer;transition:all .13s;text-align:center}
+.entry-type-card:hover{border-color:var(--gb-b);background:var(--gb-s)}
+.entry-type-card.on{border-color:var(--gb);background:var(--gb-s)}
+.entry-type-card-ic{font-size:18px;margin-bottom:4px}
+.entry-type-card-lbl{font-size:12px;font-weight:700;color:var(--n900)}
+.entry-type-card-sub{font-size:10.5px;color:var(--n500);margin-top:2px}
+
+/* Enrollment condition builder */
+.econd-builder{border:1.5px solid var(--border);border-radius:9px;overflow:hidden}
+.econd-row{display:flex;align-items:center;gap:5px;padding:8px 10px;border-bottom:1px solid var(--off);background:var(--white)}
+.econd-row:last-child{border-bottom:none}
+.econd-logic{display:inline-flex;padding:2px;background:var(--n100);border-radius:6px;gap:2px;flex-shrink:0}
+.econd-logic button{padding:2px 9px;border:none;background:transparent;border-radius:4px;font-size:11px;font-weight:700;color:var(--n500);cursor:pointer;font-family:var(--fb)}
+.econd-logic button.on{background:#fff;color:var(--n900);box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.econd-add{width:100%;padding:8px;background:var(--off);border:none;border-top:1px solid var(--border);font-size:12px;color:var(--gb);font-weight:600;cursor:pointer;font-family:var(--fb);transition:background .12s}
+.econd-add:hover{background:var(--gb-s)}
+.drop-toggle{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.drop-opt{padding:8px 10px;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;text-align:center;transition:all .13s}
+.drop-opt.on{border-color:var(--err);background:var(--err-s)}
+.drop-opt-lbl{font-size:12px;font-weight:700;color:var(--n900)}
+.drop-opt-sub{font-size:10.5px;color:var(--n500);margin-top:2px}
+
+/* Node stat strip inside editor */
+.node-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.node-stat{background:var(--off);border-radius:8px;padding:9px 8px;text-align:center;border:1px solid var(--border)}
+.node-stat-val{font-family:var(--fh);font-size:15px;font-weight:800}
+.node-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* Preview panel (stage-preview contents) */
+.preview-hd{padding:9px 14px;border-bottom:1px solid var(--border);background:var(--white);display:flex;align-items:center;gap:7px;flex-shrink:0;position:sticky;top:0;z-index:2}
+.preview-hd-title{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--n500)}
+.preview-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 16px;text-align:center;gap:10px;color:var(--n400)}
+.preview-empty-icon{font-size:28px;opacity:.4}
+.preview-empty-text{font-size:12px;line-height:1.6;max-width:180px}
+
+/* FORMS */
+.fg{margin-bottom:14px}
+.fl{font-size:11.5px;font-weight:700;color:var(--navy-m);margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.fi{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);outline:none;transition:border-color .14s,box-shadow .14s;background:var(--white)}
+.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(27,88,227,.08)}
+.fs{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);outline:none;background:var(--white);transition:border-color .14s}
+.fs:focus{border-color:var(--blue)}
+.fhint{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+.tog{width:38px;height:21px;border-radius:20px;background:var(--n300);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;border:none}
+.tog.on{background:var(--blue)}
+.tok{position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .18s;pointer-events:none}
+.tog.on .tok{left:20px}
+.ins-sec{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--n400);margin:18px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.ins-sec:first-child{margin-top:4px}
+.docs-help{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--off);border:1.5px solid var(--border-d);color:var(--muted);font-size:11px;font-weight:800;text-decoration:none;flex-shrink:0;transition:all .14s}
+.docs-help:hover{background:var(--blue-s);border-color:var(--blue);color:var(--blue)}
+
+/* Segment/OR chips */
+.seg-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;background:var(--gb-s);border:1.5px solid var(--gb-b);color:var(--gb);margin:2px}
+.seg-or{font-size:10px;font-weight:800;text-transform:uppercase;color:var(--n400);padding:2px 5px}
+.or-src{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.or-src::before,.or-src::after{content:'';flex:1;height:1px;background:var(--border)}
+.src-section{border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:4px}
+.src-hd{font-size:11px;font-weight:800;color:var(--navy-m);margin-bottom:7px;display:flex;align-items:center;gap:5px}
+
+/* Condition editor */
+.cond-row{display:flex;align-items:center;gap:5px;padding:7px 10px;border-bottom:1px solid var(--off)}
+.cond-row:last-child{border-bottom:none}
+.cr-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:0 3px;flex-shrink:0}
+.cr-del:hover{color:var(--red)}
+
+/* A/B test */
+.ab-arms{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.ab-arm{border-radius:9px;padding:10px 12px}
+.ab-arm-a{background:#EDE9FE;border:1.5px solid #DDD6FE}.ab-arm-b{background:#F3E8FF;border:1.5px solid #E9D5FF}
+.ab-arm-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.ab-arm-lbl-a{color:#7C3AED}.ab-arm-lbl-b{color:#9333EA}
+.ab-slider-wrap{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.ab-slider{flex:1;height:4px;accent-color:var(--purple);cursor:pointer}
+.ab-slider-val{font-size:13px;font-weight:800;color:#7C3AED;min-width:32px;text-align:right}
+.ab-arm-hint{font-size:11.5px;color:var(--muted);padding:7px 10px;background:var(--off);border-radius:7px;line-height:1.5;margin-bottom:10px}
+.ab-warn{font-size:11.5px;color:#92400E;padding:7px 10px;background:var(--amber-s);border-radius:7px;line-height:1.5;margin-top:4px;margin-bottom:10px}
+.ab-sel-mode{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.ab-sel-opt{padding:8px 10px;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;text-align:center;transition:all .13s}
+.ab-sel-opt.on{border-color:#7C3AED;background:#F3E8FF}
+.ab-sel-opt-lbl{font-size:12px;font-weight:700;color:var(--navy)}
+.ab-sel-opt-sub{font-size:10.5px;color:var(--muted);margin-top:2px}
+
+/* preview-body (inside stage-preview-inner) */
+.preview-body{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+
+/* WA Phone mockup */
+.wa-phone-frame{width:248px;background:linear-gradient(160deg,#075E54 0%,#128C7E 100%);border-radius:20px;padding:10px;padding-top:0;box-shadow:0 8px 28px rgba(7,94,84,.28),0 2px 6px rgba(0,0,0,.12);flex-shrink:0}
+.wa-phone-bar{height:46px;border-radius:20px 20px 0 0;display:flex;align-items:center;padding:0 12px;gap:8px;background:rgba(0,0,0,.14)}
+.wa-avatar{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;flex-shrink:0}
+.wa-contact-name{font-size:12.5px;font-weight:700;color:#fff;flex:1}
+.wa-status{font-size:10px;color:rgba(255,255,255,.65)}
+.wa-screen{background:#ECE5DD;border-radius:10px;padding:10px 9px;min-height:160px}
+.wa-bubble{background:#fff;border-radius:10px 10px 10px 2px;padding:8px 10px 5px;margin-bottom:6px;max-width:230px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.wa-bubble-header{font-size:11px;font-weight:700;color:#1B58E3;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid #F0F0F0;line-height:1.3}
+.wa-bubble-body{font-size:12px;color:#111;line-height:1.55;word-break:break-word}
+.wa-bubble-body strong{font-weight:700}
+.wa-bubble-time{font-size:9px;color:#8B8B8B;text-align:right;margin-top:5px}
+.wa-btn-list{display:flex;flex-direction:column;gap:3px;margin-top:4px}
+.wa-btn{background:rgba(255,255,255,.9);border-radius:7px;padding:6px 10px;font-size:11.5px;font-weight:600;color:#0E82F7;text-align:center;border:1px solid rgba(0,0,0,.06)}
+.wa-var-tag{background:#EDE9FE;color:#5B21B6;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:600;font-family:monospace}
+
+/* Variable map card */
+.var-map-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 14px;width:248px}
+.var-map-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--n400);margin-bottom:8px}
+.var-map-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--off);font-size:12px}
+.var-map-row:last-child{border-bottom:none}
+.var-map-key{color:var(--purple);font-weight:700;font-family:monospace;font-size:11px}
+.var-map-val{color:var(--n700);font-size:11.5px;font-weight:500}
+.preview-ab-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 10px;border-radius:20px;align-self:flex-start}
+.preview-ab-lbl.a{background:#EDE9FE;color:#7C3AED}.preview-ab-lbl.b{background:#F3E8FF;color:#9333EA}
+
+/* Node picker popup */
+.pick-pop{position:fixed;z-index:600;background:var(--white);border:1.5px solid var(--border);border-radius:12px;box-shadow:var(--sh-m);width:248px;overflow:hidden;animation:popIn .13s ease}
+.pick-sec-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--n400);padding:8px 12px 3px}
+.pick-sep{height:1px;background:var(--border);margin:3px 0}
+.pick-item{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;transition:background .1s}
+.pick-item:hover{background:var(--n50)}
+.pick-item.pick-disabled{opacity:.35;pointer-events:none}
+.pick-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.pick-name{font-size:13px;font-weight:600;color:var(--navy)}
+.pick-desc{font-size:11px;color:var(--muted);margin-top:1px}
+
+/* Toast */
+.toast-el{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;color:#fff;box-shadow:var(--sh-m);z-index:700;pointer-events:none;animation:toastIn .2s ease;background:var(--n900)}
+.toast-el.t-ok{background:var(--ok)}.toast-el.t-err{background:var(--err)}
+
+@keyframes popIn{from{opacity:0;transform:scale(.93) translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="gb-sb"></div>
+  <div class="main">
+    <div id="screen-canvas" class="screen on">
+
+      <!-- TOPBAR -->
+      <div class="tb">
+        <button class="btn btn-g btn-sm" onclick="goHome()" style="gap:4px;color:var(--muted)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>Campaigns
+        </button>
+        <div class="tb-sep"></div>
+        <span class="tb-title" id="canvas-title">Campaign</span>
+        <div id="canvas-meta" style="display:flex;align-items:center;gap:7px;margin-left:8px"></div>
+        <div class="tb-right">
+          <button class="btn btn-s btn-sm" onclick="goAnalytics(activeCampId)" style="gap:4px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics
+          </button>
+          <a href="gallabox-docs.html?page=outbound" target="_blank" class="btn btn-g btn-sm" style="gap:4px;color:var(--muted)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Docs
+          </a>
+          <div class="tb-sep"></div>
+          <button class="btn btn-s btn-sm" id="save-btn" style="gap:5px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save draft
+          </button>
+          <button class="btn btn-sm" id="publish-btn" style="gap:5px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>Publish
+          </button>
+        </div>
+      </div>
+
+      <!-- HEALTH STRIP -->
+      <div class="health-strip">
+        <div class="hs-item"><span class="hs-key">Enrolled</span><span class="hs-val" id="hs-enrolled">—</span></div>
+        <div class="hs-sep"></div>
+        <div class="hs-item"><span class="hs-key">Sent</span><span class="hs-val" id="hs-sent">—</span></div>
+        <div class="hs-sep"></div>
+        <div class="hs-item"><span class="hs-key">Delivered</span><span class="hs-val ok" id="hs-delivered">—</span></div>
+        <div class="hs-sep"></div>
+        <div class="hs-item"><span class="hs-key">Read</span><span class="hs-val blue" id="hs-read">—</span></div>
+        <div class="hs-sep"></div>
+        <div class="hs-item"><span class="hs-key">Replied</span><span class="hs-val purple" id="hs-replied">—</span></div>
+        <div class="hs-sep"></div>
+        <div class="hs-item" style="margin-left:auto;padding-right:0">
+          <span id="step-count-label" style="font-size:11.5px;font-weight:600;color:var(--n500)">0 steps</span>
+        </div>
+      </div>
+
+      <!-- BUILDER SHELL -->
+      <div class="builder-shell">
+
+        <!-- LEFT: step list -->
+        <div class="steplist">
+          <div class="steplist-hd">
+            <span class="steplist-title">Flow steps</span>
+            <a href="gallabox-docs.html?page=ob-nodes" target="_blank" class="docs-help" title="Node reference">?</a>
+          </div>
+          <div class="steplist-body" id="steplist-body"></div>
+        </div>
+
+        <!-- CENTER + RIGHT: tabbed editor + sticky preview -->
+        <div class="editor-area">
+
+          <!-- Tab bar (hidden when no node selected) -->
+          <div class="editor-head" id="editor-head" style="display:none">
+            <div class="editor-crumb" id="editor-crumb"><span>Select a step</span></div>
+            <div class="editor-tabs">
+              <button class="editor-tab on" id="tab-content" onclick="switchTab('content')">Content</button>
+              <button class="editor-tab" id="tab-logic" onclick="switchTab('logic')">Logic</button>
+              <button class="editor-tab" id="tab-schedule" onclick="switchTab('schedule')">Schedule</button>
+              <button class="editor-tab" id="tab-audience" onclick="switchTab('audience')">Audience</button>
+            </div>
+          </div>
+
+          <!-- Empty state (shown when no node) -->
+          <div id="editor-empty-state" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--n500);padding:56px 24px;text-align:center">
+            <div class="editor-empty-icon">&#9654;</div>
+            <div class="editor-empty-text">Click any step in the flow to configure it</div>
+          </div>
+
+          <!-- Stage: config + preview (hidden when no node) -->
+          <div class="editor-stage" id="editor-stage" style="display:none">
+            <div class="stage-config" id="stage-config"><!-- tab content renders here --></div>
+            <div class="stage-preview">
+              <div class="preview-hd">
+                <span style="font-size:14px">&#128241;</span>
+                <span class="preview-hd-title">WhatsApp Preview</span>
+                <a href="gallabox-docs.html?page=ob-nodes&anchor=node-send-wa" target="_blank" class="docs-help" style="margin-left:auto" title="Template preview docs">?</a>
+              </div>
+              <div class="stage-preview-inner">
+                <div class="preview-body" id="preview-body">
+                  <div class="preview-empty-state">
+                    <div class="preview-empty-icon">&#128172;</div>
+                    <div class="preview-empty-text">Select a WhatsApp Message or A/B Test step to preview</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="_gb.js"></script>
+<script src="_outbound-data.js"></script>
+<script>
+'use strict';
+
+/* ── ROUTING ── */
+function urlParam(k){return new URLSearchParams(window.location.search).get(k);}
+var pageId=parseInt(urlParam('id'))||1;
+activeCampId=pageId;
+CAMPS=loadC();
+var currentFlow=loadFlow(activeCampId);
+var selectedNodeId=null;
+
+function goHome(){window.location.href='gallabox-outbound.html';}
+function goAnalytics(id){window.location.href='outbound-analytics.html?id='+(id||activeCampId);}
+
+/* ── GROUP COLOR map (hex — avoids dual-:root resolution issues) ── */
+var GROUP_COLOR={
+  entry:'#1B58E3',message:'#16A34A',condition:'#D97706',
+  wait:'#94A3B8',action:'#7C3AED',exit:'#EF4444',experiment:'#0284C7'
+};
+
+/* ── TEMPLATE PREVIEW BODIES ── */
+var TPREV={
+  'diwali_flash_offer_v2':{body:'Hi *{{1}}* 🥰\n\nCelebrate Diwali with *{{2}}* off your entire order!\n\nUse code *DIWALI25* at checkout.\n\n⏰ Offer valid 24 hours only!',vars:['first_name','25%'],buttons:['Shop Now →','View Offer']},
+  'diwali_flash_offer_v1':{body:'Hi *{{1}}*! Happy Diwali 🎆\n\nGet *{{2}}* off today. Code: DIWALI.',vars:['first_name','20%'],buttons:['Claim Now']},
+  'diwali_thankyou_v1':{body:'Thank you *{{1}}*! 🙏\n\nYour Diwali order is confirmed. We\'ll ship within 2 business days.',vars:['first_name'],buttons:[]},
+  'webinar_welcome_v1':{body:'Hi *{{1}}*! 🎓\n\nThank you for registering!\n\n📅 Your webinar is on *{{2}}* at 3:00 PM.\n\nWe\'ll send the link 15 mins before.',vars:['first_name','Nov 28'],buttons:['Add to Calendar']},
+  'webinar_speakers_v1':{body:'Hi *{{1}}*, excited you\'re joining! 🌟\n\nSneek peek of our speakers:\n• Dr. Sarah Chen — Product Strategy\n• Mark Davis — Growth Marketing',vars:['first_name'],buttons:['View Speakers','Join Webinar']},
+  'webinar_reminder_1d':{body:'Reminder *{{1}}* ⏰\n\nYour webinar is *tomorrow* at 3:00 PM.',vars:['first_name'],buttons:['Add to Calendar']},
+  'webinar_recording':{body:'Hi *{{1}}*, the recording is ready! 🎥\n\nWatch at: *{{2}}*',vars:['first_name','gallabox.io/rec'],buttons:['Watch Recording']},
+  'returning_visitor_wed_v2':{body:'Hi *{{1}}* 👋\n\nWe noticed you browsing our *{{2}}* section.\n\nWednesday special! Reply *YES* to unlock your deal.',vars:['first_name','wishlist'],buttons:['Yes, show me deals','Not now']},
+  'returning_visitor_immediate_v1':{body:'Hi *{{1}}*! You\'re back 😊\n\nWe\'d love to help. Chat with us!',vars:['first_name'],buttons:['Chat now']},
+  'discount_10pct_v1':{body:'Hi *{{1}}*! 🎁\n\nExclusive *10% discount* just for you.\n\nCode: *SAVE10* — valid 48 hours.',vars:['first_name'],buttons:['Use Code Now']},
+  'q4_upsell_premium_v1':{body:'Hi *{{1}}*, upgrade to Premium before year end! 🚀\n\nGet *{{2}}* off for 3 months. Code: Q4UPGRADE.',vars:['first_name','30%'],buttons:['Upgrade Now','Learn More']},
+  'reactivation_30d_v1':{body:'We miss you *{{1}}*! 👋\n\nIt\'s been 30 days. Come back — we have something special.',vars:['first_name'],buttons:['See What\'s New']},
+  'cart_abandon_v1':{body:'Hi *{{1}}*, you left something behind! 🛒\n\nYour cart is waiting. Complete your purchase.',vars:['first_name'],buttons:['Complete Purchase','View Cart']},
+  'payment_reminder_v1':{body:'Hi *{{1}}*, friendly reminder 📋\n\nYour payment of *{{2}}* is due on *{{3}}*.',vars:['first_name','amount','due_date'],buttons:['Pay Now','View Invoice']},
+};
+var TPREV_DEFAULT={body:'Hi *{{1}}*,\n\nHere\'s a message from *{{2}}*.\n\nReply to connect with our team.',vars:['first_name','company_name'],buttons:['Reply Now']};
+var TSAMPLE={first_name:'John',last_name:'Smith','25%':'25%','20%':'20%',amount:'₹1,200',due_date:'Dec 1',webinar_date:'Nov 28','gallabox.io/rec':'gallabox.io/rec/abc',wishlist:'wishlist','30%':'30%'};
+
+/* ── HEADER ── */
+function initHeader(){
+  var c=CAMPS.find(function(x){return x.id===activeCampId;})||{name:'Campaign',obj:'engagement',type:'broadcast',status:'draft'};
+  nt('canvas-title',c.name);
+  var meta=document.getElementById('canvas-meta');
+  if(meta){
+    var stCls=c.status==='active'?'live':c.status==='paused'?'paused':'draft';
+    meta.innerHTML='<span class="badge badge-b" style="font-size:11px">'+esc(OBJ_L[c.obj]||c.obj)+'</span>'
+      +'<span style="padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:700;background:var(--off);color:var(--muted);border:1px solid var(--border)">'
+      +(c.type==='sequence'?'&#128256; Sequence':'&#128226; Broadcast')+'</span>'
+      +'<span class="status '+stCls+'"><span class="cdot"></span>'+(STATUS_L[c.status]||c.status)+'</span>';
+  }
+  var d=ANA[activeCampId];
+  if(d){
+    nt('hs-enrolled',fmt(d.enrolled||0));nt('hs-sent',fmt(d.sent||0));
+    nt('hs-delivered',fmt(d.delivered||0));nt('hs-read',fmt(d.read||0));nt('hs-replied',fmt(d.replied||0));
+  }
+}
+
+/* ── PERSIST ── */
+function persistFlow(){
+  saveFlow(activeCampId,currentFlow);
+  nt('step-count-label',currentFlow.length+' step'+(currentFlow.length!==1?'s':''));
+}
+
+/* ── TOAST ── */
+function toast(msg,type){
+  var t=document.createElement('div');t.className='toast-el'+(type?' t-'+type:'');t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},320);},2200);
+}
+
+/* ── SAVE / PUBLISH ── */
+function saveCampaign(){
+  persistFlow();var c=CAMPS.find(function(x){return x.id===activeCampId;});if(c)saveC(CAMPS);toast('Draft saved ✓','ok');
+}
+function publishCampaign(){
+  var entry=currentFlow.find(function(n){return NM[n.type]&&NM[n.type].group==='entry';});
+  if(!entry){toast('Add an entry node first','err');return;}
+  var abNode=currentFlow.find(function(n){return n.type==='ab-test';});
+  if(abNode){if(!abNode.cfg.template_a||!abNode.cfg.template_b){toast('A/B Test: select both templates','err');return;}if(abNode.cfg.template_a===abNode.cfg.template_b){toast('A/B Test: templates must be different','err');return;}}
+  var msg=currentFlow.find(function(n){return n.type==='send-wa'||n.type==='ab-test';});
+  if(!msg){toast('Add a WhatsApp message or A/B Test first','err');return;}
+  var c=CAMPS.find(function(x){return x.id===activeCampId;});if(!c)return;
+  if(!confirm('Publish "'+c.name+'"?\n\nThis activates the campaign.'))return;
+  c.status='active';persistFlow();saveC(CAMPS);initHeader();toast('Campaign published ✓','ok');
+}
+
+/* ══════════════════════════════════════════
+   STEP LIST
+══════════════════════════════════════════ */
+function renderStepList(){
+  var el=document.getElementById('steplist-body');if(!el)return;
+  if(!currentFlow.length){
+    el.innerHTML='<div style="padding:24px 10px;text-align:center"><div style="font-size:12.5px;color:var(--n500);margin-bottom:14px;line-height:1.6">Empty flow. Add your first step.</div>'+stepAddBtn(null,'main')+'</div>';
+    nt('step-count-label','0 steps');return;
+  }
+  var root=currentFlow.find(function(n){return !n.parentId;});
+  if(!root){el.innerHTML=stepAddBtn(null,'main');return;}
+  el.innerHTML=stepSubtree(root.id);
+  nt('step-count-label',currentFlow.length+' step'+(currentFlow.length!==1?'s':''));
+}
+
+function stepSubtree(nid){
+  var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return '';
+  var m=NM[n.type]||{label:n.type,ic:'&#9675;',group:'action'};
+  var isSel=(selectedNodeId===n.id);
+  var h='';
+  if(n.parentId) h+='<div class="step-conn"><div class="step-conn-line"></div></div>';
+  h+='<div class="step'+(isSel?' on':'')+'" id="step-'+n.id+'" onclick="selNode(\''+n.id+'\')">';
+  var bulletCls=n.type==='exit-dropped'?'dropped':esc(m.group);
+  h+='<div class="step-bullet '+bulletCls+'">'+m.ic+'</div>';
+  h+='<div class="step-info"><div class="step-name">'+esc(m.label)+'</div>';
+  var meta=stepMeta(n);if(meta)h+='<div class="step-meta">'+esc(meta)+'</div>';
+  h+='</div>';
+  if(m.group!=='exit') h+='<button class="step-del" onclick="event.stopPropagation();deleteNode(\''+n.id+'\')" title="Remove">\xd7</button>';
+  h+='</div>';
+  if(n.type==='condition'){
+    var yC=currentFlow.find(function(x){return x.parentId===n.id&&x.branch==='yes';});
+    var nC=currentFlow.find(function(x){return x.parentId===n.id&&x.branch==='no';});
+    h+='<div class="step-branch-wrap"><div class="step-conn"><div class="step-conn-line"></div></div><div class="step-branch-lbl yes">✓ YES path</div>';
+    h+=(yC?stepSubtree(yC.id):stepAddBtn(n.id,'yes'))+'</div>';
+    h+='<div class="step-branch-wrap"><div class="step-conn"><div class="step-conn-line"></div></div><div class="step-branch-lbl no">✗ NO path</div>';
+    h+=(nC?stepSubtree(nC.id):stepAddBtn(n.id,'no'))+'</div>';
+  } else if(m.group!=='exit'){
+    var child=currentFlow.find(function(x){return x.parentId===n.id&&!x.branch;});
+    h+=(child?stepSubtree(child.id):stepAddBtn(n.id,'main'));
+  }
+  return h;
+}
+
+function stepMeta(n){
+  var cfg=n.cfg||{};
+  if(n.type==='segment-enroll'){var srcT={segment:'Segment',csv:'CSV Upload',api:'API Trigger',webhook:'Webhook',web:'Web Visitor'};return srcT[cfg.srcType||'segment']+(cfg.segments&&cfg.segments.length?' · '+cfg.segments.length+' segs':'');}
+  if(n.type==='send-wa')return cfg.template?cfg.template.replace(/_/g,' '):'No template';
+  if(n.type==='ab-test')return (cfg.template_a&&cfg.template_b)?(cfg.test_pct||10)+'% test':'Configure both variants';
+  if(n.type==='condition'){var cc=cfg.conditions||[];return cc.length?cc.length+' condition'+(cc.length>1?'s':''):'Add conditions';}
+  if(n.type==='wait-delay')return (cfg.amount||24)+' '+(cfg.unit||'hours');
+  if(n.type==='api-trigger')return cfg.event?cfg.event:'API trigger';
+  if(n.type==='web-returning')return cfg.page||'any page';
+  if(n.type==='update-stage')return cfg.stage?cfg.stage:'Set stage';
+  if(n.type==='assign-inbox')return cfg.inbox||'Select inbox';
+  if(n.type==='assign-team')return cfg.team||'Select team';
+  if(n.type==='add-success-seg'||n.type==='add-cold-seg')return cfg.segment||'Segment name';
+  if(n.type==='tag-contact')return (cfg.add?'+'+cfg.add:'')+(cfg.remove?' -'+cfg.remove:'')||'Set tags';
+  if(n.type==='update-field')return cfg.field?cfg.field+'='+cfg.value:'Set field';
+  if(n.type.startsWith('exit-'))return cfg.label||(n.type==='exit-dropped'?'Dropped':n.type.replace('exit-',''));
+  return '';
+}
+
+function stepAddBtn(pid,branch){
+  return '<div class="step-add-row"><div class="step-conn"><div class="step-conn-line"></div></div>'
+    +'<button class="step-add-btn" onclick="showPickerAtBtn(event,\''+(pid||'')+'\',\''+branch+'\')">'
+    +'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add step</button></div>';
+}
+
+/* ══════════════════════════════════════════
+   EDITOR — 4-TAB SYSTEM
+══════════════════════════════════════════ */
+var currentTab='content';
+
+function clearEditor(){
+  document.getElementById('editor-head').style.display='none';
+  document.getElementById('editor-empty-state').style.display='flex';
+  document.getElementById('editor-stage').style.display='none';
+  renderPreview(null);
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  ['content','logic','schedule','audience'].forEach(function(t){
+    var el=document.getElementById('tab-'+t);
+    if(el)el.classList.toggle('on',t===tab);
+  });
+  var n=currentFlow.find(function(x){return x.id===selectedNodeId;});
+  if(n)renderTabContent(n,tab);
+}
+
+function selNode(id){
+  selectedNodeId=id;
+  document.querySelectorAll('.step').forEach(function(x){x.classList.remove('on');});
+  var sEl=document.getElementById('step-'+id);
+  if(sEl){sEl.classList.add('on');sEl.scrollIntoView({block:'nearest'});}
+  var n=currentFlow.find(function(x){return x.id===id;});
+  if(!n){clearEditor();return;}
+  var m=NM[n.type]||{label:n.type,ic:'?',group:'action'};
+  /* show stage */
+  document.getElementById('editor-head').style.display='flex';
+  document.getElementById('editor-empty-state').style.display='none';
+  document.getElementById('editor-stage').style.display='grid';
+  /* breadcrumb */
+  var gc=document.getElementById('editor-crumb');
+  if(gc)gc.innerHTML='<span style="color:var(--n400)">Flow</span><span style="color:var(--n300);font-size:11px">›</span><b>'+esc(m.label)+'</b>';
+  /* restore tab buttons */
+  switchTab(currentTab);
+  renderPreview(n);
+}
+
+function renderTabContent(n,tab){
+  var el=document.getElementById('stage-config');if(!el)return;
+  if(tab==='content') renderIns(n);
+  else if(tab==='logic') renderTabLogic(n);
+  else if(tab==='schedule') renderTabSchedule(n);
+  else if(tab==='audience') renderTabAudience(n);
+}
+
+/* ══════════════════════════════════════════
+   WHATSAPP PREVIEW
+══════════════════════════════════════════ */
+function renderPreview(n){
+  var el=document.getElementById('preview-body');if(!el)return;
+  if(!n||(n.type!=='send-wa'&&n.type!=='ab-test')){
+    el.innerHTML='<div class="preview-empty-state"><div class="preview-empty-icon">&#128172;</div><div class="preview-empty-text">Select a WhatsApp Message or A/B Test step to preview</div></div>';
+    return;
+  }
+  var cfg=n.cfg||{},h='';
+  if(n.type==='send-wa'){
+    var tmpl=cfg.template?TEMPLATES.find(function(t){return t.id===cfg.template;}):null;
+    h+=buildPhonePreview(tmpl);if(tmpl)h+=buildVarMap(tmpl.id);
+  } else {
+    var tA=cfg.template_a?TEMPLATES.find(function(t){return t.id===cfg.template_a;}):null;
+    var tB=cfg.template_b?TEMPLATES.find(function(t){return t.id===cfg.template_b;}):null;
+    h+='<div class="preview-ab-lbl a">Variant A</div>'+buildPhonePreview(tA);if(tA)h+=buildVarMap(tA.id);
+    h+='<div class="preview-ab-lbl b" style="margin-top:8px">Variant B</div>'+buildPhonePreview(tB);if(tB)h+=buildVarMap(tB.id);
+  }
+  el.innerHTML=h;
+}
+
+function buildPhonePreview(tmpl){
+  var pd=tmpl?(TPREV[tmpl.id]||TPREV_DEFAULT):null;
+  var h='<div class="wa-phone-frame">';
+  h+='<div class="wa-phone-bar"><div class="wa-avatar">&#127970;</div>';
+  h+='<div style="flex:1"><div class="wa-contact-name">'+(tmpl?esc(tmpl.name):'No template')+'</div>';
+  h+='<div class="wa-status">'+(tmpl?esc(tmpl.cat)+' template':'Select a template')+'</div></div></div>';
+  h+='<div class="wa-screen">';
+  if(!pd){
+    h+='<div style="font-size:12px;color:#888;padding:20px 8px;text-align:center;opacity:.7">Select a template to preview</div>';
+  } else {
+    h+='<div class="wa-bubble">';
+    if(tmpl&&tmpl.cat==='Marketing') h+='<div class="wa-bubble-header">&#127381; Special Offer</div>';
+    var body=pd.body;
+    /* render variables as styled chips */
+    var idx=0;
+    body=body.replace(/\{\{(\d+)\}\}/g,function(match,num){
+      var i=parseInt(num)-1;
+      var varName=(pd.vars&&pd.vars[i])||('var'+num);
+      var sampleVal=TSAMPLE[varName]||varName;
+      return '​__VAR_'+i+'__​';
+    });
+    /* escape for HTML */
+    body=esc(body);
+    /* restore vars as styled spans */
+    (pd.vars||[]).forEach(function(v,i){
+      var sampleVal=TSAMPLE[v]||v;
+      body=body.replace('​__VAR_'+i+'__​','<span class="wa-var-tag">'+esc(sampleVal)+'</span>');
+    });
+    body=body.replace(/\n/g,'<br>');
+    body=body.replace(/\*([^*<>]+)\*/g,'<strong>$1</strong>');
+    h+='<div class="wa-bubble-body">'+body+'</div>';
+    h+='<div class="wa-bubble-time">10:24 ✓✓</div>';
+    h+='</div>';
+    if(pd.buttons&&pd.buttons.length){
+      h+='<div class="wa-btn-list">';
+      pd.buttons.forEach(function(btn){h+='<div class="wa-btn">'+esc(btn)+'</div>';});
+      h+='</div>';
+    }
+  }
+  h+='</div></div>';
+  return h;
+}
+
+function buildVarMap(tmplId){
+  var pd=TPREV[tmplId];if(!pd||!pd.vars||!pd.vars.length)return '';
+  var h='<div class="var-map-card"><div class="var-map-title">Variable mapping</div>';
+  pd.vars.forEach(function(v,i){
+    h+='<div class="var-map-row"><span class="var-map-key">{{' + (i+1) + '}}</span><span class="var-map-val">'+esc(TSAMPLE[v]||v)+'</span></div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+/* ══════════════════════════════════════════
+   NODE PICKER
+══════════════════════════════════════════ */
+var pickerCtx={pid:null,branch:'main'};
+function showPickerAtBtn(e,pid,branch){
+  var rect=e.target.getBoundingClientRect();
+  showPicker(pid||null,branch||'main',rect);
+}
+function showPicker(pid,branch,rect){
+  closePicker();pickerCtx={pid:pid||null,branch:branch||'main'};
+  var parentType=null;
+  if(pid){var pn=currentFlow.find(function(n){return n.id===pid;});if(pn)parentType=pn.type;}
+  var lookupKey=(branch==='yes'||branch==='no')?branch:(parentType||null);
+  var allowed=(lookupKey?OPTS_AFTER[lookupKey]:null)||OPTS_AFTER['main']||Object.keys(NM);
+  var html='';
+  PICKER_SECS.forEach(function(sec,si){
+    var items=sec.types.filter(function(t){return allowed.indexOf(t)!==-1;});
+    if(!items.length)return;
+    if(si>0)html+='<div class="pick-sep"></div>';
+    html+='<div class="pick-sec-lbl">'+sec.title+'</div>';
+    items.forEach(function(t){
+      var m=NM[t]||{label:t,ic:'?',bg:'#F0F4FF',desc:''};
+      html+='<div class="pick-item'+(m.disabled?' pick-disabled':'')+'" data-type="'+t+'">'
+        +'<div class="pick-ic" style="background:'+m.bg+'">'+m.ic+'</div>'
+        +'<div><div class="pick-name">'+m.label+(m.disabled?' <span style="font-size:10px;color:var(--n400)">(soon)</span>':'')+'</div>'
+        +'<div class="pick-desc">'+m.desc+'</div></div></div>';
+    });
+  });
+  var pop=document.createElement('div');pop.className='pick-pop';pop.id='pick-pop';pop.innerHTML=html;
+  document.body.appendChild(pop);
+  var pw=248,ph=Math.min(pop.scrollHeight+8,380),vw=window.innerWidth,vh=window.innerHeight,top,left;
+  if(rect){top=rect.bottom+8;left=rect.left+rect.width/2-pw/2;}else{top=vh/2-160;left=vw/2-pw/2;}
+  left=Math.max(8,Math.min(left,vw-pw-8));top=Math.max(8,Math.min(top,vh-ph-8));
+  pop.style.top=top+'px';pop.style.left=left+'px';
+  pop.addEventListener('click',function(e2){var item=e2.target.closest('[data-type]');if(item&&!item.classList.contains('pick-disabled'))addNode(item.dataset.type);});
+  setTimeout(function(){document.addEventListener('click',onOutsideClick);},0);
+}
+function onOutsideClick(e){var pop=document.getElementById('pick-pop');if(pop&&!pop.contains(e.target))closePicker();}
+function closePicker(){var pop=document.getElementById('pick-pop');if(pop&&pop.parentNode)pop.parentNode.removeChild(pop);document.removeEventListener('click',onOutsideClick);}
+
+/* ══════════════════════════════════════════
+   ADD / DELETE
+══════════════════════════════════════════ */
+function addNode(type){
+  closePicker();var id='n'+Date.now();
+  /* csv-upload, api-trigger, web-returning all map to segment-enroll with srcType */
+  var srcTypeMap={'csv-upload':'csv','api-trigger':'api','web-returning':'web'};
+  if(srcTypeMap[type]){var st=srcTypeMap[type];type='segment-enroll';}
+  var defaults={
+    'ab-test':{template_a:'',template_b:'',test_pct:10,metric:'replied',window_minutes:30,auto_winner:true,winner:null,status:'pending',objective:'reply_rate',control_group:false,control_pct:10},
+    'segment-enroll':{segments:[SEGMENTS[0]],api_events:[],web_sources:[],reentry:'never',srcType:(typeof st!=='undefined'?st:'segment'),enroll_conditions:[],enroll_logic:'AND',fail_action:'drop'},
+    'send-wa':{template:'',dnd:true,retry:1,msgType:'broadcast'},
+    'condition':{logic:'OR',conditions:[{group:'msg',field:'replied',val:true}]},
+    'wait-delay':{amount:24,unit:'hours'},'update-stage':{pipeline:PIPELINES[0],stage:''},
+    'assign-inbox':{inbox:INBOXES[0]},'assign-owner':{},'assign-team':{team:TEAMS[0]},
+    'assign-pipeline':{pipeline:PIPELINES[1]},'add-success-seg':{segment:'Converted Contacts'},
+    'add-cold-seg':{segment:'Cold Contacts'},'tag-contact':{add:'',remove:''},
+    'update-field':{field:'',value:''},'exit-success':{label:'Campaign complete'},
+    'exit-cold':{label:'Cold — no engagement'},'exit-failure':{label:'Bounced / opted out'},
+    'exit-dropped':{label:'Dropped — condition not met',drop_reason:'condition_failed'},
+  };
+  currentFlow.push({id:id,type:type,parentId:pickerCtx.pid||null,branch:pickerCtx.branch==='main'?null:pickerCtx.branch,cfg:defaults[type]||{}});
+  persistFlow();renderStepList();selNode(id);
+}
+
+function deleteNode(id){
+  var rem=[id],changed=true;
+  while(changed){changed=false;currentFlow.forEach(function(n){if(rem.indexOf(n.parentId)!==-1&&rem.indexOf(n.id)===-1){rem.push(n.id);changed=true;}});}
+  currentFlow=currentFlow.filter(function(n){return rem.indexOf(n.id)===-1;});
+  if(selectedNodeId&&rem.indexOf(selectedNodeId)!==-1){selectedNodeId=null;clearEditor();}
+  persistFlow();renderStepList();
+}
+
+/* ══════════════════════════════════════════
+   INSPECTOR FORM (renderIns — writes to #ins-body)
+══════════════════════════════════════════ */
+var MSG_FIELDS=[{v:'delivered',l:'Message delivered'},{v:'not_delivered',l:'NOT delivered (bounced)'},{v:'read',l:'Message read'},{v:'not_read',l:'NOT read — cold'},{v:'replied',l:'Contact replied'},{v:'not_replied',l:'Did NOT reply'},{v:'link_clicked',l:'Link clicked'}];
+var CT_FIELDS=[{v:'in_whatsapp',l:'Contact is on WhatsApp'},{v:'tag_exists',l:'Tag exists'},{v:'phone_exists',l:'Phone number exists'},{v:'email_exists',l:'Email exists'},{v:'custom_field',l:'Custom field value'}];
+
+function setCfg(nid,key,val){
+  var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return;
+  n.cfg[key]=val;persistFlow();
+  var sm=document.querySelector('#step-'+nid+' .step-meta');if(sm)sm.textContent=stepMeta(n);
+  if(key==='template'){var nn=currentFlow.find(function(x){return x.id===nid;});if(nn)renderPreview(nn);}
+}
+function setMsgType(nid,val){setCfg(nid,'msgType',val);var n=currentFlow.find(function(x){return x.id===nid;});if(n)renderIns(n);}
+function setAbCfg(nid,key,val){
+  var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return;
+  n.cfg[key]=val;persistFlow();renderPreview(n);renderIns(n);
+}
+function setCondLogic(nid,logic){var n=currentFlow.find(function(x){return x.id===nid;});if(n){n.cfg.logic=logic;persistFlow();renderIns(n);}}
+function addCond(nid){var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return;n.cfg.conditions=n.cfg.conditions||[];n.cfg.conditions.push({group:'msg',field:'replied',val:true});persistFlow();renderIns(n);}
+function removeCond(nid,idx){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!n.cfg.conditions)return;n.cfg.conditions.splice(idx,1);persistFlow();renderIns(n);}
+function updateCondGroup(nid,idx,grp){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!n.cfg.conditions)return;n.cfg.conditions[idx].group=grp;n.cfg.conditions[idx].field=grp==='msg'?'replied':'in_whatsapp';persistFlow();renderIns(n);}
+function updateCondField(nid,idx,field){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!n.cfg.conditions)return;n.cfg.conditions[idx].field=field;persistFlow();renderIns(n);}
+function updateCondVal(nid,idx,val){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!n.cfg.conditions)return;n.cfg.conditions[idx].val=val;persistFlow();}
+function addSegment(nid,seg){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!seg)return;n.cfg.segments=n.cfg.segments||[];if(n.cfg.segments.indexOf(seg)===-1)n.cfg.segments.push(seg);persistFlow();renderIns(n);}
+function removeSegment(nid,seg){var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return;n.cfg.segments=(n.cfg.segments||[]).filter(function(s){return s!==seg;});persistFlow();renderIns(n);}
+function handleUpload(inp,nid){if(!inp.files||!inp.files[0])return;var fname=inp.files[0].name;var n=currentFlow.find(function(x){return x.id===nid;});var c=CAMPS.find(function(x){return x.id===activeCampId;});var segName=(c?c.name:'Campaign')+' — '+fname.replace(/\.[^.]+$/,'');var count=Math.floor(Math.random()*3000)+300;if(!n)return;n.cfg.uploadedSeg=segName;n.cfg.uploadedCount=count;n.cfg.segments=n.cfg.segments||[];if(n.cfg.segments.indexOf(segName)===-1)n.cfg.segments.push(segName);persistFlow();renderIns(n);toast('✓ '+fmt(count)+' contacts uploaded','ok');}
+function removeUpload(nid){var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return;if(n.cfg.uploadedSeg){n.cfg.segments=(n.cfg.segments||[]).filter(function(s){return s!==n.cfg.uploadedSeg;});delete n.cfg.uploadedSeg;delete n.cfg.uploadedCount;}persistFlow();renderIns(n);}
+function addApiEvent(nid){var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return;n.cfg.api_events=n.cfg.api_events||[];n.cfg.api_events.push({event:'',source:''});persistFlow();renderIns(n);}
+function removeApiEvent(nid,i){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!n.cfg.api_events)return;n.cfg.api_events.splice(i,1);persistFlow();renderIns(n);}
+function updateApiEvent(nid,i,key,val){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!n.cfg.api_events||!n.cfg.api_events[i])return;n.cfg.api_events[i][key]=val;persistFlow();}
+function addWebSource(nid){var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return;n.cfg.web_sources=n.cfg.web_sources||[];n.cfg.web_sources.push({page:'any',freq:'7d'});persistFlow();renderIns(n);}
+function removeWebSource(nid,i){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!n.cfg.web_sources)return;n.cfg.web_sources.splice(i,1);persistFlow();renderIns(n);}
+function updateWebSource(nid,i,key,val){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!n.cfg.web_sources||!n.cfg.web_sources[i])return;n.cfg.web_sources[i][key]=val;persistFlow();}
+function openDocs(page,anchor){var url='gallabox-docs.html?page='+(page||'outbound');if(anchor)url+='&anchor='+anchor;window.open(url,'_blank');}
+
+/* Source type switch (segment-enroll entry node) */
+function setSrcType(nid,type){
+  var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return;
+  n.cfg.srcType=type;persistFlow();renderIns(n);
+  var sm=document.querySelector('#step-'+nid+' .step-meta');if(sm)sm.textContent=stepMeta(n);
+}
+
+/* ══════════════════════════════════════════
+   LOGIC TAB
+══════════════════════════════════════════ */
+function renderTabLogic(n){
+  var b=document.getElementById('stage-config');if(!b)return;
+  var cfg=n.cfg||{},nid=n.id,h='';
+
+  if(n.type==='ab-test'){
+    /* Retry fallback */
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🔁 Retry & Fallback</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Retry failed sends</div><select class="fs" onchange="setCfg(\''+nid+'\',\'retry\',parseInt(this.value))"><option value="0"'+(cfg.retry===0?' selected':'')+'>No retry</option><option value="1"'+(cfg.retry===1||cfg.retry===undefined?' selected':'')+'>1 retry (after 10 min)</option><option value="2"'+(cfg.retry===2?' selected':'')+'>2 retries</option></select><div class="fhint">Applies to both A and B variants.</div></div>';
+    h+='<div class="fg"><div class="fl">Fallback template (if both fail)</div><select class="fs" onchange="setCfg(\''+nid+'\',\'fallback_template\',this.value)"><option value="">— None —</option>'+TEMPLATES.map(function(t){return '<option value="'+t.id+'"'+(cfg.fallback_template===t.id?' selected':'')+'>'+esc(t.name)+'</option>';}).join('')+'</select><div class="fhint">Sent only if both variants fail delivery.</div></div>';
+    h+='</div></div>';
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">📋 Test Window & Winner</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Observation window</div><select class="fs" onchange="setCfg(\''+nid+'\',\'window_minutes\',parseInt(this.value))"><option value="10"'+(cfg.window_minutes===10?' selected':'')+'>10 minutes</option><option value="30"'+((!cfg.window_minutes||cfg.window_minutes===30)?' selected':'')+'>30 minutes</option><option value="60"'+(cfg.window_minutes===60?' selected':'')+'>1 hour</option><option value="180"'+(cfg.window_minutes===180?' selected':'')+'>3 hours</option><option value="360"'+(cfg.window_minutes===360?' selected':'')+'>6 hours</option><option value="1440"'+(cfg.window_minutes===1440?' selected':'')+'>24 hours</option></select></div>';
+    h+='<div class="fg"><div class="fl">Winning metric</div><select class="fs" onchange="setCfg(\''+nid+'\',\'metric\',this.value)"><option value="replied"'+((!cfg.metric||cfg.metric==='replied')?' selected':'')+'>Reply rate (replied ÷ delivered)</option><option value="read"'+(cfg.metric==='read'?' selected':'')+'>Read rate (read ÷ delivered)</option></select></div>';
+    h+='<div class="fg"><div class="fl">Winner selection</div><div class="ab-sel-mode"><div class="ab-sel-opt'+(cfg.auto_winner!==false?' on':'')+'" onclick="setAbCfg(\''+nid+'\',\'auto_winner\',true);this.classList.add(\'on\');this.nextElementSibling.classList.remove(\'on\')"><div class="ab-sel-opt-lbl">Auto rollout</div><div class="ab-sel-opt-sub">Deploys immediately</div></div><div class="ab-sel-opt'+(cfg.auto_winner===false?' on':'')+'" onclick="setAbCfg(\''+nid+'\',\'auto_winner\',false);this.classList.add(\'on\');this.previousElementSibling.classList.remove(\'on\')"><div class="ab-sel-opt-lbl">Manual approval</div><div class="ab-sel-opt-sub">You confirm rollout</div></div></div></div>';
+    h+='</div></div>';
+  }
+  else if(n.type==='send-wa'){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🔁 Retry & Fallback</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Retry on failure</div><select class="fs" onchange="setCfg(\''+nid+'\',\'retry\',parseInt(this.value))"><option value="0"'+(cfg.retry===0?' selected':'')+'>No retry</option><option value="1"'+(cfg.retry===1||cfg.retry===undefined?' selected':'')+'>1 retry (after 10 min)</option><option value="2"'+(cfg.retry===2?' selected':'')+'>2 retries</option></select></div>';
+    h+='<div class="fg"><div class="fl">Fallback template</div><select class="fs" onchange="setCfg(\''+nid+'\',\'fallback_template\',this.value)"><option value="">— None (use failure exit) —</option>'+TEMPLATES.map(function(t){return '<option value="'+t.id+'"'+(cfg.fallback_template===t.id?' selected':'')+'>'+esc(t.name)+'</option>';}).join('')+'</select><div class="fhint">Alternative template if primary fails all retries.</div></div>';
+    h+='</div></div>';
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">💬 Mid-flow Reply Handling</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">When contact replies mid-flow</div><select class="fs" onchange="setCfg(\''+nid+'\',\'reply_action\',this.value)"><option value="continue"'+((!cfg.reply_action||cfg.reply_action==='continue')?' selected':'')+'>Continue flow normally</option><option value="pause"'+(cfg.reply_action==='pause'?' selected':'')+'>Pause flow until agent resolves</option><option value="tag"'+(cfg.reply_action==='tag'?' selected':'')+'>Tag contact and continue</option></select></div>';
+    if(cfg.reply_action==='tag')h+='<div class="fg"><div class="fl">Tag to apply</div><input class="fi" value="'+esc(cfg.reply_tag||'')+'" placeholder="e.g. replied-mid-flow" oninput="setCfg(\''+nid+'\',\'reply_tag\',this.value)"></div>';
+    h+='</div></div>';
+  }
+  else if(n.type==='segment-enroll'||n.type==='api-trigger'||n.type==='web-returning'){
+    /* Enrollment conditions builder */
+    var econds=cfg.enroll_conditions||[];
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🔎 Enrollment Conditions</div><span class="vchip '+(econds.length?'ok':'muted')+'">'+(econds.length?econds.length+' condition'+(econds.length>1?'s':''):'None')+'</span></div>';
+    h+='<div style="padding:11px 14px;border-bottom:1px solid var(--border)">';
+    h+='<div class="fhint" style="margin-bottom:8px">Only enroll contacts that match <b>all</b> conditions. Contacts that fail are <b>dropped</b> (not failed).</div>';
+    var elogic=cfg.enroll_logic||'AND';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:var(--n700)">Match</span><div class="econd-logic"><button class="'+(elogic==='AND'?'on':'')+'" onclick="setEnrollLogic(\''+nid+'\',\'AND\')">ALL</button><button class="'+(elogic==='OR'?'on':'')+'" onclick="setEnrollLogic(\''+nid+'\',\'OR\')">ANY</button></div><span style="font-size:12px;font-weight:600;color:var(--n700)">conditions</span></div>';
+    if(econds.length){
+      h+='<div class="econd-builder">';
+      econds.forEach(function(ec,i){
+        h+='<div class="econd-row">';
+        h+='<select style="font-size:11.5px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;background:var(--white);color:var(--ink);font-family:var(--fb);flex:1;min-width:0" onchange="updateEnrollCond(\''+nid+'\','+i+',\'field\',this.value)">';
+        var ENROLL_FIELDS=[{v:'whatsapp_exists',l:'WhatsApp number exists'},{v:'phone_exists',l:'Phone number exists'},{v:'email_exists',l:'Email exists'},{v:'tag',l:'Has tag'},{v:'contact_field',l:'Contact field value'},{v:'segment',l:'Is in segment'},{v:'country',l:'Country is'}];
+        ENROLL_FIELDS.forEach(function(ef){h+='<option value="'+ef.v+'"'+(ec.field===ef.v?' selected':'')+'>'+ef.l+'</option>';});
+        h+='</select>';
+        if(ec.field==='whatsapp_exists'||ec.field==='phone_exists'||ec.field==='email_exists'){
+          h+='<select style="font-size:11.5px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--fb);width:70px;flex-shrink:0" onchange="updateEnrollCond(\''+nid+'\','+i+',\'op\',this.value)"><option value="exists"'+(ec.op!=='not_exists'?' selected':'')+'>exists</option><option value="not_exists"'+(ec.op==='not_exists'?' selected':'')+'>missing</option></select>';
+        } else {
+          h+='<input style="width:90px;font-size:11.5px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:var(--fb);flex-shrink:0" placeholder="value" value="'+esc(ec.val||'')+'" oninput="updateEnrollCond(\''+nid+'\','+i+',\'val\',this.value)">';
+        }
+        h+='<button style="background:none;border:none;color:var(--n300);cursor:pointer;font-size:15px;padding:0 4px;flex-shrink:0" onclick="removeEnrollCond(\''+nid+'\','+i+')">&#xd7;</button>';
+        h+='</div>';
+      });
+      h+='<button class="econd-add" onclick="addEnrollCond(\''+nid+'\')">+ Add condition</button>';
+      h+='</div>';
+    } else {
+      h+='<button class="btn btn-s btn-sm" style="width:100%;justify-content:center" onclick="addEnrollCond(\''+nid+'\')">+ Add enrollment condition</button>';
+    }
+    h+='</div>';
+    /* Drop vs Skip setting */
+    h+='<div style="padding:12px 14px"><div style="font-size:12px;font-weight:700;color:var(--n900);margin-bottom:8px">If conditions not met:</div>';
+    h+='<div class="drop-toggle">';
+    h+='<div class="drop-opt'+(cfg.fail_action!=='skip'?' on':'')+'" onclick="setCfg(\''+nid+'\',\'fail_action\',\'drop\')"><div class="drop-opt-lbl">🚫 Drop</div><div class="drop-opt-sub">Exit flow with reason</div></div>';
+    h+='<div class="drop-opt'+(cfg.fail_action==='skip'?' on':'')+'" onclick="setCfg(\''+nid+'\',\'fail_action\',\'skip\')"><div class="drop-opt-lbl">⏭ Skip step</div><div class="drop-opt-sub">Continue to next node</div></div>';
+    h+='</div>';
+    h+='<div class="helper helper-warn"><span class="helper-icon">📊</span>Dropped contacts appear in analytics under <b>Dropped</b> — distinct from Failed. They receive no message.</div>';
+    h+='</div></div>';
+  }
+  else if(n.type==='condition'){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">⑃ Branch Logic</div></div><div class="editor-section-body">';
+    h+='<div class="helper"><span class="helper-icon">ℹ️</span>Branch conditions are configured in the <b>Content</b> tab. Logic tab is used for advanced overrides.</div>';
+    h+='<div class="fg" style="margin-top:10px"><div class="fl">Timeout (no engagement)</div><select class="fs" onchange="setCfg(\''+nid+'\',\'timeout_hours\',parseInt(this.value))"><option value="0"'+((!cfg.timeout_hours)?' selected':'')+'>No timeout — wait indefinitely</option><option value="24"'+(cfg.timeout_hours===24?' selected':'')+'>24 hours → take NO path</option><option value="48"'+(cfg.timeout_hours===48?' selected':'')+'>48 hours → take NO path</option><option value="168"'+(cfg.timeout_hours===168?' selected':'')+'>7 days → take NO path</option></select><div class="fhint">If set, contacts automatically exit the YES/NO split after this window.</div></div>';
+    h+='</div></div>';
+  }
+  else {
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">⚙️ Logic</div></div><div class="editor-section-body"><div class="helper"><span class="helper-icon">ℹ️</span>No advanced logic options for this node type.</div></div></div>';
+  }
+
+  ni('stage-config',h);
+}
+
+/* ══════════════════════════════════════════
+   SCHEDULE TAB
+══════════════════════════════════════════ */
+function renderTabSchedule(n){
+  var b=document.getElementById('stage-config');if(!b)return;
+  var cfg=n.cfg||{},nid=n.id,h='';
+
+  var showSchedule=(n.type==='send-wa'||n.type==='ab-test');
+  if(showSchedule){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🌙 DND Window</div></div><div class="editor-section-body">';
+    h+='<div class="fg" style="display:flex;justify-content:space-between;align-items:center"><div><div class="fl" style="margin-bottom:0">Respect DND hours</div><div class="fhint">Queue messages outside the send window</div></div><button class="tog'+(cfg.dnd!==false?' on':'')+'" onclick="this.classList.toggle(\'on\');setCfg(\''+nid+'\',\'dnd\',this.classList.contains(\'on\'))"><div class="tok"></div></button></div>';
+    if(cfg.dnd!==false){
+      h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">';
+      h+='<div class="fg" style="margin:0"><div class="fl">Send from</div><select class="fs" onchange="setCfg(\''+nid+'\',\'dnd_from\',this.value)">';
+      ['06:00','07:00','08:00','09:00','10:00'].forEach(function(t){h+='<option'+(cfg.dnd_from===t?' selected':'')+'>'+t+'</option>';});
+      h+='</select></div>';
+      h+='<div class="fg" style="margin:0"><div class="fl">Send until</div><select class="fs" onchange="setCfg(\''+nid+'\',\'dnd_to\',this.value)">';
+      ['18:00','19:00','20:00','21:00','22:00'].forEach(function(t){h+='<option'+(cfg.dnd_to===t?' selected':'')+'>'+t+'</option>';});
+      h+='</select></div>';
+      h+='</div>';
+    }
+    h+='<div class="fg" style="margin-top:10px"><div class="fl">Timezone</div><select class="fs" onchange="setCfg(\''+nid+'\',\'timezone\',this.value)"><option value="contact"'+((!cfg.timezone||cfg.timezone==='contact')?' selected':'')+'>Contact\'s timezone (recommended)</option><option value="IST"'+(cfg.timezone==='IST'?' selected':'')+'>IST (UTC+5:30)</option><option value="UTC"'+(cfg.timezone==='UTC'?' selected':'')+'>UTC</option><option value="EST"'+(cfg.timezone==='EST'?' selected':'')+'>EST (UTC-5)</option></select></div>';
+    h+='</div></div>';
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">⏱ Send Rate</div></div><div class="editor-section-body">';
+    var th=cfg.throttle||'';
+    h+='<div class="fg"><div class="fl">Throttle (messages/hour)</div><select class="fs" onchange="setCfg(\''+nid+'\',\'throttle\',this.value)"><option value=""'+(!th?' selected':'')+'>No limit (full speed)</option><option value="500"'+(th==='500'?' selected':'')+'>500/hour</option><option value="1000"'+(th==='1000'?' selected':'')+'>1,000/hour</option><option value="5000"'+(th==='5000'?' selected':'')+'>5,000/hour</option></select><div class="fhint">Useful for large broadcasts to avoid sudden spikes.</div></div>';
+    h+='</div></div>';
+  } else if(n.type==='wait-delay'){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">⏱ Wait Schedule</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Skip weekends</div><div style="display:flex;justify-content:space-between;align-items:center"><div class="fhint" style="margin:0">Don\'t wait on Sat/Sun — resume Monday</div><button class="tog'+(cfg.skip_weekends?' on':'')+'" onclick="this.classList.toggle(\'on\');setCfg(\''+nid+'\',\'skip_weekends\',this.classList.contains(\'on\'))"><div class="tok"></div></button></div></div>';
+    h+='<div class="fg"><div class="fl">Skip holidays</div><div style="display:flex;justify-content:space-between;align-items:center"><div class="fhint" style="margin:0">Skip public holidays in contact\'s country</div><button class="tog'+(cfg.skip_holidays?' on':'')+'" onclick="this.classList.toggle(\'on\');setCfg(\''+nid+'\',\'skip_holidays\',this.classList.contains(\'on\'))"><div class="tok"></div></button></div></div>';
+    h+='</div></div>';
+  } else {
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">📅 Schedule</div></div><div class="editor-section-body"><div class="helper"><span class="helper-icon">ℹ️</span>No scheduling options for this node type.</div></div></div>';
+  }
+
+  ni('stage-config',h);
+}
+
+/* ══════════════════════════════════════════
+   AUDIENCE TAB
+══════════════════════════════════════════ */
+function renderTabAudience(n){
+  var b=document.getElementById('stage-config');if(!b)return;
+  var cfg=n.cfg||{},nid=n.id,h='';
+
+  var isEntry=NM[n.type]&&NM[n.type].group==='entry';
+  var isMsg=n.type==='send-wa'||n.type==='ab-test';
+
+  if(isEntry||isMsg){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🚫 Suppression</div></div><div class="editor-section-body">';
+    h+='<div class="fg" style="display:flex;justify-content:space-between;align-items:center"><div><div class="fl" style="margin-bottom:0">Suppress unsubscribed contacts</div><div class="fhint">Contacts who opted out are auto-skipped</div></div><button class="tog on" style="pointer-events:none"><div class="tok"></div></button></div>';
+    h+='<div class="fg" style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><div><div class="fl" style="margin-bottom:0">Suppress contacts already in another active campaign</div><div class="fhint">Prevents contact fatigue</div></div><button class="tog'+(cfg.suppress_active?' on':'')+'" onclick="this.classList.toggle(\'on\');setCfg(\''+nid+'\',\'suppress_active\',this.classList.contains(\'on\'))"><div class="tok"></div></button></div>';
+    h+='<div class="fg" style="margin-top:10px"><div class="fl">Additional suppression segment</div><select class="fs" onchange="setCfg(\''+nid+'\',\'suppress_segment\',this.value)"><option value="">— None —</option>'+SEGMENTS.map(function(s){return '<option value="'+esc(s)+'"'+(cfg.suppress_segment===s?' selected':'')+'>'+esc(s)+'</option>';}).join('')+'</select><div class="fhint">Contacts in this segment will be skipped.</div></div>';
+    h+='</div></div>';
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🏷 Filter by Tag</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Only include contacts with tag</div><input class="fi" value="'+esc(cfg.tag_filter||'')+'" placeholder="e.g. premium-tier (leave blank for all)" oninput="setCfg(\''+nid+'\',\'tag_filter\',this.value)"></div>';
+    h+='<div class="fg"><div class="fl">Exclude contacts with tag</div><input class="fi" value="'+esc(cfg.tag_exclude||'')+'" placeholder="e.g. do-not-contact" oninput="setCfg(\''+nid+'\',\'tag_exclude\',this.value)"></div>';
+    h+='</div></div>';
+  }
+
+  if(isEntry){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🔄 Re-entry Rule</div></div><div class="editor-section-body"><select class="fs" onchange="setCfg(\''+nid+'\',\'reentry\',this.value)"><option value="never"'+(cfg.reentry==='never'?' selected':'')+'>Never re-enter</option><option value="30d"'+(cfg.reentry==='30d'?' selected':'')+'>After 30 days</option><option value="always"'+(cfg.reentry==='always'?' selected':'')+'>Always re-enter</option></select><div class="fhint">Controls whether an already-enrolled contact can re-enter.</div></div></div>';
+  }
+
+  if(!isEntry&&!isMsg){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">👥 Audience</div></div><div class="editor-section-body"><div class="helper"><span class="helper-icon">ℹ️</span>Audience settings apply to entry and message nodes. This node type has no audience configuration.</div></div></div>';
+  }
+
+  ni('stage-config',h);
+}
+
+/* Enrollment condition helpers */
+function addEnrollCond(nid){var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return;n.cfg.enroll_conditions=n.cfg.enroll_conditions||[];n.cfg.enroll_conditions.push({field:'whatsapp_exists',op:'exists',val:''});persistFlow();renderTabLogic(n);}
+function removeEnrollCond(nid,i){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!n.cfg.enroll_conditions)return;n.cfg.enroll_conditions.splice(i,1);persistFlow();renderTabLogic(n);}
+function updateEnrollCond(nid,i,key,val){var n=currentFlow.find(function(x){return x.id===nid;});if(!n||!n.cfg.enroll_conditions||!n.cfg.enroll_conditions[i])return;n.cfg.enroll_conditions[i][key]=val;persistFlow();renderTabLogic(n);}
+function setEnrollLogic(nid,logic){var n=currentFlow.find(function(x){return x.id===nid;});if(!n)return;n.cfg.enroll_logic=logic;persistFlow();renderTabLogic(n);}
+
+function renderIns(n){
+  var b=document.getElementById('stage-config');if(!b)return;
+  var cfg=n.cfg||{},nid=n.id,h='';
+
+  if(n.type==='ab-test'){
+    var perArm=Math.round((cfg.test_pct||10)/2);
+    var minAud=Math.ceil(600/((cfg.test_pct||10)/100));
+    var tplOptsA='<option value="">— Select template —</option>'+TEMPLATES.map(function(t){return '<option value="'+t.id+'"'+(cfg.template_a===t.id?' selected':'')+'>'+esc(t.name)+' ('+t.cat+')</option>';}).join('');
+    var tplOptsB='<option value="">— Select template —</option>'+TEMPLATES.map(function(t){return '<option value="'+t.id+'"'+(cfg.template_b===t.id?' selected':'')+'>'+esc(t.name)+' ('+t.cat+')</option>';}).join('');
+    /* Objective */
+    h+='<div class="editor-section">';
+    h+='<div class="editor-section-head"><div class="editor-section-title">🎯 Test Objective</div></div>';
+    h+='<div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">What are you optimising for?</div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">';
+    var abObjs=[{v:'reply_rate',l:'Reply rate',sub:'% who replied',ic:'💬'},{v:'read_rate',l:'Read rate',sub:'% who opened',ic:'👁'},{v:'click_rate',l:'Click rate',sub:'% who clicked CTA',ic:'🖱'},{v:'conversion',l:'Conversion',sub:'Custom goal event',ic:'🏆'}];
+    abObjs.forEach(function(o){
+      var on=(cfg.objective||'reply_rate')===o.v;
+      h+='<div onclick="setAbCfg(\''+nid+'\',\'objective\',\''+o.v+'\')" style="padding:9px 10px;border-radius:8px;border:1.5px solid '+(on?'#7C3AED':'var(--border)')+';background:'+(on?'#F3E8FF':'var(--white)')+';cursor:pointer;transition:all .13s">';
+      h+='<div style="font-size:15px;margin-bottom:3px">'+o.ic+'</div>';
+      h+='<div style="font-size:12px;font-weight:700;color:var(--n900)">'+o.l+'</div>';
+      h+='<div style="font-size:10.5px;color:var(--n500);margin-top:2px">'+o.sub+'</div></div>';
+    });
+    h+='</div></div>';
+    h+='</div></div>';
+    /* Variants */
+    h+='<div class="editor-section">';
+    h+='<div class="editor-section-head"><div class="editor-section-title">⚗️ Variants</div>';
+    h+='<span class="vchip '+(cfg.template_a&&cfg.template_b?'ok':'warn')+'">'+(cfg.template_a&&cfg.template_b?'✓ Both set':'Incomplete')+'</span></div>';
+    h+='<div class="editor-section-body">';
+    h+='<div class="ab-arms">';
+    h+='<div class="ab-arm ab-arm-a"><div class="ab-arm-lbl ab-arm-lbl-a">Variant A</div><select class="fs" style="font-size:12px" onchange="setAbCfg(\''+nid+'\',\'template_a\',this.value)">'+tplOptsA+'</select><div class="fhint" style="font-size:10.5px;margin-top:4px">'+perArm+'% of test audience</div></div>';
+    h+='<div class="ab-arm ab-arm-b"><div class="ab-arm-lbl ab-arm-lbl-b">Variant B</div><select class="fs" style="font-size:12px" onchange="setAbCfg(\''+nid+'\',\'template_b\',this.value)">'+tplOptsB+'</select><div class="fhint" style="font-size:10.5px;margin-top:4px">'+perArm+'% of test audience</div></div>';
+    h+='</div>';
+    /* Control group toggle */
+    h+='<div style="margin-top:10px;padding:10px 12px;background:var(--off);border-radius:9px;border:1px solid var(--border)">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
+    h+='<div><div style="font-size:12.5px;font-weight:700;color:var(--n900)">Control group (no message)</div><div class="fhint">Hold back a % — receives no message. Measures organic conversion baseline.</div></div>';
+    h+='<button class="tog'+(cfg.control_group?' on':'')+'" onclick="setAbCfg(\''+nid+'\',\'control_group\',!'+!!(cfg.control_group)+')"><div class="tok"></div></button>';
+    h+='</div>';
+    if(cfg.control_group){h+='<div class="fg" style="margin-top:8px;margin-bottom:0"><div class="fl">Control group %</div><div style="display:flex;align-items:center;gap:8px"><input type="range" class="ab-slider" min="5" max="20" step="5" value="'+(cfg.control_pct||10)+'" oninput="setAbCfg(\''+nid+'\',\'control_pct\',parseInt(this.value));document.getElementById(\'abcl-'+nid+'\').textContent=this.value+\'%\'"><span class="ab-slider-val" id="abcl-'+nid+'">'+(cfg.control_pct||10)+'%</span></div></div>';}
+    h+='</div>';
+    h+='</div></div>';
+    /* Test size */
+    h+='<div class="editor-section">';
+    h+='<div class="editor-section-head"><div class="editor-section-title">📊 Test Configuration</div></div>';
+    h+='<div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Test audience size</div><div class="ab-slider-wrap"><input type="range" class="ab-slider" min="5" max="20" step="5" value="'+(cfg.test_pct||10)+'" oninput="setAbCfg(\''+nid+'\',\'test_pct\',parseInt(this.value));document.getElementById(\'abl-'+nid+'\').textContent=this.value+\'%\'"><span class="ab-slider-val" id="abl-'+nid+'">'+(cfg.test_pct||10)+'%</span></div><div class="ab-arm-hint">Each arm gets <strong>'+perArm+'%</strong> of total. Min reliable: <strong>'+fmt(minAud)+' contacts</strong>.</div>';
+    if((cfg.test_pct||10)<10)h+='<div class="ab-warn">⚠ Very small test group. Results may not be reliable.</div>';
+    h+='</div>';
+    h+='<div class="fg"><div class="fl">Observation window</div><select class="fs" onchange="setAbCfg(\''+nid+'\',\'window_minutes\',parseInt(this.value))"><option value="10"'+(cfg.window_minutes===10?' selected':'')+'>10 minutes</option><option value="30"'+((!cfg.window_minutes||cfg.window_minutes===30)?' selected':'')+'>30 minutes</option><option value="60"'+(cfg.window_minutes===60?' selected':'')+'>1 hour</option><option value="180"'+(cfg.window_minutes===180?' selected':'')+'>3 hours</option><option value="360"'+(cfg.window_minutes===360?' selected':'')+'>6 hours</option><option value="1440"'+(cfg.window_minutes===1440?' selected':'')+'>24 hours</option></select><div class="fhint">How long to collect data before picking the winner.</div></div>';
+    h+='<div class="fg"><div class="fl">Winner selection</div><div class="ab-sel-mode"><div class="ab-sel-opt'+(cfg.auto_winner!==false?' on':'')+'" onclick="setAbCfg(\''+nid+'\',\'auto_winner\',true);this.classList.add(\'on\');this.nextElementSibling.classList.remove(\'on\')"><div class="ab-sel-opt-lbl">Auto</div><div class="ab-sel-opt-sub">Rolls out immediately</div></div><div class="ab-sel-opt'+(cfg.auto_winner===false?' on':'')+'" onclick="setAbCfg(\''+nid+'\',\'auto_winner\',false);this.classList.add(\'on\');this.previousElementSibling.classList.remove(\'on\')"><div class="ab-sel-opt-lbl">Manual</div><div class="ab-sel-opt-sub">You confirm rollout</div></div></div>'+(cfg.auto_winner===false?'<div class="fhint">You\'ll be notified. Rollout waits for your approval.</div>':'')+'</div>';
+    if(cfg.status&&cfg.status!=='pending'){var sM={running:'🔄 Experiment running',evaluating:'⏳ Evaluating',rollout:'🚀 Rolling out winner',complete:'✅ Complete'};var sBg={running:'var(--blue-s)',evaluating:'var(--amber-s)',rollout:'#F3E8FF',complete:'var(--ok-s)'};var sC={running:'var(--blue)',evaluating:'var(--amber)',rollout:'#7C3AED',complete:'var(--ok)'};h+='<div style="padding:9px 11px;border-radius:8px;font-size:12.5px;font-weight:700;background:'+(sBg[cfg.status]||'var(--off)')+';color:'+(sC[cfg.status]||'var(--muted)')+';">'+(sM[cfg.status]||cfg.status)+'</div>';if(cfg.winner)h+='<div style="margin-top:8px;padding:8px 11px;border-radius:8px;font-size:12px;background:#F3E8FF;color:#7C3AED">🏆 <strong>Winner: Variant '+(cfg.winner==='a'?'A':'B')+'</strong> — rolling out.</div>';}
+    h+='</div></div>';
+  }
+  else if(n.type==='segment-enroll'){
+    /* Source type selector */
+    var srcType=cfg.srcType||'segment';
+    h+='<div class="editor-section">';
+    var srcLbls={segment:'Segment',csv:'CSV Upload',api:'API Trigger',webhook:'Webhook',web:'Web Visitor'};
+    h+='<div class="editor-section-head"><div class="editor-section-title">📥 Enrollment Source</div><span class="vchip ok">'+esc(srcLbls[srcType]||srcType)+'</span></div>';
+    h+='<div class="editor-section-body">';
+    h+='<div class="entry-type-grid">';
+    [{v:'segment',ic:'🎯',l:'Segment',sub:'From saved list'},{v:'csv',ic:'📄',l:'Upload CSV',sub:'Bulk spreadsheet'},{v:'api',ic:'⚡',l:'API Trigger',sub:'REST enrollment'},{v:'webhook',ic:'🔗',l:'Webhook',sub:'Inbound payload'},{v:'web',ic:'🌐',l:'Web Visitor',sub:'Returning visitor'}].forEach(function(s){
+      h+='<div class="entry-type-card'+(srcType===s.v?' on':'')+'" onclick="setSrcType(\''+nid+'\',\''+s.v+'\')"><div class="entry-type-card-ic">'+s.ic+'</div><div class="entry-type-card-lbl">'+s.l+'</div><div class="entry-type-card-sub">'+s.sub+'</div></div>';
+    });
+    h+='</div></div></div>';
+    /* Source-specific config */
+    if(srcType==='segment'){
+      var segs=cfg.segments||[];
+      h+='<div class="editor-section">';
+      h+='<div class="editor-section-head"><div class="editor-section-title">🎯 Segments</div><span class="vchip '+(segs.length?'ok':'warn')+'">'+(segs.length?segs.length+' selected':'None')+'</span></div>';
+      h+='<div class="editor-section-body">';
+      if(segs.length){h+='<div style="margin-bottom:8px">';segs.forEach(function(seg){h+='<span class="seg-tag">'+esc(seg)+'<span style="opacity:.5;cursor:pointer;margin-left:4px" onclick="removeSegment(\''+nid+'\',\''+esc(seg)+'\')">&#xd7;</span></span>';});h+='</div>';}
+      var rem2=SEGMENTS.filter(function(s){return segs.indexOf(s)===-1;});
+      if(rem2.length)h+='<div style="display:flex;gap:5px"><select class="fs" id="ss-'+nid+'" style="flex:1;font-size:12px">'+rem2.map(function(s){return '<option>'+esc(s)+'</option>';}).join('')+'</select><button class="btn btn-p btn-sm" onclick="var s=document.getElementById(\'ss-'+nid+'\');if(s)addSegment(\''+nid+'\',s.value)">+ Add</button></div>';
+      h+='<div class="helper" style="margin-top:10px"><span class="helper-icon">ℹ️</span>Contacts in <b>any</b> selected segment are enrolled. Use OR logic to broaden reach.</div>';
+      h+='</div></div>';
+    } else if(srcType==='csv'){
+      h+='<div class="editor-section">';
+      h+='<div class="editor-section-head"><div class="editor-section-title">📄 Upload File</div></div>';
+      h+='<div class="editor-section-body">';
+      if(cfg.uploadedSeg){h+='<div style="font-size:12.5px;color:var(--ok);font-weight:600;margin-bottom:8px">✓ '+esc(cfg.uploadedSeg)+' · '+fmt(cfg.uploadedCount||0)+' contacts</div><button class="btn btn-g btn-sm" onclick="removeUpload(\''+nid+'\')">Remove upload</button>';}
+      else{h+='<label class="btn btn-s btn-sm" style="cursor:pointer;display:inline-flex;gap:5px;margin-bottom:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Browse CSV / Excel<input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleUpload(this,\''+nid+'\')"></label>';}
+      h+='<div class="helper"><span class="helper-icon">ℹ️</span>Upload creates a one-time segment. Phone numbers matched to existing contacts.</div>';
+      h+='</div></div>';
+    } else if(srcType==='api'){
+      var apiEvts=cfg.api_events||[];
+      h+='<div class="editor-section">';
+      h+='<div class="editor-section-head"><div class="editor-section-title">⚡ API Events</div><span class="vchip mcp">MCP</span></div>';
+      h+='<div class="editor-section-body">';
+      apiEvts.forEach(function(ev,i){h+='<div style="display:flex;gap:4px;align-items:center;margin-bottom:6px"><input class="fi" style="flex:1;font-size:12px" placeholder="event name" value="'+esc(ev.event||'')+'" oninput="updateApiEvent(\''+nid+'\','+i+',\'event\',this.value)"><input class="fi" style="flex:1;font-size:12px" placeholder="source" value="'+esc(ev.source||'')+'" oninput="updateApiEvent(\''+nid+'\','+i+',\'source\',this.value)"><button style="background:none;border:none;color:var(--n400);cursor:pointer;font-size:16px;padding:0 4px" onclick="removeApiEvent(\''+nid+'\','+i+')">&#xd7;</button></div>';});
+      h+='<button class="btn btn-s btn-sm" style="width:100%;justify-content:center;margin-bottom:10px" onclick="addApiEvent(\''+nid+'\')">+ Add event</button>';
+      h+='<div class="helper"><span class="helper-icon">🔌</span>POST to <code style="background:var(--off);padding:1px 5px;border-radius:4px;font-size:11px">/api/campaigns/'+activeCampId+'/enroll</code> with <code style="background:var(--off);padding:1px 5px;border-radius:4px;font-size:11px">contact_id</code>.</div>';
+      h+='</div></div>';
+    } else if(srcType==='webhook'){
+      h+='<div class="editor-section">';
+      h+='<div class="editor-section-head"><div class="editor-section-title">🔗 Webhook</div><span class="vchip mcp">MCP</span></div>';
+      h+='<div class="editor-section-body">';
+      h+='<div class="fg"><div class="fl">Webhook URL (listen on)</div><div style="display:flex;gap:5px;align-items:center"><input class="fi" readonly value="https://app.gallabox.com/webhook/campaign/'+activeCampId+'" style="font-size:11.5px;color:var(--n500);background:var(--off)"><button class="btn btn-s btn-sm" onclick="navigator.clipboard.writeText(\'https://app.gallabox.com/webhook/campaign/'+activeCampId+'\')" style="flex-shrink:0">Copy</button></div><div class="fhint">Gallabox will accept a POST with <code>phone</code> or <code>contact_id</code>.</div></div>';
+      h+='<div class="fg"><div class="fl">Secret token</div><input class="fi" value="'+esc(cfg.webhook_secret||'')+'" placeholder="Optional validation token" oninput="setCfg(\''+nid+'\',\'webhook_secret\',this.value)"></div>';
+      h+='<div class="helper"><span class="helper-icon">ℹ️</span>Include <code style="background:var(--off);padding:1px 4px;border-radius:3px">X-GB-Token</code> header matching the secret for request validation.</div>';
+      h+='</div></div>';
+    } else if(srcType==='web'){
+      var webSrcs=cfg.web_sources||[];
+      h+='<div class="editor-section">';
+      h+='<div class="editor-section-head"><div class="editor-section-title">🌐 Web Visitor Rules</div></div>';
+      h+='<div class="editor-section-body">';
+      webSrcs.forEach(function(ws,i){h+='<div style="display:flex;gap:4px;align-items:center;margin-bottom:6px"><select class="fs" style="flex:1;font-size:12px" onchange="updateWebSource(\''+nid+'\','+i+',\'page\',this.value)"><option value="any"'+(ws.page==='any'?' selected':'')+'>Any page</option><option value="pricing"'+(ws.page==='pricing'?' selected':'')+'>Pricing</option><option value="product"'+(ws.page==='product'?' selected':'')+'>Product</option></select><select class="fs" style="flex:1;font-size:12px" onchange="updateWebSource(\''+nid+'\','+i+',\'freq\',this.value)"><option value="7d"'+(ws.freq==='7d'?' selected':'')+'>1×/7 days</option><option value="once"'+(ws.freq==='once'?' selected':'')+'>Once</option><option value="30d"'+(ws.freq==='30d'?' selected':'')+'>1×/30 days</option></select><button style="background:none;border:none;color:var(--n400);cursor:pointer;font-size:16px;padding:0 4px" onclick="removeWebSource(\''+nid+'\','+i+')">&#xd7;</button></div>';});
+      h+='<button class="btn btn-s btn-sm" style="width:100%;justify-content:center;margin-bottom:10px" onclick="addWebSource(\''+nid+'\')">+ Add rule</button>';
+      h+='<div class="helper"><span class="helper-icon">🌐</span>Requires tracking pixel. Contacts must already exist in Gallabox with phone verified.</div>';
+      h+='</div></div>';
+    }
+    /* Re-entry (always shown) */
+    h+='<div class="editor-section">';
+    h+='<div class="editor-section-head"><div class="editor-section-title">🔄 Re-entry Rule</div></div>';
+    h+='<div class="editor-section-body"><select class="fs" onchange="setCfg(\''+nid+'\',\'reentry\',this.value)"><option value="never"'+(cfg.reentry==='never'?' selected':'')+'>Never re-enter</option><option value="30d"'+(cfg.reentry==='30d'?' selected':'')+'>After 30 days</option><option value="always"'+(cfg.reentry==='always'?' selected':'')+'>Always re-enter</option></select><div class="fhint">Controls whether a contact already in this campaign can re-enroll.</div></div></div>';
+  }
+  else if(n.type==='api-trigger'){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">⚡ API Trigger</div><span class="vchip mcp">MCP</span></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Event name</div><input class="fi" value="'+esc(cfg.event||'')+'" placeholder="e.g. form_submit" oninput="setCfg(\''+nid+'\',\'event\',this.value)"></div>';
+    h+='<div class="fg"><div class="fl">Source</div><input class="fi" value="'+esc(cfg.source||'')+'" placeholder="e.g. webinar_signup" oninput="setCfg(\''+nid+'\',\'source\',this.value)"></div>';
+    h+='<div class="helper"><span class="helper-icon">🔌</span>POST to <code style="background:var(--off);padding:1px 5px;border-radius:4px;font-size:11px">/api/campaigns/'+activeCampId+'/enroll</code> with <code style="background:var(--off);padding:1px 5px;border-radius:4px;font-size:11px">contact_id</code></div>';
+    h+='</div></div>';
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🔄 Re-entry Rule</div></div><div class="editor-section-body"><select class="fs" onchange="setCfg(\''+nid+'\',\'reentry\',this.value)"><option value="never"'+(cfg.reentry==='never'?' selected':'')+'>Never re-enter</option><option value="30d"'+(cfg.reentry==='30d'?' selected':'')+'>After 30 days</option><option value="always"'+(cfg.reentry==='always'?' selected':'')+'>Always re-enter</option></select></div></div>';
+  }
+  else if(n.type==='web-returning'){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🌐 Web Visitor Trigger</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Trigger page</div><select class="fs" onchange="setCfg(\''+nid+'\',\'page\',this.value)"><option value="any"'+(cfg.page==='any'?' selected':'')+'>Any page</option><option value="pricing">Pricing page</option><option value="product">Product pages</option></select></div>';
+    h+='<div class="fg"><div class="fl">Send mode</div><select class="fs" onchange="setCfg(\''+nid+'\',\'mode\',this.value)"><option value="immediate"'+(cfg.mode==='immediate'?' selected':'')+'>Immediately</option><option value="scheduled">Scheduled bulk</option><option value="segment">Add to segment silently</option></select></div>';
+    h+='<div class="fg"><div class="fl">Frequency cap</div><select class="fs" onchange="setCfg(\''+nid+'\',\'freq\',this.value)"><option value="7d">1× per 7 days</option><option value="once">Once ever</option><option value="30d">1× per 30 days</option></select></div>';
+    h+='<div class="helper"><span class="helper-icon">🌐</span>Requires tracking pixel on your site. Contacts matched by phone number.</div>';
+    h+='</div></div>';
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🔄 Re-entry Rule</div></div><div class="editor-section-body"><select class="fs" onchange="setCfg(\''+nid+'\',\'reentry\',this.value)"><option value="never"'+(cfg.reentry==='never'?' selected':'')+'>Never re-enter</option><option value="30d"'+(cfg.reentry==='30d'?' selected':'')+'>After 30 days</option><option value="always"'+(cfg.reentry==='always'?' selected':'')+'>Always re-enter</option></select></div></div>';
+  }
+  else if(n.type==='send-wa'){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">💬 Template</div><span class="vchip '+(cfg.template?'ok':'warn')+'">'+(cfg.template?'Selected':'Required')+'</span></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Message type</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><div onclick="setMsgType(\''+nid+'\',\'broadcast\')" style="padding:9px 10px;border-radius:8px;border:1.5px solid '+(cfg.msgType!=='sequence'?'var(--gb)':'var(--border)')+';background:'+(cfg.msgType!=='sequence'?'var(--gb-s)':'var(--white)')+';cursor:pointer;text-align:center;transition:all .13s"><div style="font-size:15px;margin-bottom:3px">📣</div><div style="font-size:12px;font-weight:700;color:var(--n900)">Broadcast</div><div style="font-size:10.5px;color:var(--muted)">Full list at once</div></div><div onclick="setMsgType(\''+nid+'\',\'sequence\')" style="padding:9px 10px;border-radius:8px;border:1.5px solid '+(cfg.msgType==='sequence'?'var(--gb)':'var(--border)')+';background:'+(cfg.msgType==='sequence'?'var(--gb-s)':'var(--white)')+';cursor:pointer;text-align:center;transition:all .13s"><div style="font-size:15px;margin-bottom:3px">🔁</div><div style="font-size:12px;font-weight:700;color:var(--n900)">Sequence</div><div style="font-size:10.5px;color:var(--muted)">Per-contact trigger</div></div></div></div>';
+    h+='<div class="fg"><div class="fl">Template</div><select class="fs" onchange="setCfg(\''+nid+'\',\'template\',this.value)"><option value="">— Select template —</option>'+TEMPLATES.map(function(t){return '<option value="'+t.id+'"'+(cfg.template===t.id?' selected':'')+'>'+esc(t.name)+' ('+t.cat+')</option>';}).join('')+'</select><div class="fhint">Only Meta-approved templates. Preview updates in the right column →</div></div>';
+    var d2=ANA[activeCampId],nm_d=d2&&d2.nm&&d2.nm[n.id];
+    if(nm_d&&nm_d.sent){
+      h+='<div class="node-stats" style="margin-top:4px">';
+      [{v:nm_d.sent,l:'Sent',c:'var(--n900)'},{v:nm_d.delivered,l:'Delivered',c:'var(--ok)'},{v:nm_d.read,l:'Read',c:'var(--gb)'},{v:nm_d.replied,l:'Replied',c:'var(--purple)'}].forEach(function(m2){h+='<div class="node-stat"><div class="node-stat-val" style="color:'+m2.c+'">'+fmt(m2.v||0)+'</div><div class="node-stat-lbl">'+m2.l+'</div></div>';});
+      h+='</div>';
+    }
+    h+='</div></div>';
+    /* DND / retry quick toggles */
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">⚙️ Delivery</div></div><div class="editor-section-body">';
+    h+='<div class="fg" style="display:flex;justify-content:space-between;align-items:center"><div><div class="fl" style="margin-bottom:0">Respect DND hours</div><div class="fhint">Queue messages outside 9am–9pm local time</div></div><button class="tog'+(cfg.dnd!==false?' on':'')+'" onclick="this.classList.toggle(\'on\');setCfg(\''+nid+'\',\'dnd\',this.classList.contains(\'on\'))"><div class="tok"></div></button></div>';
+    h+='<div class="fg"><div class="fl">Retry on failure</div><select class="fs" onchange="setCfg(\''+nid+'\',\'retry\',parseInt(this.value))"><option value="0"'+(cfg.retry===0?' selected':'')+'>No retry</option><option value="1"'+(cfg.retry===1||cfg.retry===undefined?' selected':'')+'>1 retry (after 10 min)</option><option value="2"'+(cfg.retry===2?' selected':'')+'>2 retries</option></select></div>';
+    h+='</div></div>';
+  }
+  else if(n.type==='condition'){
+    var conds=cfg.conditions||[],logic=cfg.logic||'OR';
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">⑃ Branch Conditions</div><div class="econd-logic"><button class="'+(logic==='OR'?'on':'')+'" onclick="setCondLogic(\''+nid+'\',\'OR\')">OR</button><button class="'+(logic==='AND'?'on':'')+'" onclick="setCondLogic(\''+nid+'\',\'AND\')">AND</button></div></div>';
+    h+='<div class="econd-builder">';
+    conds.forEach(function(c,i){
+      var fields=c.group==='msg'?MSG_FIELDS:CT_FIELDS;
+      h+='<div class="econd-row"><select style="font-size:11.5px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;background:var(--white);color:var(--ink);font-family:var(--fb);width:84px;flex-shrink:0" onchange="updateCondGroup(\''+nid+'\','+i+',this.value)"><option value="msg"'+(c.group==='msg'?' selected':'')+'>Message</option><option value="contact"'+(c.group==='contact'?' selected':'')+'>Contact</option></select><select style="flex:1;font-size:11.5px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;background:var(--white);color:var(--ink);font-family:var(--fb);min-width:0" onchange="updateCondField(\''+nid+'\','+i+',this.value)">'+fields.map(function(f){return '<option value="'+f.v+'"'+(c.field===f.v?' selected':'')+'>'+f.l+'</option>';}).join('')+'</select>'+(c.field==='tag_exists'||c.field==='custom_field'?'<input style="width:70px;font-size:11.5px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:var(--fb);flex-shrink:0" placeholder="value" value="'+esc(c.val||'')+'" oninput="updateCondVal(\''+nid+'\','+i+',this.value)">':'')+'<button style="background:none;border:none;color:var(--n300);cursor:pointer;font-size:15px;padding:0 4px;flex-shrink:0" onclick="removeCond(\''+nid+'\','+i+')">&#xd7;</button></div>';
+    });
+    h+='<button class="econd-add" onclick="addCond(\''+nid+'\')">+ Add condition</button>';
+    h+='</div>';
+    h+='<div style="padding:0 14px 12px"><div class="fhint" style="margin-top:8px"><strong>YES</strong> = conditions pass · <strong>NO</strong> = fail · '+(logic==='OR'?'Any one condition is enough.':'All conditions must be true.')+'</div></div></div>';
+    var dm2=ANA[activeCampId],nmd=dm2&&dm2.nm&&dm2.nm[n.id];
+    if(nmd&&nmd.yes!=null){
+      h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">📊 Branch Results</div></div><div class="editor-section-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+      h+='<div style="background:#F0FDF4;border-radius:9px;padding:12px 14px"><div style="font-family:var(--fh);font-size:22px;font-weight:800;color:var(--ok)">'+fmt(nmd.yes)+'</div><div style="font-size:11px;color:var(--ok);font-weight:700;margin-top:2px">✓ YES path</div></div>';
+      h+='<div style="background:#FEF2F2;border-radius:9px;padding:12px 14px"><div style="font-family:var(--fh);font-size:22px;font-weight:800;color:var(--err)">'+fmt(nmd.no)+'</div><div style="font-size:11px;color:var(--err);font-weight:700;margin-top:2px">✗ NO path</div></div>';
+      h+='</div></div></div>';
+    }
+  }
+  else if(n.type==='wait-delay'){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">⏱ Delay</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Wait for</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input class="fi" type="number" min="1" value="'+(cfg.amount||24)+'" oninput="setCfg(\''+nid+'\',\'amount\',parseInt(this.value)||1)"><select class="fs" onchange="setCfg(\''+nid+'\',\'unit\',this.value)"><option value="minutes"'+(cfg.unit==='minutes'?' selected':'')+'>Minutes</option><option value="hours"'+(cfg.unit==='hours'?' selected':'')+'>Hours</option><option value="days"'+(cfg.unit==='days'?' selected':'')+'>Days</option></select></div><div class="fhint">Contact waits before the next step in the flow.</div></div>';
+    h+='</div></div>';
+  }
+  else if(n.type==='update-stage'){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">📋 CRM Stage</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Pipeline</div><select class="fs" onchange="setCfg(\''+nid+'\',\'pipeline\',this.value)">'+PIPELINES.map(function(p){return '<option'+(cfg.pipeline===p?' selected':'')+'>'+esc(p)+'</option>';}).join('')+'</select></div>';
+    h+='<div class="fg"><div class="fl">Stage</div><input class="fi" value="'+esc(cfg.stage||'')+'" placeholder="e.g. Contacted, Qualified" oninput="setCfg(\''+nid+'\',\'stage\',this.value)"></div>';
+    h+='</div></div>';
+  }
+  else if(n.type==='assign-inbox'){h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">📥 Inbox Assignment</div></div><div class="editor-section-body"><div class="fg"><div class="fl">Inbox</div><select class="fs" onchange="setCfg(\''+nid+'\',\'inbox\',this.value)">'+INBOXES.map(function(x){return '<option'+(cfg.inbox===x?' selected':'')+'>'+esc(x)+'</option>';}).join('')+'</select></div></div></div>';}
+  else if(n.type==='assign-team'){h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">👥 Team Assignment</div></div><div class="editor-section-body"><div class="fg"><div class="fl">Team</div><select class="fs" onchange="setCfg(\''+nid+'\',\'team\',this.value)">'+TEAMS.map(function(x){return '<option'+(cfg.team===x?' selected':'')+'>'+esc(x)+'</option>';}).join('')+'</select></div></div></div>';}
+  else if(n.type==='assign-pipeline'){h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🔀 Pipeline Move</div></div><div class="editor-section-body"><div class="fg"><div class="fl">Target pipeline</div><select class="fs" onchange="setCfg(\''+nid+'\',\'pipeline\',this.value)">'+PIPELINES.map(function(p){return '<option'+(cfg.pipeline===p?' selected':'')+'>'+esc(p)+'</option>';}).join('')+'</select></div></div></div>';}
+  else if(n.type==='assign-owner'){h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">👤 Owner Assignment</div></div><div class="editor-section-body"><div class="fg"><div class="fl">Assign to</div><select class="fs"><option>Contact owner (auto)</option></select></div></div></div>';}
+  else if(n.type==='add-success-seg'||n.type==='add-cold-seg'){
+    var isSuccess=n.type==='add-success-seg';
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">'+(isSuccess?'✅ Success Segment':'🥶 Cold Segment')+'</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Segment name</div><input class="fi" value="'+esc(cfg.segment||'')+'" placeholder="Segment to add contact to" oninput="setCfg(\''+nid+'\',\'segment\',this.value)"></div>';
+    h+='<div class="helper'+(isSuccess?'':' helper-warn')+'"><span class="helper-icon">'+(isSuccess?'✅':'🥶')+'</span>'+(isSuccess?'Contact marked as converted and added to success segment.':'No engagement — added to cold segment for nurture.')+'</div>';
+    h+='</div></div>';
+  }
+  else if(n.type==='tag-contact'){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">🏷 Tag Contact</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Add tag</div><input class="fi" value="'+esc(cfg.add||'')+'" placeholder="e.g. campaign-replied" oninput="setCfg(\''+nid+'\',\'add\',this.value)"></div>';
+    h+='<div class="fg"><div class="fl">Remove tag (optional)</div><input class="fi" value="'+esc(cfg.remove||'')+'" placeholder="Tag to remove" oninput="setCfg(\''+nid+'\',\'remove\',this.value)"></div>';
+    h+='</div></div>';
+  }
+  else if(n.type==='update-field'){
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">✏️ Update Field</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Contact field</div><input class="fi" value="'+esc(cfg.field||'')+'" placeholder="e.g. lifecycle_stage" oninput="setCfg(\''+nid+'\',\'field\',this.value)"></div>';
+    h+='<div class="fg"><div class="fl">Set value to</div><input class="fi" value="'+esc(cfg.value||'')+'" placeholder="New value" oninput="setCfg(\''+nid+'\',\'value\',this.value)"></div>';
+    h+='</div></div>';
+  }
+  else if(n.type.startsWith('exit-')){
+    var eInfo={
+      'exit-success':{bg:'var(--ok-s)',c:'#166534',msg:'Contact converted or completed goal. Counted in success metrics.',ic:'✅'},
+      'exit-cold':{bg:'var(--gb-s)',c:'#1e40af',msg:'No engagement — cold contact. Route to cold nurture campaigns.',ic:'❄️'},
+      'exit-failure':{bg:'var(--err-s)',c:'#991b1b',msg:'Bounced or opted out. Automatically suppressed from future sends.',ic:'⛔'},
+      'exit-dropped':{bg:'#FFF7ED',c:'#92400E',msg:'Contact did not meet enrollment conditions. Dropped before first message.',ic:'🚫'}
+    };
+    var ei=eInfo[n.type]||{bg:'var(--off)',c:'var(--muted)',msg:'',ic:'⭕'};
+    h+='<div class="editor-section"><div class="editor-section-head"><div class="editor-section-title">'+ei.ic+' Exit Configuration</div></div><div class="editor-section-body">';
+    h+='<div class="fg"><div class="fl">Exit label</div><input class="fi" value="'+esc(cfg.label||'')+'" placeholder="Describe this exit" oninput="setCfg(\''+nid+'\',\'label\',this.value)"></div>';
+    if(n.type==='exit-dropped'){
+      h+='<div class="fg"><div class="fl">Drop reason</div><select class="fs" onchange="setCfg(\''+nid+'\',\'drop_reason\',this.value)"><option value="no_whatsapp"'+(cfg.drop_reason==='no_whatsapp'?' selected':'')+'>No WhatsApp number</option><option value="condition_failed"'+(cfg.drop_reason==='condition_failed'?' selected':'')+'>Enrollment condition not met</option><option value="opted_out"'+(cfg.drop_reason==='opted_out'?' selected':'')+'>Opted out</option><option value="duplicate"'+(cfg.drop_reason==='duplicate'?' selected':'')+'>Duplicate contact</option><option value="custom"'+(cfg.drop_reason==='custom'?' selected':'')+'>Custom reason</option></select></div>';
+      if(cfg.drop_reason==='custom')h+='<div class="fg"><div class="fl">Custom reason</div><input class="fi" value="'+esc(cfg.drop_reason_text||'')+'" placeholder="Describe why contact was dropped" oninput="setCfg(\''+nid+'\',\'drop_reason_text\',this.value)"></div>';
+    }
+    h+='<div class="helper'+(n.type==='exit-dropped'?' helper-warn':'')+'" style="margin-top:4px"><span class="helper-icon">'+ei.ic+'</span>'+ei.msg+'</div>';
+    if(n.type==='exit-dropped')h+='<div class="helper helper-warn" style="margin-top:6px"><span class="helper-icon">📊</span>Dropped contacts appear in analytics with reason. They are <b>not</b> counted as failed — they never entered the flow.</div>';
+    h+='</div></div>';
+  }
+
+  ni('stage-config',h);
+}
+
+/* ── UTILS ── */
+function nt(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+function ni(id,v){var e=document.getElementById(id);if(e)e.innerHTML=v;}
+function fmt(n){return Number(n||0).toLocaleString();}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ── INIT ── */
+GB.sidebar('outbound');
+initHeader();
+clearEditor();
+renderStepList();
+document.getElementById('save-btn').onclick=saveCampaign;
+document.getElementById('publish-btn').onclick=publishCampaign;
+
+/* Auto-select root node */
+(function(){var root=currentFlow.find(function(n){return !n.parentId;});if(root)selNode(root.id);})();
+
+/* Keyboard shortcuts */
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&selectedNodeId){selectedNodeId=null;document.querySelectorAll('.step').forEach(function(x){x.classList.remove('on');});clearEditor();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='s'){e.preventDefault();saveCampaign();}
+});
+</script>
+</body>
+</html>
