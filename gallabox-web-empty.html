@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Agents — Gallabox</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_gb.css">
+<style>
+/* Page-specific styles only */
+.topnav{height:52px;background:var(--ink);border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;padding:0 16px;gap:0;flex-shrink:0}
+.logo{font-family:var(--fh);font-size:17px;font-weight:800;color:#fff;
+  letter-spacing:-.03em;display:flex;align-items:center;gap:8px;margin-right:20px}
+.nav-tab{background:transparent;border:none;font-size:13px;font-weight:500;
+  color:rgba(255,255,255,.4);border-radius:7px;padding:7px 14px;transition:all .15s}
+.nav-tab:hover{color:rgba(255,255,255,.75);background:rgba(255,255,255,.06)}
+.nav-tab.on{color:#fff;background:rgba(255,255,255,.1)}
+.create-top{padding:7px 16px;background:var(--gb);color:#fff;border:none;
+  border-radius:8px;font-size:13px;font-weight:700;
+  box-shadow:0 1px 4px rgba(27,88,227,.3);transition:all .15s}
+.create-top:hover{background:var(--gb-d)}
+.lp-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;
+  background:var(--err);color:#fff;border-radius:7px;font-size:12px;font-weight:700;
+  text-decoration:none;margin-left:8px}
+.body-shell{display:flex;flex:1;overflow:hidden}
+.section-bar{height:50px;background:var(--white);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0}
+.section-title{font-family:var(--fh);font-size:15px;font-weight:700}
+.section-actions{display:flex;gap:8px;align-items:center}
+.agents-area{padding:24px 28px;flex:1;overflow-y:auto}
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.agent-card{background:var(--white);border:1px solid var(--border);border-radius:14px;
+  overflow:hidden;cursor:pointer;transition:all .14s;display:flex;flex-direction:column;
+  box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.agent-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(15,23,42,.1);border-color:var(--n300)}
+.agent-card-banner{height:68px;position:relative;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-end;padding:0 16px 0}
+.agent-card-banner.color-1{background:linear-gradient(135deg,#EFF4FF,#DBEAFE)}
+.agent-card-banner.color-2{background:linear-gradient(135deg,#F0FDF4,#DCFCE7)}
+.agent-card-banner.color-3{background:linear-gradient(135deg,#FFF7ED,#FED7AA)}
+.agent-card-banner.color-4{background:linear-gradient(135deg,#FAF5FF,#EDE9FE)}
+.agent-card-banner.color-5{background:linear-gradient(135deg,#FFF1F2,#FFE4E6)}
+.agent-mark{width:48px;height:48px;border-radius:12px;background:var(--white);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.1);
+  font-family:var(--fh);font-size:16px;font-weight:800;color:#fff;
+  transform:translateY(50%);border:1px solid var(--border);flex-shrink:0}
+.agent-card-body{padding:30px 16px 12px;flex:1;display:flex;flex-direction:column}
+.agent-name{font-family:var(--fh);font-size:14.5px;font-weight:700;color:var(--n900);
+  letter-spacing:-.005em;margin-bottom:2px}
+.agent-use{font-size:12px;color:var(--n500);margin-bottom:10px}
+.agent-stats{display:flex;gap:14px;padding-top:10px;border-top:1px solid var(--n100);margin-top:auto}
+.agent-stat-val{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--n900);
+  letter-spacing:-.01em;display:block}
+.agent-stat-lbl{font-size:10.5px;color:var(--n500);margin-top:1px}
+.agent-card-foot{padding:10px 16px;display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid var(--n100);background:var(--n50)}
+.agent-card-url{font-size:11px;color:var(--n400);font-family:ui-monospace,monospace;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:8px}
+.features{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.fpill-feat{display:flex;align-items:center;gap:6px;padding:6px 12px;
+  background:var(--white);border:1px solid var(--border);border-radius:20px;
+  font-size:12px;color:var(--n700);font-weight:500}
+/* Delete modal */
+.del-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);
+  z-index:200;align-items:center;justify-content:center}
+.del-modal-bg.vis{display:flex}
+.del-modal{background:var(--white);border-radius:14px;padding:24px;width:360px;
+  box-shadow:0 24px 64px rgba(15,23,42,.18)}
+</style>
+</head>
+<body>
+<div style="display:flex;height:100vh;overflow:hidden">
+  <div id="gb-sb"></div>
+  <div class="gb-main">
+    <div id="main-content" style="display:flex;flex-direction:column;flex:1;overflow:hidden"></div>
+  </div>
+</div>
+
+<!-- Delete confirm -->
+<div class="del-modal-bg" id="del-bg">
+  <div class="del-modal">
+    <div style="font-family:var(--fh);font-size:16px;font-weight:700;color:var(--n900);margin-bottom:8px">Delete agent?</div>
+    <div style="font-size:13.5px;color:var(--n500);line-height:1.6;margin-bottom:20px" id="del-body"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeDel()" style="flex:1;padding:10px;background:transparent;color:var(--n700);border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;font-weight:600">Cancel</button>
+      <button onclick="confirmDel()" style="flex:1;padding:10px;background:var(--err);color:#fff;border:none;border-radius:8px;font-size:13.5px;font-weight:700">Delete agent</button>
+    </div>
+  </div>
+</div>
+
+<script src="_gb.js"></script>
+<script>
+'use strict';
+GB.sidebar('web');
+
+/* ── AGENT DATA ─────────────────────────────── */
+var LS_KEY = 'gb_agents';
+function loadAgents(){ return GB.ls.get(LS_KEY, []); }
+function saveAgents(arr){ GB.ls.set(LS_KEY, arr); }
+var AGENTS = loadAgents();
+var pendingDel = null;
+
+/* ── RENDER ─────────────────────────────────── */
+function render() {
+  var wrap = document.getElementById('main-content');
+  AGENTS = loadAgents();
+  if (AGENTS.length === 0) { renderEmpty(wrap); } else { renderList(wrap); }
+}
+
+function sectionBar(html) {
+  return '<div class="section-bar"><div class="section-title">Web Agents</div>'
+    + '<div class="section-actions">' + html + '</div></div>';
+}
+
+var BANNER_COLORS = ['color-1','color-2','color-3','color-4','color-5'];
+
+function renderList(wrap) {
+  var cards = AGENTS.map(function (a, idx) {
+    var initials = a.name.split(/[\s\u2014\-]+/).slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase().slice(0,2);
+    var isLive = a.status === 'live';
+    var bannerCls = BANNER_COLORS[idx % BANNER_COLORS.length];
+    var markBg = a.color || 'var(--gb)';
+    return '<div class="agent-card" onclick="window.location.href=\'GBWebWidget.html?mode=manage\'"  >'
+      + '<div class="agent-card-banner ' + bannerCls + '"  >'
+      + '<div class="agent-mark" style="background:' + markBg + '">' + initials + '</div>'
+      + '</div>'
+      + '<div class="agent-card-body">'
+      + '<div class="agent-name">' + GB.esc(a.name) + '</div>'
+      + '<div class="agent-use">' + GB.esc(a.industry) + ' · ' + GB.esc(a.useCase) + '</div>'
+      + '<div class="agent-stats">'
+      + '<div><span class="agent-stat-val">' + GB.fmt(a.sessions) + '</span><div class="agent-stat-lbl">Sessions</div></div>'
+      + '<div><span class="agent-stat-val">' + GB.fmt(a.contacts) + '</span><div class="agent-stat-lbl">Leads</div></div>'
+      + '<div><span class="agent-stat-val">' + GB.fmt(a.cta) + '</span><div class="agent-stat-lbl">CTA clicks</div></div>'
+      + '</div></div>'
+      + '<div class="agent-card-foot">'
+      + '<span class="status ' + (isLive ? 'live' : 'draft') + '"><span class="cdot"></span>' + (isLive ? 'Live' : 'Draft') + '</span>'
+      + '<div style="display:flex;gap:6px">'
+      + '<button class="btn btn-p btn-sm" onclick="event.stopPropagation();window.location.href=\'GBWebWidget.html?mode=manage\'">Manage →</button>'
+      + '<button class="btn btn-d btn-sm" onclick="event.stopPropagation();startDel(' + a.id + ')">Delete</button>'
+      + '</div></div></div>';
+  }).join('');
+
+  wrap.innerHTML = sectionBar('<button class="btn btn-p btn-sm" onclick="window.location.href=\'gallabox-onboarding.html\'">+ Create agent</button>')
+    + '<div class="agents-area"><div class="agents-grid">' + cards + '</div></div>';
+}
+
+function renderEmpty(wrap) {
+  wrap.innerHTML = sectionBar('<button class="btn btn-p btn-sm" onclick="window.location.href=\'gallabox-onboarding.html\'">+ Create agent</button>')
+    + '<div class="gb-empty">'
+    + '<svg viewBox="0 0 440 180" style="width:420px;max-width:100%;margin-bottom:24px" xmlns="http://www.w3.org/2000/svg">'
+    + '<rect x="20" y="20" width="120" height="80" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1.5"/>'
+    + '<rect x="20" y="20" width="120" height="22" rx="8" fill="#F1F5F9"/><rect x="20" y="32" width="120" height="10" fill="#F1F5F9"/>'
+    + '<circle cx="32" cy="31" r="3" fill="#FF5F57"/><circle cx="42" cy="31" r="3" fill="#FEBC2E"/><circle cx="52" cy="31" r="3" fill="#28C840"/>'
+    + '<rect x="28" y="50" width="60" height="5" rx="2.5" fill="#E2E8F0"/><rect x="28" y="60" width="45" height="4" rx="2" fill="#F1F5F9"/>'
+    + '<rect x="28" y="70" width="32" height="12" rx="4" fill="#1B58E3"/>'
+    + '<rect x="68" y="64" width="58" height="18" rx="9" fill="white" stroke="#E2E8F0" stroke-width="1"/>'
+    + '<circle cx="80" cy="73" r="6" fill="#1B58E3"/><text x="103" y="77" text-anchor="middle" fill="#334155" font-size="6.5" font-family="sans-serif">Chat ✦</text>'
+    + '<line x1="142" y1="60" x2="178" y2="60" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="4 3"/><polygon points="178,56 186,60 178,64" fill="#CBD5E1"/>'
+    + '<rect x="186" y="32" width="80" height="56" rx="10" fill="#EFF4FF" stroke="#BFDBFE" stroke-width="1.5"/>'
+    + '<rect x="194" y="40" width="64" height="6" rx="3" fill="#BFDBFE"/><rect x="194" y="51" width="48" height="4" rx="2" fill="#DBEAFE"/>'
+    + '<rect x="208" y="64" width="36" height="12" rx="4" fill="#1B58E3"/>'
+    + '<text x="226" y="73.5" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="sans-serif">Lead Context</text>'
+    + '<line x1="270" y1="60" x2="306" y2="60" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="4 3"/><polygon points="306,56 314,60 306,64" fill="#CBD5E1"/>'
+    + '<rect x="314" y="14" width="120" height="100" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1.5"/>'
+    + '<rect x="314" y="14" width="120" height="24" rx="8" fill="#F8FAFC"/><rect x="314" y="28" width="120" height="10" fill="#F8FAFC"/>'
+    + '<rect x="322" y="42" width="104" height="40" rx="6" fill="#EFF4FF" stroke="#BFDBFE" stroke-width="1"/>'
+    + '<text x="328" y="52" fill="#1B58E3" font-size="5.5" font-weight="700" font-family="sans-serif">LEAD CONTEXT · AGENT ONLY</text>'
+    + '<rect x="328" y="56" width="40" height="3.5" rx="1.5" fill="#BFDBFE"/><rect x="328" y="62" width="60" height="3.5" rx="1.5" fill="#BFDBFE"/>'
+    + '<text x="80" y="120" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="sans-serif">Your website</text>'
+    + '<text x="226" y="103" text-anchor="middle" fill="#1B58E3" font-size="9" font-weight="600" font-family="sans-serif">AI qualifies</text>'
+    + '<text x="374" y="122" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="sans-serif">Gallabox inbox</text>'
+    + '</svg>'
+    + '<div class="gb-empty-title">No web agents yet.</div>'
+    + '<div class="gb-empty-sub">Create a Web Agent to start capturing leads from your website and routing them to WhatsApp with full context.</div>'
+    + '<div style="display:flex;gap:10px;justify-content:center">'
+    + '<button class="btn btn-p" onclick="window.location.href=\'gallabox-onboarding.html\'">+ Create your first Web Agent</button>'
+    + '<button class="btn btn-s" onclick="window.open(\'gallabox-docs.html\',\'_blank\')">Read the guide</button>'
+    + '</div>'
+    + '<div class="features" style="margin-top:20px">'
+    + '<div class="fpill-feat"><span style="width:7px;height:7px;border-radius:50%;background:var(--gb);display:inline-block"></span>AI-powered qualification</div>'
+    + '<div class="fpill-feat"><span style="width:7px;height:7px;border-radius:50%;background:#25D366;display:inline-block"></span>WhatsApp handoff with context</div>'
+    + '<div class="fpill-feat"><span style="width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block"></span>Lead capture — free on all plans</div>'
+    + '</div></div>';
+}
+
+/* ── DELETE FLOW ─────────────────────────────── */
+function startDel(id) {
+  pendingDel = id;
+  var a = AGENTS.find(function(x){return x.id===id;});
+  document.getElementById('del-body').textContent = 'This will permanently delete "' + (a ? a.name : 'this agent') + '" and all its configuration.';
+  document.getElementById('del-bg').classList.add('vis');
+}
+function closeDel(){ pendingDel=null; document.getElementById('del-bg').classList.remove('vis'); }
+function confirmDel(){
+  if(pendingDel===null)return;
+  AGENTS = AGENTS.filter(function(a){return a.id!==pendingDel;});
+  saveAgents(AGENTS);
+  closeDel(); render();
+}
+
+render();
+</script>
+</body>
+</html>
