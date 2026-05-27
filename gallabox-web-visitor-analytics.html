@@ -227,42 +227,35 @@
               <div class="fn-step">
                 <div class="fn-name">Visitors</div>
                 <div class="fn-track"><div class="fn-fill" style="width:100%;background:var(--gb)"><span class="fn-fill-txt">all sessions</span></div></div>
-                <div class="fn-end"><span class="fn-n">2,841</span><span class="fn-pct" style="color:var(--gb)">100%</span></div>
+                <div class="fn-end"><span class="fn-n">2,841</span><span class="fn-pct" style="color:var(--n500)">100%</span></div>
               </div>
-              <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">227 left before widget rendered</span><span class="gap-ok">−8%</span></div>
-
-              <div class="fn-step">
-                <div class="fn-name">Widget Visible</div>
-                <div class="fn-track"><div class="fn-fill" style="width:92%;background:#3B82F6"><span class="fn-fill-txt">widget in viewport</span></div></div>
-                <div class="fn-end"><span class="fn-n">2,614</span><span class="fn-pct" style="color:#3B82F6">92%</span></div>
-              </div>
-              <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">1,723 saw widget, never opened</span><span class="gap-warn">−66% · biggest drop</span></div>
+              <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">1,950 visitors never opened the widget</span><span class="gap-warn">−69% · biggest drop</span></div>
 
               <div class="fn-step">
                 <div class="fn-name">Widget Opened</div>
-                <div class="fn-track"><div class="fn-fill" style="width:31%;background:var(--purple)"><span class="fn-fill-txt">34% of visible</span></div></div>
-                <div class="fn-end"><span class="fn-n">891</span><span class="fn-pct" style="color:var(--purple)">31%</span></div>
+                <div class="fn-track"><div class="fn-fill" style="width:31%;background:var(--gb)"><span class="fn-fill-txt">31% of visitors</span></div></div>
+                <div class="fn-end"><span class="fn-n">891</span><span class="fn-pct" style="color:var(--n500)">31%</span></div>
               </div>
               <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">579 opened widget, sent no message</span><span class="gap-warn">−65%</span></div>
 
               <div class="fn-step">
                 <div class="fn-name">Chat Started</div>
-                <div class="fn-track"><div class="fn-fill" style="width:11%;background:var(--ok)"><span class="fn-fill-txt">35% of opened</span></div></div>
-                <div class="fn-end"><span class="fn-n">312</span><span class="fn-pct" style="color:var(--ok)">11%</span></div>
+                <div class="fn-track"><div class="fn-fill" style="width:11%;background:var(--gb)"><span class="fn-fill-txt">35% of opened</span></div></div>
+                <div class="fn-end"><span class="fn-n">312</span><span class="fn-pct" style="color:var(--n500)">11%</span></div>
               </div>
               <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">32 chats did not move to WhatsApp</span><span class="gap-warn">−10%</span></div>
 
               <div class="fn-step">
                 <div class="fn-name">WA Handoff</div>
-                <div class="fn-track"><div class="fn-fill" style="width:9.9%;background:#10B981"><span class="fn-fill-txt">90% of chats</span></div></div>
-                <div class="fn-end"><span class="fn-n">280</span><span class="fn-pct" style="color:#10B981">9.9%</span></div>
+                <div class="fn-track"><div class="fn-fill" style="width:9.9%;background:var(--gb)"><span class="fn-fill-txt">90% of chats</span></div></div>
+                <div class="fn-end"><span class="fn-n">280</span><span class="fn-pct" style="color:var(--n500)">9.9%</span></div>
               </div>
               <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">32 WA sessions without contact captured</span><span class="gap-warn">−11%</span></div>
 
               <div class="fn-step">
                 <div class="fn-name">Contact Captured</div>
-                <div class="fn-track"><div class="fn-fill" style="width:8.7%;background:#0D9488"><span class="fn-fill-txt">89% of handoffs</span></div></div>
-                <div class="fn-end"><span class="fn-n">248</span><span class="fn-pct" style="color:#0D9488">8.7%</span></div>
+                <div class="fn-track"><div class="fn-fill" style="width:8.7%;background:var(--gb)"><span class="fn-fill-txt">89% of handoffs</span></div></div>
+                <div class="fn-end"><span class="fn-n">248</span><span class="fn-pct" style="color:var(--n500)">8.7%</span></div>
               </div>
               <!-- Cycling uplift recommendations — one step at a time -->
               <div style="margin-top:12px;padding-top:11px;border-top:1px solid var(--n100)">
@@ -278,7 +271,7 @@
                   </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
-                  <span id="uplift-stage" style="font-size:11.5px;font-weight:600;color:var(--n700)">Widget Visible → Opened</span>
+                  <span id="uplift-stage" style="font-size:11.5px;font-weight:600;color:var(--n700)">Visitors → Widget Opened</span>
                   <span id="uplift-drop" style="font-size:9.5px;font-weight:700;color:var(--err);background:var(--err-s);border-radius:4px;padding:2px 7px">−66%</span>
                 </div>
                 <div id="uplift-actions" style="display:flex;flex-direction:column"></div>
@@ -500,21 +493,12 @@
         <div class="card" style="border-left:3px solid var(--warn)">
           <div class="card-hdr">
             <div>
-              <div class="card-title">Improve Analytics — 3 events missing from the widget script</div>
+              <div class="card-title">Improve Analytics — 2 events missing from the widget script</div>
               <div class="card-sub">Add these to <code style="font-size:10.5px;background:var(--n50);border:1px solid var(--n100);border-radius:4px;padding:1px 5px">_gb.js</code> to unlock the full engagement picture and enable data-driven auto-open decisions</div>
             </div>
             <span style="font-size:9.5px;font-weight:700;color:var(--warn);background:var(--warn-s);border:1px solid #FCD34D;border-radius:20px;padding:3px 10px;flex-shrink:0;white-space:nowrap">Engineering action</span>
           </div>
           <div style="padding:0 17px 15px">
-            <div class="gap-item">
-              <div class="gap-ic" style="background:var(--gb-s)">👁</div>
-              <div>
-                <div class="gap-title">widget_visible — widget enters the viewport</div>
-                <div class="gap-desc">Currently "Widget Visible" is estimated from page load. Visitors on long pages who never scroll to the widget are counted as having seen it. Fire this event on <code style="font-size:10px;background:var(--n50);padding:1px 4px;border-radius:3px">IntersectionObserver</code> entry.</div>
-                <div class="gap-unlock">Unlocks: true impression rate · above-vs-below-fold split · scroll depth at widget appearance</div>
-                <code class="gap-code">GB.track('widget_visible', { agent_id, scroll_pct, time_on_page_s })</code>
-              </div>
-            </div>
             <div class="gap-item">
               <div class="gap-ic" style="background:var(--purple-s)">⚡</div>
               <div>
@@ -527,10 +511,10 @@
             <div class="gap-item">
               <div class="gap-ic" style="background:var(--ok-s)">⏱</div>
               <div>
-                <div class="gap-title">session_context — scroll depth + dwell time at first message sent</div>
-                <div class="gap-desc">When a visitor sends their first message, capture how long they spent on the page and how far they scrolled. This reveals the engagement threshold that precedes a chat, directly informing the optimal auto-open delay and scroll trigger.</div>
-                <div class="gap-unlock">Unlocks: optimal dwell time for auto-open · high-intent page sections · bounce signal (chat at scroll &lt; 20% means auto-open triggered too early)</div>
-                <code class="gap-code">GB.track('chat_start', { scroll_pct, dwell_s, page_url, visitor_touch_count })</code>
+                <div class="gap-title">session_context — dwell time at first message sent</div>
+                <div class="gap-desc">When a visitor sends their first message, capture how long they spent on the page before engaging. This directly informs the optimal auto-open delay — fire too early and you interrupt; fire too late and they've already left.</div>
+                <div class="gap-unlock">Unlocks: optimal dwell time for auto-open · bounce signal (chat at &lt;5s means auto-open triggered too early)</div>
+                <code class="gap-code">GB.track('chat_start', { dwell_s, page_url, visitor_touch_count })</code>
               </div>
             </div>
           </div>
@@ -677,7 +661,7 @@ document.getElementById('vt-body').innerHTML = VISITORS.map(function(v) {
 
 /* ── CONVERSION UPLIFTS CYCLING ───────────────────────────── */
 var UPLIFTS = [
-  { stage:'Widget Visible → Opened', drop:'−66%', critical:true,
+  { stage:'Visitors → Widget Opened', drop:'−69%', critical:true,
     actions:[
       {label:'Enable nudge',      cta:'Configure', href:'gallabox-web-empty.html'},
       {label:'Customize nudge',   cta:'Configure', href:'gallabox-web-empty.html'},
@@ -730,13 +714,13 @@ renderUplift();
 
 /* ── EMPTY STATE ──────────────────────────────────────────── */
 if (CHANNELS.length === 0) {
-  document.querySelector('.va-scroll').innerHTML =
-    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;text-align:center;padding:48px">'
-    + '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
-    + '<div style="font-family:var(--fh);font-size:16px;font-weight:700;color:var(--n700)">No web channels configured</div>'
-    + '<div style="font-size:13px;color:var(--n400);max-width:380px;line-height:1.65">Create a Web Agent to start tracking visitors, chat sessions, and conversion data across your site.</div>'
-    + '<a href="gallabox-web-empty.html" style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;background:var(--gb);color:#fff;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none">Create Web Agent →</a>'
-    + '<a href="gallabox-web-channel-settings.html" style="font-size:12px;color:var(--gb);font-weight:600;text-decoration:none">Go to Channel Settings →</a>'
+  document.querySelector('.gb-main').innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;height:100%;gap:16px;text-align:center;padding:48px">'
+    + '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
+    + '<div style="font-size:18px;font-weight:700;color:var(--n700)">No web channel connected</div>'
+    + '<div style="font-size:13.5px;color:var(--n400);max-width:360px;line-height:1.7">Create a Web Agent to start tracking visitors, chat sessions, and conversion data across your site.</div>'
+    + '<a href="gallabox-web-empty.html" style="display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--gb);color:#fff;border-radius:9px;font-size:13.5px;font-weight:700;text-decoration:none;margin-top:4px">Create Web Agent →</a>'
+    + '<a href="gallabox-web-channel-settings.html" style="font-size:12px;color:var(--n400);font-weight:500;text-decoration:none">Already have a channel? Go to Channel Settings →</a>'
     + '</div>';
 }
 </script>

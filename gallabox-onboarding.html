@@ -356,9 +356,7 @@ function renderDetails(){
   var autoN=autoName();
   var nameVal=S.name||autoN;
   var nameCustomised=nameVal!==autoN;
-  var hintHTML=!nameCustomised
-    ?'<div class="fname-hint">💡 This is your agent\'s name as visitors will see it. Tap to personalise it.</div>'
-    :'<div class="fsub">Visitors see this name in the widget header.</div>';
+  var hintHTML='<div class="fsub">Visitors see this name in the widget header.</div>';
   var urlErrHTML=S._urlErr
     ?'<div class="ferr">⚠ '+S._urlErr+'</div>'
     :'<div class="fsub">Your website URL. We use it to pre-configure your agent\'s knowledge.</div>';
@@ -420,9 +418,9 @@ function renderLoading(){
     +'<div class="wd"></div><div class="wd"></div><div class="wd"></div>'
     +'</div>'
     +'<div class="agent-creating-label">Your agent is getting smarter</div>'
+    +'<button class="skip-link" id="skip-btn" style="margin-top:18px">Skip — open builder now →</button>'
     +'<div class="long-wait" id="long-wait">'
-    +'Still working — this can take a moment depending on your configuration.<br>'
-    +'<button class="skip-link" id="skip-btn">Skip and finish setup in the builder →</button>'
+    +'Still working — this can take a moment depending on your configuration.'
     +'</div>'
     +'</div>';
 
@@ -459,9 +457,7 @@ function renderLoading(){
   },8000);
   loadIntervals.push(rotateTimer);
 
-  /* At 20 seconds — redirect to builder */
-  var redirectTimer=setTimeout(function(){
-    // Persist agent before navigating away
+  function saveAndGo(){
     try {
       var LS_KEY='gb_agents';
       var existing=JSON.parse(localStorage.getItem(LS_KEY)||'[]');
@@ -481,15 +477,17 @@ function renderLoading(){
       }
     } catch(e){}
     window.location.href='GBWebWidget.html?mode=new';
-    /* Fallback: if redirect fails (e.g. file not found), show manual link after 1s */
-    setTimeout(function(){
-      var lw=qs('#long-wait');
-      if(lw){
-        lw.innerHTML='Your agent is configured. <a href="'+"GBWebWidget.html?mode=new"+'" style="color:var(--gb);font-weight:700">Open builder →</a>';
-        lw.classList.add('vis');
-      }
-    },1000);
-  },20000);
+  }
+
+  /* Wire skip button — immediately visible for prototype use */
+  var skipEl=qs('#skip-btn');
+  if(skipEl) skipEl.addEventListener('click',function(){
+    loadIntervals.forEach(function(t){clearTimeout(t);clearInterval(t);});
+    saveAndGo();
+  });
+
+  /* At 20 seconds — redirect to builder automatically */
+  var redirectTimer=setTimeout(saveAndGo,20000);
   loadIntervals.push(redirectTimer);
 
   /* Simulate completion — replace with real API callback in production */
