@@ -662,6 +662,9 @@
         const[waModal,setWaModal]=useState(false);
         const[hist,setHist]=useState(HIST);
         const botCount=useRef(0),bodyRef=useRef(null),tmr=useRef(null),runRef=useRef(null);
+        // Read persisted channel settings for ref code display in QR modal
+        var _csPersisted=(function(){try{var s=localStorage.getItem('gb_channel_settings');return s?JSON.parse(s):{};} catch(e){return {};}}());
+        var showRefCode=_csPersisted.refCode!==false; // defaults true
 
         runRef.current=(script,i)=>{
           if(!script||i>=script.length){onSimDone&&onSimDone();return}
@@ -768,7 +771,8 @@
                 ce(WaI,{sz:14}),
                 ce('span',{style:{fontSize:13,color:'#fff',fontWeight:700}},'Open WhatsApp Web'),
                 ce(ExtI,{sz:12})
-              )
+              ),
+              null
             )
           )
         );
@@ -2015,13 +2019,6 @@
 
             ce('div',{style:{flex:1}}),
 
-            ce('button',{onClick:copyScript,
-              style:{display:'flex',alignItems:'center',gap:5,padding:'7px 13px',
-                borderRadius:8,border:'1px solid #E2E8F0',
-                background:copied?'#ECFDF5':'#fff',cursor:'pointer',fontFamily:'inherit',
-                fontSize:12,fontWeight:600,color:copied?'#16A34A':'#475569',transition:'all .2s'}},
-              copied?'✓ Copied!':'</> Script'),
-
             ce('button',{onClick:doReset,
               style:{padding:'7px 13px',background:'#F1F5F9',color:'#64748B',
                 border:'1px solid #E2E8F0',borderRadius:8,fontSize:12.5,
@@ -2071,14 +2068,7 @@
                         'https://'+(cfg.brandName||'yoursite').toLowerCase().replace(/\s+/g,'')+'.com')
                     ),
 
-                    ce('div',{style:{flex:1}}),
-
-                    ce('button',{onClick:copyScript,
-                      style:{display:'flex',alignItems:'center',gap:5,padding:'4px 10px',
-                        borderRadius:7,border:'1px solid #E2E8F0',background:copied?'#ECFDF5':'#fff',
-                        cursor:'pointer',fontFamily:'inherit',fontSize:11,fontWeight:600,
-                        color:copied?'#16A34A':'#475569',transition:'all .2s',flexShrink:0}},
-                      copied?'✓ Copied':'</> Script')
+                    ce('div',{style:{flex:1}})
                   ),
 
                   /* Website body — dynamic crawl simulation (D2) */
@@ -2224,13 +2214,321 @@
         autoOpenShowNudge:true,
         silentTracking:false,
         nudgeRules:[],
+        role:'',
+        goal:'',
+        agentInstructions:'',
       };
+
+      /* ═══════════════════════════════════════════════════════════
+         SECTION 10A · AGENT BUILDER TAB PANELS
+         InstructionsPanel, ActionsPanel, KnowledgePanel, AISettingsPanel
+         Match production tab UI exactly. Prototype uses local state only.
+      ═══════════════════════════════════════════════════════════ */
+
+      function InstructionsPanel({cfg,onChange}){
+        var fields=[
+          {key:'role',label:'Role',placeholder:'Agent is named <ENTER AGENT NAME HERE>, a friendly and professional lead qualification specialist for <ENTER COMPANY NAME HERE>. Agent personality is warm, curious, and efficient. Agent speaks in a conversational yet professional tone suitable for WhatsApp and Instagram. Agent has expertise in <ENTER INDUSTRY OR PRODUCT CATEGORY HERE>. Agent introduces itself briefly and focuses on understanding customer needs quickly.'},
+          {key:'goal',label:'Goal',placeholder:'Primary objective is to identify and qualify leads who are a good fit for <ENTER COMPANY NAME HERE>\'s products and services. A qualified lead is defined as someone who has a genuine need for <ENTER PRODUCT OR SERVICE TYPE HERE>, has budget authority, and is looking to make a decision within a reasonable timeline. Success criteria includes gathering essential qualification information, booking demos or consultations, and connecting qualified leads with the sales team.'},
+          {key:'agentInstructions',label:'Instructions',placeholder:'<ENTER COMPANY NAME HERE> is a <ENTER COMPANY DESCRIPTION HERE>. The company offers <ENTER BRIEF PRODUCT OVERVIEW HERE> to help customers <ENTER KEY BENEFIT HERE>.\n\nAgent can answer general questions about products, features, and benefits. Agent cannot provide detailed technical specifications, custom pricing, or account-specific information. Agent connects visitors to human experts for those queries.'},
+        ];
+        var ToolbarBtn=function(p){return ce('button',{title:p.tip,style:{width:26,height:24,background:'none',border:'none',cursor:'pointer',borderRadius:4,fontSize:p.sz||11,fontWeight:p.fw||400,color:'#64748B',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},p.label);};
+        return ce('div',{style:{flex:1,overflowY:'auto',background:'#fff'}},
+          ce('div',{style:{maxWidth:1040,padding:'28px 32px'}},
+            fields.map(function(f){
+              var val=cfg[f.key]||'';
+              return ce('div',{key:f.key,style:{marginBottom:28}},
+                ce('div',{style:{display:'flex',alignItems:'center',gap:5,marginBottom:10}},
+                  ce('label',{style:{fontSize:14,fontWeight:600,color:'#0F172A'}},f.label),
+                  ce('span',{style:{color:'#EF4444',fontSize:13}},'*')
+                ),
+                ce('div',{style:{display:'flex',gap:2,padding:'7px 10px',background:'#F8FAFC',border:'1.5px solid #E2E8F0',borderBottom:'none',borderRadius:'8px 8px 0 0'}},
+                  ce(ToolbarBtn,{label:'B',tip:'Bold',fw:800,sz:12}),
+                  ce(ToolbarBtn,{label:'I',tip:'Italic'}),
+                  ce(ToolbarBtn,{label:'U',tip:'Underline'}),
+                  ce(ToolbarBtn,{label:'</>',tip:'Code'}),
+                  ce('div',{style:{width:1,height:16,background:'#E2E8F0',margin:'0 4px',alignSelf:'center'}}),
+                  ce(ToolbarBtn,{label:'≡',tip:'Bullet list'}),
+                  ce(ToolbarBtn,{label:'1.',tip:'Numbered list'}),
+                  ce(ToolbarBtn,{label:'❝',tip:'Quote'})
+                ),
+                ce('textarea',{
+                  value:val,
+                  onChange:function(e){onChange(Object.assign({},cfg,{[f.key]:e.target.value}));},
+                  placeholder:f.placeholder,
+                  style:{width:'100%',minHeight:160,border:'1.5px solid #E2E8F0',borderTop:'none',borderRadius:'0 0 8px 8px',padding:'12px 14px',fontSize:13,lineHeight:1.65,color:'#334155',fontFamily:'inherit',resize:'vertical',outline:'none',background:'#fff',display:'block'}
+                })
+              );
+            })
+          )
+        );
+      }
+
+      function ActionsPanel(){
+        var as=useState([]),actions=as[0],setActions=as[1];
+        var ms=useState(false),showModal=ms[0],setShowModal=ms[1];
+        var ns=useState(''),aName=ns[0],setAName=ns[1];
+        var ts=useState('API Call'),aType=ts[0],setAType=ts[1];
+        var ds=useState(''),aDesc=ds[0],setADesc=ds[1];
+        var rs=useState('https://'),reqUrl=rs[0],setReqUrl=rs[1];
+        var bs=useState(true),bgProc=bs[0],setBgProc=bs[1];
+        var hs=useState('headers'),hTab=hs[0],setHTab=hs[1];
+        var tds=useState(false),typeDrop=tds[0],setTypeDrop=tds[1];
+
+        function saveAction(){
+          if(!aName)return;
+          setActions(function(prev){return prev.concat({name:aName,type:aType,desc:aDesc});});
+          setShowModal(false);setAName('');setADesc('');setAType('API Call');setReqUrl('https://');
+        }
+
+        return ce('div',{style:{flex:1,overflowY:'auto',background:'#F8FAFC',position:'relative'}},
+          ce('div',{style:{padding:'28px 32px',maxWidth:1040}},
+            ce('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20}},
+              ce('div',{style:{fontSize:15,fontWeight:700,color:'#0F172A'}},'Actions'),
+              ce('button',{onClick:function(){setShowModal(true);},style:{padding:'8px 16px',background:BB,color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}},'+ Create action')
+            ),
+            actions.length===0
+              ?ce('div',{style:{background:'#fff',border:'1px solid #E2E8F0',borderRadius:12,padding:'60px 24px',textAlign:'center',color:'#94A3B8',fontSize:13,boxShadow:'0 1px 3px rgba(0,0,0,.04)'}},
+                  'No actions yet. Create your first action to let the agent call APIs or run code.')
+              :actions.map(function(a,i){
+                  return ce('div',{key:i,style:{background:'#fff',border:'1px solid #E2E8F0',borderRadius:10,padding:'14px 16px',marginBottom:8,display:'flex',alignItems:'center',boxShadow:'0 1px 3px rgba(0,0,0,.04)'}},
+                    ce('div',{style:{flex:1}},
+                      ce('div',{style:{fontSize:13.5,fontWeight:600,color:'#0F172A'}},a.name),
+                      ce('div',{style:{fontSize:12,color:'#64748B',marginTop:2}},a.type)
+                    ),
+                    ce('button',{style:{padding:'5px 12px',background:'transparent',border:'1px solid #E2E8F0',borderRadius:6,fontSize:12,color:'#64748B',cursor:'pointer',fontFamily:'inherit'}},'Edit')
+                  );
+                })
+          ),
+          showModal?ce('div',{style:{position:'fixed',inset:0,background:'rgba(15,23,42,.45)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
+            ce('div',{style:{background:'#fff',borderRadius:12,width:'100%',maxWidth:920,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 24px 64px rgba(15,23,42,.18)'}},
+              ce('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'20px 24px',borderBottom:'1px solid #E2E8F0'}},
+                ce('div',{style:{fontSize:16,fontWeight:700,color:'#0F172A'}},'Create New Action'),
+                ce('button',{onClick:function(){setShowModal(false);},style:{background:'none',border:'none',cursor:'pointer',fontSize:22,color:'#94A3B8',lineHeight:1}},'×')
+              ),
+              ce('div',{style:{padding:'24px'}},
+                ce('div',{style:{display:'grid',gridTemplateColumns:'1fr 200px 140px',gap:16,marginBottom:20,alignItems:'start'}},
+                  ce('div',null,
+                    ce('label',{style:{fontSize:13,fontWeight:600,color:'#374151',display:'block',marginBottom:6}},'Action name ',ce('span',{style:{color:'#EF4444'}},'*')),
+                    ce('input',{value:aName,onChange:function(e){setAName(e.target.value);},placeholder:'Enter action name',style:{width:'100%',border:'1.5px solid #E2E8F0',borderRadius:8,padding:'9px 12px',fontSize:13,fontFamily:'inherit',outline:'none'}})
+                  ),
+                  ce('div',{style:{position:'relative'}},
+                    ce('label',{style:{fontSize:13,fontWeight:600,color:'#374151',display:'block',marginBottom:6}},'Action Type ',ce('span',{style:{color:'#EF4444'}},'*')),
+                    ce('div',{onClick:function(){setTypeDrop(!typeDrop);},style:{border:'1.5px solid #E2E8F0',borderRadius:8,padding:'9px 12px',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',background:'#fff',userSelect:'none'}},
+                      ce('span',null,aType),
+                      ce('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},ce('polyline',{points:'6 9 12 15 18 9'}))
+                    ),
+                    typeDrop?ce('div',{style:{position:'absolute',top:'100%',left:0,right:0,background:'#fff',border:'1px solid #E2E8F0',borderRadius:8,boxShadow:'0 8px 24px rgba(0,0,0,.12)',zIndex:10,marginTop:4}},
+                      ['API Call','Code Execution'].map(function(opt){
+                        return ce('div',{key:opt,onClick:function(){setAType(opt);setTypeDrop(false);},
+                          style:{padding:'10px 14px',cursor:'pointer',fontSize:13,background:aType===opt?'#EFF4FF':'transparent',color:aType===opt?BB:'#0F172A'}},opt);
+                      })
+                    ):null
+                  ),
+                  ce('div',null,
+                    ce('label',{style:{fontSize:13,fontWeight:600,color:'#374151',display:'block',marginBottom:6}},'Process in background ',ce('span',{style:{color:'#EF4444'}},'*')),
+                    ce('div',{onClick:function(){setBgProc(!bgProc);},style:{width:44,height:24,borderRadius:12,background:bgProc?BB:'#D1D5DB',cursor:'pointer',position:'relative',transition:'background .2s',marginTop:4}},
+                      ce('div',{style:{width:20,height:20,borderRadius:10,background:'#fff',position:'absolute',top:2,left:bgProc?22:2,transition:'left .2s',boxShadow:'0 1px 4px rgba(0,0,0,.2)'}})
+                    )
+                  )
+                ),
+                ce('div',{style:{marginBottom:20}},
+                  ce('label',{style:{fontSize:13,fontWeight:600,color:'#374151',display:'block',marginBottom:6}},'Action description ',ce('span',{style:{color:'#EF4444'}},'*')),
+                  ce('textarea',{value:aDesc,onChange:function(e){setADesc(e.target.value);},placeholder:'Enter action description',style:{width:'100%',height:80,border:'1.5px solid #E2E8F0',borderRadius:8,padding:'9px 12px',fontSize:13,fontFamily:'inherit',resize:'none',outline:'none'}})
+                ),
+                ce('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}},
+                  ce('div',{style:{border:'1px solid #E2E8F0',borderRadius:10,padding:'16px',background:'#FAFAFA'}},
+                    ce('div',{style:{display:'flex',gap:10,marginBottom:16}},
+                      ce('div',{style:{border:'1.5px solid #E2E8F0',borderRadius:8,padding:'8px 12px',fontSize:13,background:'#fff',minWidth:70,display:'flex',alignItems:'center',gap:6}},
+                        'GET ',ce('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'#94A3B8',strokeWidth:2},ce('polyline',{points:'6 9 12 15 18 9'}))),
+                      ce('input',{value:reqUrl,onChange:function(e){setReqUrl(e.target.value);},placeholder:'https://',style:{flex:1,border:'1.5px solid #E2E8F0',borderRadius:8,padding:'8px 12px',fontSize:13,fontFamily:'inherit',outline:'none'}})
+                    ),
+                    ce('div',{style:{display:'flex',borderBottom:'1px solid #E2E8F0',marginBottom:14}},
+                      ['Headers','Query Params','Params'].map(function(tab){
+                        var tid=tab.replace(' ','').toLowerCase();
+                        var isA=hTab===tid;
+                        return ce('button',{key:tab,onClick:function(){setHTab(tid);},style:{padding:'6px 14px',background:'transparent',border:'none',borderBottom:isA?'2px solid '+BB:'2px solid transparent',fontSize:12.5,fontWeight:isA?700:500,color:isA?BB:'#64748B',cursor:'pointer',fontFamily:'inherit'}},tab);
+                      })
+                    ),
+                    hTab==='headers'
+                      ?ce('div',null,
+                          ce('label',{style:{fontSize:12,fontWeight:600,color:'#374151',display:'block',marginBottom:6}},'Authentication'),
+                          ce('div',{style:{border:'1.5px solid #E2E8F0',borderRadius:8,padding:'8px 12px',fontSize:13,background:'#fff',marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}},
+                            'None',ce('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'#94A3B8',strokeWidth:2},ce('polyline',{points:'6 9 12 15 18 9'}))),
+                          ce('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}},
+                            ce('span',{style:{fontSize:13,fontWeight:600,color:'#374151'}},'Header (1)'),
+                            ce('button',{style:{padding:'5px 12px',background:'transparent',border:'1px solid #E2E8F0',borderRadius:6,fontSize:12,color:BB,cursor:'pointer',fontFamily:'inherit'}},'+ Add Header')
+                          ),
+                          ce('table',{style:{width:'100%',borderCollapse:'collapse',fontSize:12.5}},
+                            ce('thead',null,ce('tr',null,
+                              ['Key','Value','Action'].map(function(h){return ce('th',{key:h,style:{textAlign:'left',padding:'6px 8px',color:'#94A3B8',fontWeight:500,borderBottom:'1px solid #E2E8F0',fontSize:12}},h);}))
+                            ),
+                            ce('tbody',null,ce('tr',null,
+                              ce('td',{style:{padding:'8px',borderBottom:'1px solid #F1F5F9',color:'#374151'}},'Content-Type'),
+                              ce('td',{style:{padding:'8px',borderBottom:'1px solid #F1F5F9',color:'#374151'}},'application/json'),
+                              ce('td',{style:{padding:'8px',borderBottom:'1px solid #F1F5F9'}},ce('button',{style:{width:22,height:22,border:'1px solid #E2E8F0',borderRadius:4,background:'#fff',cursor:'pointer',color:'#64748B'}},'+'))
+                            ))
+                          )
+                        )
+                      :ce('div',{style:{textAlign:'center',padding:'20px',color:'#94A3B8',fontSize:13}},'No '+hTab+' configured yet')
+                  ),
+                  ce('div',{style:{border:'1px solid #E2E8F0',borderRadius:10,padding:'16px',background:'#FAFAFA'}},
+                    ce('div',{style:{fontSize:13,fontWeight:600,color:'#0F172A',marginBottom:16}},'Variable Configuration'),
+                    ce('div',{style:{textAlign:'center',padding:'40px 20px',color:'#94A3B8',fontSize:13}},'No Variables Found')
+                  )
+                )
+              ),
+              ce('div',{style:{display:'flex',justifyContent:'flex-end',padding:'16px 24px',borderTop:'1px solid #E2E8F0'}},
+                ce('button',{onClick:saveAction,style:{padding:'10px 24px',background:BB,color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}},'Save')
+              )
+            )
+          ):null
+        );
+      }
+
+      function KnowledgePanel(){
+        var ss=useState([]),selKBs=ss[0],setSelKBs=ss[1];
+        var ds=useState(false),kbDrop=ds[0],setKbDrop=ds[1];
+        var sv=useState(false),saved=sv[0],setSaved=sv[1];
+        var KBS=['Product FAQ','Pricing Guide 2024','Technical Docs v3','Onboarding Guide','Support Articles'];
+
+        function doSave(){setSaved(true);setTimeout(function(){setSaved(false);},2000);}
+
+        return ce('div',{style:{flex:1,overflowY:'auto',background:'#F8FAFC',padding:'24px 32px'}},
+          ce('div',{style:{maxWidth:960,background:'#fff',border:'1px solid #E2E8F0',borderRadius:12,padding:'24px',boxShadow:'0 1px 3px rgba(0,0,0,.04)'}},
+            ce('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20}},
+              ce('div',null,
+                ce('div',{style:{fontSize:16,fontWeight:700,color:'#0F172A',marginBottom:4}},'Knowledge Base'),
+                ce('div',{style:{fontSize:13,color:'#64748B'}},'Attach up to 3 knowledge bases used for retrieval during chats')
+              ),
+              ce('button',{style:{padding:'8px 14px',background:'transparent',border:'1.5px solid #E2E8F0',borderRadius:8,fontSize:13,fontWeight:600,color:'#374151',cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:6,flexShrink:0}},
+                ce('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},ce('path',{d:'M4 19.5A2.5 2.5 0 0 1 6.5 17H20'}),ce('path',{d:'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'})),
+                'Manage Knowledge Bases'
+              )
+            ),
+            ce('div',{style:{fontSize:13,fontWeight:600,color:'#374151',marginBottom:8}},'Knowledge Bases'),
+            ce('div',{style:{position:'relative',marginBottom:20}},
+              ce('div',{onClick:function(){setKbDrop(!kbDrop);},style:{border:'1.5px solid #E2E8F0',borderRadius:8,padding:'10px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',background:'#fff',minHeight:44}},
+                selKBs.length>0
+                  ?ce('div',{style:{display:'flex',gap:6,flexWrap:'wrap',flex:1}},
+                      selKBs.map(function(kb){
+                        return ce('span',{key:kb,style:{background:'#EFF4FF',color:BB,borderRadius:6,padding:'2px 10px',fontSize:12.5,fontWeight:500,display:'flex',alignItems:'center',gap:4}},
+                          kb,
+                          ce('span',{onClick:function(e){e.stopPropagation();setSelKBs(function(p){return p.filter(function(k){return k!==kb;});});},style:{cursor:'pointer',color:'#93A5BF',marginLeft:2,fontWeight:700,fontSize:13,lineHeight:1}},'×')
+                        );
+                      })
+                    )
+                  :ce('span',{style:{color:'#94A3B8',fontSize:13}},'Select Knowledge Bases'),
+                ce('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'#94A3B8',strokeWidth:2},ce('polyline',{points:'6 9 12 15 18 9'}))
+              ),
+              kbDrop&&KBS.filter(function(k){return selKBs.indexOf(k)===-1;}).length>0
+                ?ce('div',{style:{position:'absolute',top:'100%',left:0,right:0,background:'#fff',border:'1px solid #E2E8F0',borderRadius:8,boxShadow:'0 8px 24px rgba(0,0,0,.1)',zIndex:10,marginTop:4}},
+                    KBS.filter(function(k){return selKBs.indexOf(k)===-1;}).map(function(kb){
+                      return ce('div',{key:kb,onClick:function(){if(selKBs.length<3){setSelKBs(function(p){return p.concat(kb);});}setKbDrop(false);},
+                        style:{padding:'10px 14px',cursor:'pointer',fontSize:13,color:'#0F172A',transition:'background .1s'},
+                        onMouseEnter:function(e){e.currentTarget.style.background='#F8FAFC';},
+                        onMouseLeave:function(e){e.currentTarget.style.background='transparent';}},kb);
+                    })
+                  )
+                :null
+            ),
+            ce('div',{style:{display:'flex',gap:10,marginBottom:20}},
+              ce('button',{onClick:function(){setSelKBs([]);setSaved(false);},style:{padding:'8px 18px',background:'transparent',border:'1.5px solid #E2E8F0',borderRadius:8,fontSize:13,fontWeight:600,color:'#374151',cursor:'pointer',fontFamily:'inherit'}},'Clear'),
+              ce('button',{onClick:doSave,style:{padding:'8px 18px',background:saved?'#22C55E':selKBs.length>0?BB:'#94A3B8',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:selKBs.length>0?'pointer':'default',fontFamily:'inherit',transition:'background .2s'}},saved?'✓ Saved':'Save Changes')
+            ),
+            ce('div',{style:{fontSize:12.5,color:'#94A3B8'}},'This will link the selected knowledge bases to your managed provider for this AI flow.')
+          )
+        );
+      }
+
+      function AISettingsPanel(){
+        var ts=useState(0.10),temp=ts[0],setTemp=ts[1];
+        var ms=useState('gpt-4o-mini'),model=ms[0],setModel=ms[1];
+        var s1=useState(true),sec1=s1[0],setSec1=s1[1];
+        var s2=useState(false),sec2=s2[0],setSec2=s2[1];
+
+        function SCard(p){
+          return ce('div',{style:{border:'1px solid #E2E8F0',borderRadius:12,marginBottom:16,background:'#fff',overflow:'hidden',boxShadow:'0 1px 3px rgba(0,0,0,.04)'}},
+            ce('div',{onClick:p.onToggle,style:{display:'flex',alignItems:'center',gap:14,padding:'18px 20px',cursor:'pointer'}},
+              ce('div',{style:{width:40,height:40,borderRadius:10,background:'#EFF4FF',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},
+                ce('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:BB,strokeWidth:1.8},ce('path',{d:'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'}),ce('polyline',{points:'22,6 12,13 2,6'}))
+              ),
+              ce('div',{style:{flex:1}},
+                ce('div',{style:{fontSize:15,fontWeight:700,color:'#0F172A',marginBottom:2}},p.title),
+                ce('div',{style:{fontSize:12.5,color:'#64748B',lineHeight:1.5}},p.desc)
+              ),
+              ce('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'#94A3B8',strokeWidth:2,style:{transform:p.open?'rotate(180deg)':'none',transition:'transform .2s',flexShrink:0}},ce('polyline',{points:'6 9 12 15 18 9'}))
+            ),
+            p.open?ce('div',{style:{borderTop:'1px solid #F1F5F9'}},p.children):null
+          );
+        }
+
+        return ce('div',{style:{flex:1,overflowY:'auto',background:'#F8FAFC',padding:'24px 32px'}},
+          ce('div',{style:{maxWidth:960}},
+            ce(SCard,{title:'AI Model & Document Intelligence',desc:'Configure your AI bot\'s core intelligence, how it processes documents, and retrieves knowledge for better responses',open:sec1,onToggle:function(){setSec1(!sec1);}},
+              ce('div',{style:{padding:'20px 20px 24px'}},
+                ce('div',{style:{fontSize:15,fontWeight:700,color:'#0F172A',marginBottom:20}},'AI Model & Behavior'),
+                ce('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}},
+                  ce('div',null,
+                    ce('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:8}},
+                      ce('label',{style:{fontSize:13,fontWeight:600,color:'#374151'}},'AI Provider'),
+                      ce('span',{style:{color:'#EF4444'}},' *'),
+                      ce('div',{style:{width:16,height:16,borderRadius:'50%',border:'1.5px solid #CBD5E1',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:10,color:'#94A3B8',flexShrink:0}},'i')
+                    ),
+                    ce('div',{style:{border:'1.5px solid #E2E8F0',borderRadius:8,padding:'10px 12px',display:'flex',alignItems:'center',justifyContent:'space-between',background:'#F8FAFC',fontSize:13,color:'#64748B'}},
+                      'v2',
+                      ce('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},ce('polyline',{points:'6 9 12 15 18 9'}))
+                    ),
+                    ce('div',{style:{fontSize:11.5,color:'#94A3B8',marginTop:6}},'Provider is set during flow creation and cannot be changed')
+                  ),
+                  ce('div',null,
+                    ce('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:8}},
+                      ce('label',{style:{fontSize:13,fontWeight:600,color:'#374151'}},'AI Model'),
+                      ce('span',{style:{color:'#EF4444'}},' *'),
+                      ce('div',{style:{width:16,height:16,borderRadius:'50%',border:'1.5px solid #CBD5E1',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:10,color:'#94A3B8',flexShrink:0}},'i')
+                    ),
+                    ce('select',{value:model,onChange:function(e){setModel(e.target.value);},style:{width:'100%',border:'1.5px solid #E2E8F0',borderRadius:8,padding:'10px 12px',fontSize:13,fontFamily:'inherit',background:'#fff',color:'#0F172A',outline:'none',cursor:'pointer',appearance:'auto'}},
+                      ce('option',{value:'gpt-4o-mini'},'gpt-4o-mini'),
+                      ce('option',{value:'gpt-4o'},'gpt-4o'),
+                      ce('option',{value:'gpt-3.5-turbo'},'gpt-3.5-turbo')
+                    )
+                  )
+                ),
+                ce('div',{style:{marginBottom:20}},
+                  ce('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:12}},
+                    ce('label',{style:{fontSize:13,fontWeight:600,color:'#374151'}},'LLM Temperature'),
+                    ce('div',{style:{width:16,height:16,borderRadius:'50%',border:'1.5px solid #CBD5E1',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:10,color:'#94A3B8',flexShrink:0}},'i')
+                  ),
+                  ce('div',{style:{display:'flex',alignItems:'center',gap:14}},
+                    ce('span',{style:{fontSize:11.5,color:'#94A3B8',minWidth:32,textAlign:'right'}},'0.00'),
+                    ce('div',{style:{flex:1,position:'relative'}},
+                      ce('input',{type:'range',min:0,max:200,step:1,value:Math.round(temp*100),
+                        onChange:function(e){setTemp(Number(e.target.value)/100);},
+                        style:{width:'100%',accentColor:BB,cursor:'pointer',display:'block'}}),
+                      ce('div',{style:{textAlign:'center',marginTop:4,fontSize:12.5,fontWeight:700,color:BB}},temp.toFixed(2))
+                    ),
+                    ce('span',{style:{fontSize:11.5,color:'#94A3B8',minWidth:32}},'2.00')
+                  ),
+                  ce('div',{style:{fontSize:12,color:'#64748B',marginTop:8}},'Lower value yields better function call results.')
+                ),
+                ce('button',{onClick:function(){setTemp(0.10);setModel('gpt-4o-mini');},style:{padding:'8px 16px',background:'transparent',border:'1.5px solid #E2E8F0',borderRadius:8,fontSize:13,color:'#374151',cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:6}},
+                  ce('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},ce('path',{d:'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'}),ce('path',{d:'M3 3v5h5'})),
+                  'Reset to Default'
+                )
+              )
+            ),
+            ce(SCard,{title:'AI Processing Message Settings',desc:'Enable and customize the message displayed when AI takes longer than 10 seconds to respond',open:sec2,onToggle:function(){setSec2(!sec2);}},
+              ce('div',{style:{padding:'20px'}},
+                ce('div',{style:{fontSize:13,color:'#64748B',lineHeight:1.6}},'Configure the message shown to users when the AI is processing a complex request that takes longer than 10 seconds to respond.')
+              )
+            )
+          )
+        );
+      }
 
       /* ═══════════════════════════════════════════════════════════
          SECTION 10 · GALLABOX BUILDER ROOT
          GallaboxBuilder — top-level app
-           • Dark top nav (BB fixed, never brand color)
-           • Left icon sidebar (52px)
+           • White top nav (matches production — agent builder context)
            • FormPanel (320px, scrollable)
            • PreviewPanel (flex:1)
          To add a new tab: add to tabs[] array + render its content
@@ -2311,6 +2609,29 @@ var CHATS_TABLE = [
   {name:'Unknown',         phone:'—',              session:'f6b3c1',type:'Anonymous',src:'Instagram', page:'/offers',            ts:'May 11, 12:33 PM',open:'Auto'},
   {name:'Aasish Giri',     phone:'+91 43210 98765',session:'g1c2d4',type:'New',      src:'Direct',    page:'/home',              ts:'May 11, 01:14 PM',open:'User'},
   {name:'Harpreet Singh',  phone:'+91 32109 87654',session:'h4e1f2',type:'Returning',src:'LinkedIn',  page:'/pricing/enterprise',ts:'May 11, 01:45 PM',open:'User'},
+];
+
+/* ── ANALYZE TAB MOCK DATA ─────────────────────────────── */
+var AGENT_SESSIONS = [
+  {id:'sid_8f2c1a',contact:'Priya Sharma',  phone:'+91 98765 43210',ts:'May 21 · 3:42 PM',status:'Successful',eval:'Qualified lead'},
+  {id:'sid_3e7b9d',contact:'Rahul Mehta',   phone:'+91 87654 32109',ts:'May 21 · 2:18 PM',status:'Ended',     eval:'Not qualified'},
+  {id:'sid_1a4f6e',contact:'Anonymous',     phone:'—',               ts:'May 21 · 1:55 PM',status:'Dropped',  eval:'—'},
+  {id:'sid_d2c8b5',contact:'Anjali Gupta',  phone:'+91 76543 21098',ts:'May 20 · 5:31 PM',status:'Successful',eval:'Demo booked'},
+  {id:'sid_9b3a7c',contact:'Vikram Nair',   phone:'+91 65432 10987',ts:'May 20 · 4:09 PM',status:'Ended',     eval:'Requested callback'},
+  {id:'sid_5f1e4d',contact:'Sunita Rao',    phone:'+91 54321 09876',ts:'May 20 · 11:22 AM',status:'Successful',eval:'Qualified lead'},
+  {id:'sid_7c2d8a',contact:'Anonymous',     phone:'—',               ts:'May 19 · 9:44 AM',status:'Dropped',  eval:'—'},
+  {id:'sid_4a6b1e',contact:'Deepak Kumar',  phone:'+91 43210 98765',ts:'May 19 · 8:30 AM',status:'Ended',     eval:'Not qualified'},
+  {id:'sid_0e9c3f',contact:'Anita Patel',   phone:'+91 32109 87654',ts:'May 18 · 6:15 PM',status:'Successful',eval:'Demo booked'},
+  {id:'sid_6d4b2c',contact:'Mohan Das',     phone:'+91 21098 76543',ts:'May 18 · 3:50 PM',status:'Dropped',  eval:'—'},
+];
+var SESSION_CHAT_MOCK = [
+  {who:'bot', text:"Hi! I'm Maya, your AI assistant. How can I help you today?", time:'3:42 PM'},
+  {who:'in',  text:"Hi, I'm looking for pricing information.", time:'3:43 PM'},
+  {who:'bot', text:"Great! I'd be happy to help with pricing. Could you tell me a bit about your use case?", time:'3:43 PM'},
+  {who:'in',  text:"We need something for our e-commerce team, about 20 people.", time:'3:44 PM'},
+  {who:'bot', text:"Perfect — 20 seats. Our Growth plan would suit that well. Would you like to book a quick demo to see it in action?", time:'3:44 PM', btns:['Schedule demo →']},
+  {who:'in',  text:"Yes, that sounds great.", time:'3:45 PM'},
+  {who:'bot', text:"Wonderful! Let me collect your details to schedule the demo.", time:'3:45 PM'},
 ];
 
 /* ── HELPERS ───────────────────────────────────────────── */
@@ -2590,6 +2911,280 @@ function ChatsTable(){
         })
       )
     )
+  );
+}
+
+/* ── SESSION OVERLAY (Analyze tab conversation popup) ──── */
+function SessionOverlay({session, onClose}){
+  var ts=useState('log'), tab=ts[0], setTab=ts[1];
+  useEffect(function(){
+    function onKey(e){ if(e.key==='Escape') onClose(); }
+    document.addEventListener('keydown',onKey);
+    return function(){ document.removeEventListener('keydown',onKey); };
+  },[]);
+  var C='#1B58E3';
+  var SCLR={Successful:['#DCFCE7','#15803D'],Ended:['#F1F5F9','#64748B'],Dropped:['#FEF2F2','#DC2626']};
+  var sc=SCLR[session.status]||SCLR.Ended;
+  return ce('div',{
+    onClick:function(e){if(e.target===e.currentTarget)onClose();},
+    style:{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'stretch',
+      justifyContent:'flex-end',background:'rgba(15,23,42,.38)'}},
+    ce('div',{style:{width:460,background:'#fff',display:'flex',flexDirection:'column',
+      boxShadow:'-8px 0 32px rgba(15,23,42,.16)',animation:'slideInRight .22s cubic-bezier(.34,1.1,.64,1)'}},
+      /* Header */
+      ce('div',{style:{flexShrink:0,borderBottom:'1px solid #E2E8F0'}},
+        ce('div',{style:{display:'flex',alignItems:'center',gap:8,padding:'12px 16px 10px'}},
+          ce('div',{style:{width:30,height:30,borderRadius:8,background:'#EFF4FF',border:'1px solid #BFDBFE',
+            display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},
+            ce('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:C,strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
+              ce('circle',{cx:12,cy:12,r:10}),ce('line',{x1:2,y1:12,x2:22,y2:12}),
+              ce('path',{d:'M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z'}))
+          ),
+          ce('div',{style:{flex:1,minWidth:0}},
+            ce('div',{style:{fontSize:13,fontWeight:700,color:'#0F172A',marginBottom:1}},'Web Session'),
+            ce('div',{style:{fontSize:10.5,color:'#94A3B8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},
+              session.contact+' · #'+session.id.slice(-6))
+          ),
+          ce('button',{
+            onClick:function(){window.location.href='gallabox-web-inbox.html';},
+            style:{padding:'5px 11px',background:C,color:'#fff',border:'none',borderRadius:7,
+              fontSize:11.5,fontWeight:700,cursor:'pointer',fontFamily:'inherit',
+              display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap',marginRight:6,flexShrink:0}},
+            'Jump to conversation →'
+          ),
+          ce('button',{
+            onClick:onClose,
+            style:{width:28,height:28,borderRadius:7,border:'1px solid #E2E8F0',background:'#F8FAFC',
+              cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0},
+            onMouseEnter:function(e){e.currentTarget.style.background='#F1F5F9';},
+            onMouseLeave:function(e){e.currentTarget.style.background='#F8FAFC';}},
+            ce('svg',{width:11,height:11,viewBox:'0 0 24 24',fill:'none',stroke:'#64748B',strokeWidth:2.5,strokeLinecap:'round'},
+              ce('line',{x1:18,y1:6,x2:6,y2:18}),ce('line',{x1:6,y1:6,x2:18,y2:18}))
+          )
+        ),
+        ce('div',{style:{display:'flex',alignItems:'center',gap:7,padding:'0 16px 10px',flexWrap:'wrap'}},
+          ce('span',{style:{display:'inline-block',fontSize:11.5,fontWeight:700,padding:'2px 9px',borderRadius:20,background:sc[0],color:sc[1]}},session.status),
+          ce('span',{style:{fontSize:11.5,color:'#94A3B8'}},'·'),
+          ce('span',{style:{fontSize:11.5,color:'#64748B'}},session.ts)
+        ),
+        ce('div',{style:{display:'flex',padding:'0 16px'}},
+          [['log','Chat Log'],['analyze','Analyze']].map(function(item){
+            return ce('button',{key:item[0],onClick:function(){setTab(item[0]);},
+              style:{padding:'7px 14px',background:'transparent',border:'none',
+                borderBottom:tab===item[0]?'2px solid '+C:'2px solid transparent',
+                cursor:'pointer',fontFamily:'inherit',fontSize:12.5,fontWeight:600,
+                color:tab===item[0]?C:'#94A3B8',transition:'color .12s,border-color .12s',marginBottom:-1}},item[1]);
+          })
+        )
+      ),
+      /* Body */
+      tab==='log'
+        ?ce('div',{style:{flex:1,overflowY:'auto',padding:'14px 16px',background:'#F8FAFC'}},
+            SESSION_CHAT_MOCK.map(function(m,i){
+              var isIn=m.who==='in';
+              if(m.btns){
+                return ce('div',{key:i,style:{marginBottom:12}},
+                  ce('div',{style:{background:'#fff',border:'1px solid #E2E8F0',borderRadius:'9px 9px 9px 3px',
+                    padding:'8px 11px',fontSize:12.5,color:'#334155',marginBottom:5,maxWidth:'88%',lineHeight:1.5}},m.text),
+                  ce('div',{style:{display:'flex',flexWrap:'wrap',gap:5}},
+                    m.btns.map(function(b){return ce('div',{key:b,style:{padding:'4px 11px',border:'1.5px solid '+C,borderRadius:16,fontSize:12,color:C,fontWeight:600,background:'#fff'}},b);})),
+                  ce('div',{style:{fontSize:10,color:'#CBD5E1',marginTop:3}},m.time));
+              }
+              return ce('div',{key:i,style:{display:'flex',flexDirection:'column',alignItems:isIn?'flex-end':'flex-start',marginBottom:9}},
+                ce('div',{style:{maxWidth:'84%',background:isIn?C:'#fff',color:isIn?'#fff':'#334155',
+                  borderRadius:isIn?'9px 9px 3px 9px':'9px 9px 9px 3px',padding:'8px 11px',
+                  fontSize:12.5,lineHeight:1.5,border:isIn?'none':'1px solid #E2E8F0'}},m.text),
+                ce('div',{style:{fontSize:10,color:'#CBD5E1',marginTop:2}},m.time));
+            })
+          )
+        :ce('div',{style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:32,textAlign:'center',background:'#fff'}},
+            ce('div',{style:{fontSize:13,fontWeight:700,color:'#334155',marginBottom:6}},'Analysis ready'),
+            ce('div',{style:{fontSize:12.5,color:'#94A3B8',lineHeight:1.6,maxWidth:300,marginBottom:16}},'Outcome evaluation and extracted data fields appear here after the session is scored.'),
+            session.status==='Successful'
+              ?ce('div',{style:{padding:'12px 16px',background:'#F0FDF4',border:'1px solid #86EFAC',borderRadius:9,textAlign:'left',maxWidth:300}},
+                  ce('div',{style:{fontSize:10.5,fontWeight:700,color:'#15803D',textTransform:'uppercase',letterSpacing:.5,marginBottom:6}},'OUTCOME · '+session.eval),
+                  ce('div',{style:{fontSize:12,color:'#166534',lineHeight:1.6}},'Budget: ₹8K–10K/month · Team size: ~20 · Demo interest: High · Decision timeline: 2–3 weeks'))
+              :ce('div',{style:{fontSize:12,color:'#94A3B8'}},'No outcome matched for this session.')
+          )
+    )
+  );
+}
+
+/* ── ANALYZE PANEL ─────────────────────────────────────── */
+function AnalyzePanel({cfg}){
+  var rs=useState('7d'),range=rs[0],setRange=rs[1];
+  var ss=useState(''),search=ss[0],setSearch=ss[1];
+  var ps=useState(false),showPSS=ps[0],setShowPSS=ps[1];
+  var as=useState(null),activeSess=as[0],setActiveSess=as[1];
+  var wu=useState('https://hooks.example.com/agent-events'),webhookUrl=wu[0],setWebhookUrl=wu[1];
+
+  var BB='#1B58E3';
+  var RANGES=[{v:'7d',l:'Past 7 Days'},{v:'30d',l:'Past 30 Days'},{v:'90d',l:'Past 90 Days'}];
+  var SC={Successful:['#DCFCE7','#15803D'],Ended:['#F1F5F9','#64748B'],Dropped:['#FEF2F2','#DC2626']};
+  var KPIS=[
+    {label:'Total Sessions',    value:'312',accent:'#1B58E3',tip:true,sub:'All sessions in period'},
+    {label:'Ended Sessions',    value:'148',accent:'#64748B',tip:true,sub:'Closed without qualifying'},
+    {label:'Dropped Sessions',  value:'64', accent:'#EF4444',tip:true,sub:'Never reached first message'},
+    {label:'Successful Sessions',value:'100',accent:'#10B981',tip:true,sub:'Configured outcome met'},
+  ];
+
+  var rows=AGENT_SESSIONS.filter(function(s){
+    if(!search)return true;
+    var q=search.toLowerCase();
+    return s.contact.toLowerCase().indexOf(q)!==-1||s.id.toLowerCase().indexOf(q)!==-1;
+  });
+
+  return ce('div',{style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:'#F8FAFC',position:'relative'}},
+
+    /* Sticky toolbar */
+    ce('div',{style:{background:'#fff',borderBottom:'1px solid #E2E8F0',padding:'10px 24px',
+      display:'flex',alignItems:'center',gap:10,flexShrink:0}},
+      ce('input',{type:'search',placeholder:'Search contact or session ID…',value:search,
+        onChange:function(e){setSearch(e.target.value);},
+        style:{width:260,padding:'7px 11px',border:'1.5px solid #E2E8F0',borderRadius:8,
+          fontSize:12.5,color:'#334151',outline:'none',fontFamily:'inherit'}}),
+      ce('div',{style:{display:'flex',border:'1px solid #E2E8F0',borderRadius:8,overflow:'hidden',background:'#fff'}},
+        RANGES.map(function(r){
+          return ce('button',{key:r.v,onClick:function(){setRange(r.v);},
+            style:{padding:'7px 12px',border:'none',cursor:'pointer',fontFamily:'inherit',
+              fontSize:12,fontWeight:600,transition:'background .15s,color .15s',
+              background:range===r.v?BB:'transparent',color:range===r.v?'#fff':'#64748B'}},r.l);
+        })
+      ),
+      ce('div',{style:{flex:1}}),
+      ce('button',{style:{padding:'7px 14px',border:'1px solid #E2E8F0',borderRadius:8,background:'#fff',
+        cursor:'pointer',fontFamily:'inherit',fontSize:12,color:'#475569',fontWeight:600}},
+        '↓ Export'),
+      ce('button',{
+        onClick:function(){setShowPSS(!showPSS);},
+        style:{padding:'7px 14px',border:'1px solid '+(showPSS?BB:'#E2E8F0'),borderRadius:8,
+          background:showPSS?'#EFF4FF':'#fff',cursor:'pointer',fontFamily:'inherit',
+          fontSize:12,fontWeight:600,color:showPSS?BB:'#475569',
+          display:'flex',alignItems:'center',gap:5,transition:'all .15s'}},
+        ce('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round'},
+          ce('circle',{cx:12,cy:12,r:3}),
+          ce('path',{d:'M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14'})),
+        'Post-session settings'
+      )
+    ),
+
+    ce('div',{style:{flex:1,overflowY:'auto',padding:'20px 24px',display:'flex',flexDirection:'column',gap:16}},
+
+      /* KPI row */
+      ce('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}},
+        KPIS.map(function(k){return ce(KpiTile,Object.assign({key:k.label},k));})
+      ),
+
+      /* Post-session settings panel */
+      showPSS&&ce('div',{style:{background:'#fff',border:'1px solid #E2E8F0',borderRadius:12,padding:'20px 24px'}},
+        ce('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}},
+          ce('div',{style:{fontSize:14,fontWeight:700,color:'#0F172A'}},'Post-session settings'),
+          ce('button',{onClick:function(){setShowPSS(false);},
+            style:{background:'none',border:'none',cursor:'pointer',fontSize:18,color:'#94A3B8',lineHeight:1,padding:'0 4px'}},'×')
+        ),
+        /* Data Extraction */
+        ce('div',{style:{marginBottom:20}},
+          ce('div',{style:{fontSize:11,fontWeight:700,color:'#64748B',textTransform:'uppercase',letterSpacing:.6,marginBottom:10}},'Data Extraction'),
+          ce('div',{style:{border:'1px solid #E2E8F0',borderRadius:9,overflow:'hidden'}},
+            ce('div',{style:{display:'grid',gridTemplateColumns:'100px 140px 1fr 24px',
+              background:'#F8FAFC',borderBottom:'1px solid #E2E8F0',padding:'7px 14px',
+              fontSize:10.5,fontWeight:700,color:'#94A3B8',textTransform:'uppercase',letterSpacing:.5,gap:12}},
+              ce('div',null,'Type'),ce('div',null,'Field Name'),ce('div',null,'Instructions'),ce('div',null,'')),
+            [{id:1,type:'Text',name:'Budget Range',instr:'Extract any budget or price range mentioned'},
+             {id:2,type:'Text',name:'Team Size',    instr:'Number of people needing access'}
+            ].map(function(ex){
+              return ce('div',{key:ex.id,style:{display:'grid',gridTemplateColumns:'100px 140px 1fr 24px',
+                padding:'10px 14px',borderBottom:'1px solid #F1F5F9',alignItems:'center',gap:12}},
+                ce('span',{style:{display:'inline-block',padding:'2px 9px',background:'#F1F5F9',borderRadius:6,fontSize:12,fontWeight:600,color:'#475569',whiteSpace:'nowrap'}},ex.type),
+                ce('span',{style:{fontSize:13,color:'#0F172A',fontWeight:500}},ex.name),
+                ce('span',{style:{fontSize:12.5,color:'#94A3B8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},ex.instr),
+                ce('button',{style:{width:22,height:22,background:'none',border:'none',cursor:'pointer',color:'#CBD5E1',fontSize:15,lineHeight:1,flexShrink:0}},'×'));
+            }),
+            ce('div',{style:{padding:'9px 14px'}},
+              ce('button',{style:{background:'none',border:'none',cursor:'pointer',fontSize:12.5,color:BB,fontWeight:600,padding:0}},'+ Add field'))
+          )
+        ),
+        /* Outcome Evaluation */
+        ce('div',{style:{marginBottom:20}},
+          ce('div',{style:{fontSize:11,fontWeight:700,color:'#64748B',textTransform:'uppercase',letterSpacing:.6,marginBottom:10}},'Outcome Evaluation'),
+          ce('div',{style:{border:'1px solid #E2E8F0',borderRadius:9,overflow:'hidden'}},
+            ce('div',{style:{display:'grid',gridTemplateColumns:'160px 1fr 24px',
+              background:'#F8FAFC',borderBottom:'1px solid #E2E8F0',padding:'7px 14px',
+              fontSize:10.5,fontWeight:700,color:'#94A3B8',textTransform:'uppercase',letterSpacing:.5,gap:12}},
+              ce('div',null,'Name'),ce('div',null,'Criteria'),ce('div',null,'')),
+            [{id:1,name:'Qualified Lead',criteria:'Visitor mentioned budget, timeline, and expressed purchase intent'}
+            ].map(function(oc){
+              return ce('div',{key:oc.id,style:{display:'grid',gridTemplateColumns:'160px 1fr 24px',
+                padding:'10px 14px',borderBottom:'1px solid #F1F5F9',alignItems:'center',gap:12}},
+                ce('span',{style:{fontSize:13,color:'#0F172A',fontWeight:600}},oc.name),
+                ce('span',{style:{fontSize:12.5,color:'#94A3B8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},oc.criteria),
+                ce('button',{style:{width:22,height:22,background:'none',border:'none',cursor:'pointer',color:'#CBD5E1',fontSize:15,lineHeight:1}},'×'));
+            }),
+            ce('div',{style:{padding:'9px 14px'}},
+              ce('button',{style:{background:'none',border:'none',cursor:'pointer',fontSize:12.5,color:BB,fontWeight:600,padding:0}},'+ Add outcome'))
+          )
+        ),
+        /* Webhook */
+        ce('div',null,
+          ce('div',{style:{fontSize:11,fontWeight:700,color:'#64748B',textTransform:'uppercase',letterSpacing:.6,marginBottom:8}},'Webhook'),
+          ce('div',{style:{display:'flex',gap:8}},
+            ce('input',{type:'url',value:webhookUrl,onChange:function(e){setWebhookUrl(e.target.value);},
+              placeholder:'https://hooks.example.com/events',
+              style:{flex:1,padding:'8px 12px',border:'1.5px solid #E2E8F0',borderRadius:8,
+                fontSize:12.5,color:'#334155',outline:'none',fontFamily:'inherit'}}),
+            ce('button',{style:{padding:'8px 16px',background:BB,color:'#fff',border:'none',
+              borderRadius:8,fontSize:12.5,fontWeight:700,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}},
+              'Save')
+          )
+        )
+      ),
+
+      /* Sessions table */
+      ce('div',{style:{background:'#fff',border:'1px solid #E2E8F0',borderRadius:12,overflow:'hidden'}},
+        ce('div',{style:{padding:'14px 20px',borderBottom:'1px solid #F1F5F9',display:'flex',alignItems:'center',justifyContent:'space-between'}},
+          ce('div',{style:{fontSize:14,fontWeight:700,color:'#0F172A'}},'Agent Sessions'),
+          ce('div',{style:{fontSize:12.5,color:'#94A3B8'}},'Click a row to view the conversation')
+        ),
+        ce('table',{style:{width:'100%',borderCollapse:'collapse',fontSize:13}},
+          ce('thead',null,
+            ce('tr',null,
+              ['Contact Name','Contact No','Session ID','Timestamp','Status','Success Evaluation'].map(function(h){
+                return ce('th',{key:h,style:{padding:'10px 16px',textAlign:'left',fontSize:11,fontWeight:700,
+                  color:'#94A3B8',textTransform:'uppercase',letterSpacing:.5,
+                  background:'#F8FAFC',borderBottom:'1px solid #E2E8F0',whiteSpace:'nowrap'}},h);
+              })
+            )
+          ),
+          ce('tbody',null,
+            rows.length===0
+              ?ce('tr',null,ce('td',{colSpan:6,style:{textAlign:'center',padding:40,color:'#94A3B8',fontSize:13}},'No sessions found.'))
+              :rows.map(function(r){
+                var sc=SC[r.status]||SC.Ended;
+                return ce('tr',{key:r.id,
+                  onClick:function(){setActiveSess(r);},
+                  onMouseEnter:function(e){e.currentTarget.style.background='#F8FAFC';e.currentTarget.style.cursor='pointer';},
+                  onMouseLeave:function(e){e.currentTarget.style.background='';},
+                  style:{borderBottom:'1px solid #F1F5F9'}},
+                  ce('td',{style:{padding:'13px 16px',fontWeight:600,color:'#0F172A'}},r.contact),
+                  ce('td',{style:{padding:'13px 16px',color:'#94A3B8',fontFamily:'monospace',fontSize:12.5}},r.phone),
+                  ce('td',{style:{padding:'13px 16px'}},
+                    ce('span',{style:{fontSize:12,color:'#94A3B8',fontFamily:'monospace'}},'#'+r.id.slice(-6))
+                  ),
+                  ce('td',{style:{padding:'13px 16px',color:'#64748B',fontSize:12.5,whiteSpace:'nowrap'}},r.ts),
+                  ce('td',{style:{padding:'13px 16px'}},
+                    ce('span',{style:{display:'inline-block',padding:'3px 10px',borderRadius:20,
+                      fontSize:12,fontWeight:600,background:sc[0],color:sc[1]}},r.status)
+                  ),
+                  ce('td',{style:{padding:'13px 16px',color:'#475569',fontSize:12.5}},r.eval)
+                );
+              })
+          )
+        )
+      )
+    ),
+
+    /* Session conversation overlay */
+    activeSess&&ce(SessionOverlay,{session:activeSess,onClose:function(){setActiveSess(null);}})
   );
 }
 
@@ -2917,6 +3512,283 @@ function AnalyticsPanel({cfg}){
 }
 
 
+/* ── CHANNEL SETTINGS PANEL ─────────────────────────────── */
+function ChannelSettingsPanel({cfg}){
+  var[infusion,setInfusion]=useState(true);
+  var[createEv,setCreateEv]=useState(true);
+  var[resolveEv,setResolveEv]=useState(true);
+  var[aiSummary,setAiSummary]=useState(false);
+  var[autoResolve,setAutoResolve]=useState(true);
+  var[resolveOn,setResolveOn]=useState('handoff');
+  var[capture,setCapture]=useState(true);
+  var[refCode,setRefCode]=useState(true);
+  var[waOpen,setWaOpen]=useState(false);
+  var[rtOpen,setRtOpen]=useState(false);
+  var[selectedWa,setWa]=useState('wa1');
+  var[saved,setSaved]=useState(false);
+
+  // Load persisted state on mount
+  useEffect(function(){
+    var s=localStorage.getItem('gb_channel_settings');
+    if(!s)return;
+    try{
+      var d=JSON.parse(s);
+      if(d.infusion!==undefined)setInfusion(d.infusion);
+      if(d.createEv!==undefined)setCreateEv(d.createEv);
+      if(d.resolveEv!==undefined)setResolveEv(d.resolveEv);
+      if(d.aiSummary!==undefined)setAiSummary(d.aiSummary);
+      if(d.autoResolve!==undefined)setAutoResolve(d.autoResolve);
+      if(d.resolveOn!==undefined)setResolveOn(d.resolveOn);
+      if(d.capture!==undefined)setCapture(d.capture);
+      if(d.refCode!==undefined)setRefCode(d.refCode);
+      if(d.selectedWa!==undefined)setWa(d.selectedWa);
+    }catch(e){}
+  },[]);
+
+  var WA_CHANNELS=[
+    {id:'wa1',name:'Acharya Academy',phone:'+91 98765 43210',color:'#22C55E'},
+    {id:'wa2',name:'Support Line',phone:'+91 80121 44822',color:'#3B82F6'},
+  ];
+  var RT_OPTS=[
+    {v:'handoff',l:'On WhatsApp handoff click'},
+    {v:'inact5', l:'After 5 min inactivity'},
+    {v:'inact15',l:'After 15 min inactivity'},
+    {v:'manual', l:'Manual only'},
+  ];
+  var selWa=WA_CHANNELS.find(function(c){return c.id===selectedWa;})||WA_CHANNELS[0];
+  var selRt=RT_OPTS.find(function(o){return o.v===resolveOn;})||RT_OPTS[0];
+
+  function doSave(){
+    localStorage.setItem('gb_channel_settings',JSON.stringify({
+      infusion:infusion,createEv:createEv,resolveEv:resolveEv,aiSummary:aiSummary,
+      autoResolve:autoResolve,resolveOn:resolveOn,capture:capture,refCode:refCode,selectedWa:selectedWa
+    }));
+    setSaved(true);
+    setTimeout(function(){setSaved(false);},2200);
+  }
+
+  /* ── sub-components ── */
+  function Toggle(p){
+    var on=p.on,dis=p.disabled;
+    return ce('div',{onClick:dis?null:p.onChange,
+      style:{width:36,height:20,borderRadius:10,flexShrink:0,cursor:dis?'default':'pointer',
+        background:on&&!dis?BB:'#CBD5E1',transition:'background .18s',
+        position:'relative',opacity:dis?.4:1}},
+      ce('div',{style:{width:16,height:16,borderRadius:'50%',background:'#fff',
+        position:'absolute',top:2,
+        left:on?18:2,transition:'left .18s',
+        boxShadow:'0 1px 3px rgba(0,0,0,.18)'}}));
+  }
+
+  function SHead(p){
+    return ce('div',{style:{padding:'20px 24px 12px'}},
+      ce('div',{style:{fontSize:11,fontWeight:800,textTransform:'uppercase',
+        letterSpacing:.8,color:'#94A3B8',marginBottom:p.desc?4:0}},p.label),
+      p.desc?ce('div',{style:{fontSize:12.5,color:'#64748B',lineHeight:1.5}},p.desc):null);
+  }
+
+  function TRow(p){
+    var indent=p.indent;
+    return ce('div',{style:{padding:'13px 24px '+(indent?'13px 40px':'13px 24px'),
+      background:indent?'#FAFBFC':'#fff',
+      borderTop:'1px solid #F1F5F9',
+      display:'flex',alignItems:'flex-start',gap:12,
+      opacity:p.disabled?.45:1}},
+      ce('div',{style:{flex:1,minWidth:0}},
+        ce('div',{style:{display:'flex',alignItems:'center',gap:7,marginBottom:p.sub?3:0}},
+          ce('span',{style:{fontSize:13,fontWeight:600,color:'#1E293B'}},p.label),
+          p.badge?ce('span',{style:{fontSize:9.5,fontWeight:700,padding:'2px 6px',
+            borderRadius:4,background:'#FFF7ED',color:'#C2410C',
+            border:'1px solid #FED7AA',letterSpacing:.2}},p.badge):null),
+        p.sub?ce('div',{style:{fontSize:12,color:'#64748B',lineHeight:1.5,marginTop:2}},p.sub):null,
+        p.note?ce('div',{style:{fontSize:11,color:'#94A3B8',marginTop:4,
+          display:'flex',alignItems:'center',gap:4}},
+          ce('span',{style:{fontSize:9}},'●'),p.note):null),
+      ce(Toggle,{on:p.on,onChange:p.onChange,disabled:p.disabled}));
+  }
+
+  function Dropdown(p){
+    var open=p.open,opts=p.opts,sel=p.sel,onSel=p.onSel,onToggle=p.onToggle;
+    return ce('div',{style:{position:'relative'}},
+      ce('div',{onClick:p.disabled?null:onToggle,
+        style:{display:'flex',alignItems:'center',gap:8,padding:'9px 12px',
+          border:'1.5px solid '+(open?BB:'#E2E8F0'),borderRadius:8,
+          background:'#fff',cursor:p.disabled?'default':'pointer',
+          transition:'border-color .15s',opacity:p.disabled?.4:1}},
+        p.prefix?p.prefix:null,
+        ce('span',{style:{fontSize:13,color:'#1E293B',fontWeight:500,flex:1}},sel.l||sel.name||''),
+        p.suffix?ce('div',{style:{marginLeft:4}},p.suffix):null,
+        ce('div',{style:{transform:open?'rotate(180deg)':'rotate(0)',transition:'transform .18s'}},
+          ce(ChevDI,{sz:12,cl:'#94A3B8'}))),
+      open?ce('div',{style:{position:'absolute',top:'calc(100% + 4px)',left:0,right:0,
+        background:'#fff',border:'1.5px solid #E2E8F0',borderRadius:9,
+        boxShadow:'0 8px 24px rgba(15,23,42,.12)',zIndex:99,overflow:'hidden'}},
+        opts.map(function(opt){
+          var isS=(opt.v||opt.id)===( sel.v||sel.id);
+          return ce('div',{key:opt.v||opt.id,
+            onClick:function(){onSel(opt.v||opt.id);onToggle();},
+            style:{padding:'10px 14px',fontSize:13,color:isS?BB:'#334155',
+              fontWeight:isS?700:400,cursor:'pointer',
+              background:isS?'#EFF4FF':'#fff',
+              borderBottom:'1px solid #F8FAFC',
+              display:'flex',alignItems:'center',gap:8,transition:'background .1s'},
+            onMouseEnter:function(e){if(!isS)e.currentTarget.style.background='#F8FAFC';},
+            onMouseLeave:function(e){if(!isS)e.currentTarget.style.background='#fff';}},
+            opt.color?ce('div',{style:{width:7,height:7,borderRadius:'50%',background:opt.color,flexShrink:0}}):null,
+            ce('div',null,
+              ce('div',null,opt.l||opt.name),
+              opt.phone?ce('div',{style:{fontSize:11,color:'#94A3B8',marginTop:1}},opt.phone):null));
+        })):null);
+  }
+
+  return ce('div',{style:{flex:1,overflowY:'auto',background:'#F8FAFC',padding:'28px 32px'}},
+    /* header */
+    ce('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:28}},
+      ce('div',{style:{width:36,height:36,borderRadius:9,background:BB,
+        display:'flex',alignItems:'center',justifyContent:'center',
+        fontSize:13,fontWeight:800,color:'#fff',flexShrink:0}},
+        (cfg.brandName||'G').slice(0,2).toUpperCase()),
+      ce('div',null,
+        ce('div',{style:{fontSize:15,fontWeight:700,color:'#0F172A'}},(cfg.brandName||'Your Agent')+' — Channel Settings'),
+        ce('div',{style:{fontSize:12,color:'#94A3B8',marginTop:1}},'Configure how this web channel connects to WhatsApp')),
+      ce('div',{style:{flex:1}}),
+      ce('button',{onClick:doSave,style:{padding:'9px 22px',background:saved?'#22C55E':BB,
+        color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:700,
+        cursor:'pointer',fontFamily:'inherit',transition:'background .2s',
+        display:'flex',alignItems:'center',gap:7}},
+        saved?'✓ Saved':'Save changes')),
+
+    /* ── CARD: Web Context in Inbox ── */
+    ce('div',{style:{background:'#fff',border:'1px solid #E2E8F0',borderRadius:12,
+      marginBottom:16,overflow:'hidden'}},
+      ce(SHead,{label:'Web Context in Inbox',
+        desc:'When a website visitor continues on WhatsApp, your team sees everything the AI learned — automatically, in the thread.'}),
+
+      /* WA channel selector — which channel receives web session context */
+      ce('div',{style:{padding:'0 24px 16px'}},
+        ce('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:7}},
+          ce('div',{style:{fontSize:12,fontWeight:600,color:'#334155'}},'Connected WhatsApp channel'),
+          ce('a',{href:'gallabox-docs.html?page=handoff&anchor=chat-infusion',target:'_blank',
+            style:{display:'inline-flex',alignItems:'center',justifyContent:'center',width:16,height:16,borderRadius:'50%',background:'#F1F5F9',border:'1px solid #E2E8F0',color:'#94A3B8',fontSize:9,fontWeight:800,textDecoration:'none',flexShrink:0,lineHeight:1},
+            title:'How does channel connection work?'},'?')),
+        ce(Dropdown,{
+          open:waOpen,onToggle:function(){setWaOpen(function(v){return !v;});},
+          opts:WA_CHANNELS,
+          sel:selWa,
+          onSel:function(id){setWa(id);},
+          disabled:!infusion,
+          prefix:ce('div',{style:{width:7,height:7,borderRadius:'50%',
+            background:selWa.color,flexShrink:0}}),
+          suffix:ce('div',{style:{fontSize:11,color:'#94A3B8',whiteSpace:'nowrap'}},selWa.phone)}),
+        ce('div',{style:{fontSize:11.5,color:'#94A3B8',marginTop:6,lineHeight:1.5}},
+          'Web session context from this agent is sent to this channel’s inbox when a contact is matched.')),
+
+      ce(TRow,{
+        label:'Show web context in inbox',
+        sub:'When a web visitor moves to WhatsApp, your team sees a context card in the thread — intent, fields, and session summary.',
+        note:'Free · No AI credits used.',
+        on:infusion,
+        onChange:function(){setInfusion(function(v){return !v;});}})),
+
+    /* ── CARD: Conversation Events ── */
+    ce('div',{style:{background:'#fff',border:'1px solid #E2E8F0',borderRadius:12,
+      marginBottom:16,overflow:'hidden'}},
+      ce(SHead,{label:'Conversation Events',
+        desc:'Choose which lifecycle events are injected as entries in the WhatsApp thread.'}),
+
+      ce(TRow,{
+        label:'Session started entry',
+        sub:'A single line appears in the thread when the session begins and the visitor is identified.',
+        note:'Free · No AI credits.',
+        on:createEv,disabled:!infusion,
+        onChange:function(){setCreateEv(function(v){return !v;});}}),
+
+      ce(TRow,{
+        label:'Session summary entry',
+        sub:'A context card appears when the session ends — shows intent, fields captured, and lead score.',
+        note:'Free · Structured fields only.',
+        on:resolveEv,disabled:!infusion,
+        onChange:function(){setResolveEv(function(v){return !v;});}}),
+
+      /* AI summary — nested, indented */
+      ce(TRow,{
+        indent:true,
+        label:'Add AI-generated summary',
+        badge:'1 AI credit / session',
+        sub:'Intent score, natural-language summary, and AI-extracted fields added to the context card.',
+        on:aiSummary,disabled:!infusion||!resolveEv,
+        onChange:function(){setAiSummary(function(v){return !v;});}}),
+
+      /* credit note */
+      aiSummary&&resolveEv&&infusion?ce('div',{style:{
+        margin:'0 24px 16px',padding:'10px 14px',
+        background:'#FFFBEB',border:'1px solid #FED7AA',borderRadius:8,
+        display:'flex',alignItems:'flex-start',gap:8}},
+        ce('span',{style:{fontSize:13}},'💡'),
+        ce('div',{style:{fontSize:12,color:'#92400E',lineHeight:1.55}},
+          'AI credits are charged once per session when the summary generates successfully. Dropped sessions and anonymous (unmapped) sessions are never charged. ',
+          ce('a',{href:'gallabox-docs.html',target:'_blank',
+            style:{color:'#B45309',fontWeight:700,textDecoration:'none'}},
+            'Learn about AI credits →'))):null),
+
+    /* ── CARD: Auto-resolve ── */
+    ce('div',{style:{background:'#fff',border:'1px solid #E2E8F0',borderRadius:12,
+      marginBottom:16,overflow:'hidden'}},
+      ce(SHead,{label:'Auto-resolve',
+        desc:'Automatically close the web session and start summary generation.'}),
+
+      ce(TRow,{
+        label:'Auto-resolve web session',
+        sub:'Triggers when the contact moves to WhatsApp. Starts infusion immediately.',
+        on:autoResolve,
+        onChange:function(){setAutoResolve(function(v){return !v;});}}),
+
+      /* resolve trigger dropdown */
+      ce('div',{style:{padding:'4px 24px 18px',opacity:autoResolve?1:.4,
+        pointerEvents:autoResolve?'all':'none'}},
+        ce('div',{style:{fontSize:12,fontWeight:600,color:'#334155',marginBottom:7}},
+          'Resolve trigger'),
+        ce(Dropdown,{
+          open:rtOpen,onToggle:function(){setRtOpen(function(v){return !v;});},
+          opts:RT_OPTS,
+          sel:selRt,
+          onSel:function(v){setResolveOn(v);},
+          disabled:!autoResolve}))),
+
+    /* ── CARD: Contact Mapping ── */
+    ce('div',{style:{background:'#fff',border:'1px solid #E2E8F0',borderRadius:12,
+      marginBottom:32,overflow:'hidden'}},
+      ce(SHead,{label:'Contact Mapping',
+        desc:'How this channel identifies and maps web visitors to Gallabox contacts.'}),
+
+      ce(TRow,{
+        label:'Enable contact capture',
+        sub:'Bot attempts to collect phone/email during session to match an existing contact or create a new one.',
+        note:'Free · Required for infusion on most sessions.',
+        on:capture,
+        onChange:function(){setCapture(function(v){return !v;});}}),
+
+      ce(TRow,{
+        label:'Fallback session matching',
+        sub:'Adds an internal session token to the WhatsApp handoff. Used only if cookie-based matching fails — invisible to the customer.',
+        note:'Free · Recommended · Token expires after 30 min.',
+        on:refCode,
+        onChange:function(){setRefCode(function(v){return !v;});}})),
+
+    /* bottom save */
+    ce('div',{style:{display:'flex',justifyContent:'flex-end',gap:10,paddingBottom:8}},
+      ce('button',{style:{padding:'9px 20px',background:'transparent',color:'#64748B',
+        border:'1.5px solid #E2E8F0',borderRadius:8,fontSize:13,fontWeight:600,
+        cursor:'pointer',fontFamily:'inherit'}},'Cancel'),
+      ce('button',{onClick:doSave,style:{padding:'9px 22px',background:saved?'#22C55E':BB,
+        color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:700,
+        cursor:'pointer',fontFamily:'inherit',transition:'background .2s',
+        display:'flex',alignItems:'center',gap:7}},
+        saved?'✓ Saved':'Save changes'))
+  );
+}
+
+
       function GallaboxBuilder(){
         // Determine mode from URL param: ?mode=new (from onboarding) or ?mode=manage (from agent list)
         var urlMode=(new URLSearchParams(window.location.search)).get('mode')||'manage';
@@ -2924,85 +3796,139 @@ function AnalyticsPanel({cfg}){
 
         const[cfg,setCfg]=useState(DFLT_CFG);
         const[open,setOpen]=useState(false);
-        const[activeTab,setActiveTab]=useState(isNewAgent?'widget':'analytics');
+        const[activeTab,setActiveTab]=useState(isNewAgent?'instructions':'analytics');
         const[saved,setSaved]=useState(false);
-        // isPro: simulates plan tier — toggle in preview toolbar to test Pro features
         const[isPro,setIsPro]=useState(false);
+        const[pubModal,setPubModal]=useState(false);
+        const[devEmail,setDevEmail]=useState('');
+        const[pubSent,setPubSent]=useState(false);
+        const[pubDropOpen,setPubDropOpen]=useState(false);
+        const[navCopied,setNavCopied]=useState(false);
+        const[editingName,setEditingName]=useState(false);
+        const[nameInput,setNameInput]=useState(cfg.brandName||'E-Commerce - Lead Qualification');
 
         const doSave=()=>{setSaved(true);setTimeout(()=>setSaved(false),2000)};
+        function navCopyScript(){
+          var s='<!-- Gallabox Widget -->\n<script>\n  (function(w,d,s){s=d.createElement("script");s.src="https://app.gallabox.com/widget.js";s.async=1;s.dataset.id="YOUR_WIDGET_ID";d.head.appendChild(s);})(window,document);\n</'+'script>';
+          if(navigator.clipboard)navigator.clipboard.writeText(s).then(function(){setNavCopied(true);setTimeout(function(){setNavCopied(false);},2500);});
+        }
 
-        // Dashboard tab only shown for existing (managed) agents
+        useEffect(function(){
+          if(!pubDropOpen)return;
+          function close(){setPubDropOpen(false);}
+          document.addEventListener('click',close);
+          return function(){document.removeEventListener('click',close);};
+        },[pubDropOpen]);
+
+        // Dashboard is default for existing agents (leftmost, production-parity)
+        // New agents start on Instructions; Channel Settings is a standalone page
         const allTabs=[
+          {id:'analytics',label:'Dashboard'},
           {id:'instructions',label:'Instructions'},
           {id:'actions',label:'Actions'},
           {id:'knowledge',label:'Knowledge'},
           {id:'widget',label:'Web Widget'},
-          {id:'analytics',label:'Dashboard'},
           {id:'settings',label:'Settings'},
+          {id:'analyze',label:'Analyze'},
         ];
         const tabs=isNewAgent?allTabs.filter(t=>t.id!=='analytics'):allTabs;
 
         return ce('div',{style:{display:'flex',flexDirection:'column',height:'100vh',
           fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',overflow:'hidden'}},
 
-          /* ── TOP NAV ── Gallabox product chrome — ALWAYS BB blue */
+          /* ── TOP NAV ── White agent-builder header — matches production */
           ce('div',{style:{
-            height:52,background:'#0F1117',display:'flex',alignItems:'center',
-            padding:'0 16px',gap:0,flexShrink:0,borderBottom:'1px solid rgba(255,255,255,.08)'}},
-            /* Back button — returns to web agents list */
-            ce('button',{onClick:function(){window.location.href='gallabox-web-empty.html';},style:{width:32,height:32,borderRadius:7,background:'rgba(255,255,255,.06)',
-              border:'1px solid rgba(255,255,255,.1)',cursor:'pointer',color:'#94A3B8',
-              display:'flex',alignItems:'center',justifyContent:'center',marginRight:10,flexShrink:0}},
-              ce('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round'},
+            height:52,background:'#fff',display:'flex',alignItems:'center',
+            padding:'0 20px',gap:0,flexShrink:0,borderBottom:'1px solid #E2E8F0'}},
+            /* Back chevron — returns to web agents list */
+            ce('button',{onClick:function(){window.location.href='gallabox-web-empty.html';},
+              style:{width:28,height:28,borderRadius:6,background:'transparent',border:'none',
+                cursor:'pointer',color:'#64748B',display:'flex',alignItems:'center',justifyContent:'center',marginRight:6,flexShrink:0},
+              onMouseEnter:function(e){e.currentTarget.style.background='#F1F5F9';},
+              onMouseLeave:function(e){e.currentTarget.style.background='transparent';}},
+              ce('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
                 ce('polyline',{points:'15 18 9 12 15 6'}))
             ),
-            /* Agent name */
-            ce('div',{style:{display:'flex',alignItems:'center',gap:8,marginRight:24}},
-              ce('div',{style:{width:28,height:28,borderRadius:7,background:BB,
+            /* Agent avatar + name + edit icon */
+            ce('div',{style:{display:'flex',alignItems:'center',gap:8,marginRight:16}},
+              ce('div',{style:{width:30,height:30,borderRadius:8,background:BB,
                 display:'flex',alignItems:'center',justifyContent:'center',
-                fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}},
-                (cfg.brandName||'G').slice(0,2).toUpperCase()),
-              ce('div',null,
-                ce('div',{style:{fontSize:13.5,fontWeight:600,color:'#F1F5F9'}},cfg.brandName||'Your Agent'),
-                ce('div',{style:{fontSize:11,color:'#64748B'}})
-              ),
-              ce('button',{style:{background:'none',border:'none',cursor:'pointer',color:'#64748B',padding:2,marginLeft:2}},
-                ce('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
-                  ce('path',{d:'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'}),
-                  ce('path',{d:'M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'})))
+                fontSize:11,fontWeight:800,color:'#fff',flexShrink:0,letterSpacing:'-.02em'}},
+                ((cfg.brandName||'EC').trim().split(/\s+/).slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase()||'EC').slice(0,2)),
+              ce('div',{style:{display:'flex',alignItems:'center',gap:6}},
+                editingName
+                  ? ce('input',{autoFocus:true,value:nameInput,
+                      onChange:function(e){setNameInput(e.target.value);},
+                      onBlur:function(){
+                        setCfg(function(p){return Object.assign({},p,{brandName:nameInput||p.brandName});});
+                        setEditingName(false);
+                      },
+                      onKeyDown:function(e){
+                        if(e.key==='Enter'){e.target.blur();}
+                        if(e.key==='Escape'){setNameInput(cfg.brandName||'');setEditingName(false);}
+                      },
+                      style:{fontSize:14,fontWeight:600,color:'#0F172A',letterSpacing:'-.01em',
+                        border:'1px solid #E2E8F0',borderRadius:5,padding:'2px 8px',
+                        outline:'none',fontFamily:'inherit',width:220}})
+                  : ce('div',{style:{fontSize:14,fontWeight:600,color:'#0F172A',letterSpacing:'-.01em'}},cfg.brandName||nameInput),
+                ce('button',{onClick:function(){setNameInput(cfg.brandName||'');setEditingName(true);},
+                  style:{background:'none',border:'none',cursor:'pointer',color:'#94A3B8',padding:2,display:'flex',alignItems:'center'}},
+                  ce('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
+                    ce('path',{d:'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'}),
+                    ce('path',{d:'M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'})))
+              )
             ),
             /* Spacer */
             ce('div',{style:{flex:1}}),
-            /* Right action buttons */
+            /* Right actions — match production style */
             ce('div',{style:{display:'flex',alignItems:'center',gap:10}},
-              ce('div',{style:{fontSize:11.5,color:'#64748B'}},
-                'Last Published: ',ce('span',{style:{color:'#94A3B8'}},'15 Apr')),
-              ce('button',{style:{padding:'7px 13px',background:'transparent',
-                border:'1px solid rgba(255,255,255,.12)',borderRadius:8,
-                fontSize:12,color:'#94A3B8',cursor:'pointer',fontFamily:'inherit'}},
+              ce('div',{style:{fontSize:12,color:'#64748B'}},
+                'Last Published at: ',ce('span',{style:{color:'#475569'}},'Yesterday')),
+              ce('button',{style:{padding:'7px 14px',background:'transparent',
+                border:'1px solid #E2E8F0',borderRadius:8,
+                fontSize:12.5,color:'#374151',cursor:'pointer',fontFamily:'inherit',
+                display:'flex',alignItems:'center',gap:6,fontWeight:500}},
+                ce('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},ce('path',{d:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'})),
                 'View chat logs'),
-              ce('button',{style:{padding:'7px 13px',background:'transparent',
-                border:'1px solid rgba(255,255,255,.12)',borderRadius:8,
-                fontSize:12,color:'#94A3B8',cursor:'pointer',fontFamily:'inherit'}},
-                '⟲  History'),
-              ce('div',{style:{display:'flex',gap:1}},
-                ce('button',{onClick:doSave,style:{padding:'8px 18px',
+              ce('button',{style:{padding:'7px 14px',background:'transparent',
+                border:'1px solid #E2E8F0',borderRadius:8,
+                fontSize:12.5,color:'#374151',cursor:'pointer',fontFamily:'inherit',
+                display:'flex',alignItems:'center',gap:6,fontWeight:500}},
+                ce('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},ce('path',{d:'M3 3h7l1 9 3.5-5.5L18 8l2-5H3z'}),ce('path',{d:'M15 19a2 2 0 1 1-4 0 2 2 0 0 1 4 0z'}),ce('path',{d:'M8 19a2 2 0 1 1-4 0 2 2 0 0 1 4 0z'})),
+                'History'),
+              ce('div',{style:{display:'flex',gap:0,position:'relative'}},
+                ce('button',{onClick:function(){setPubModal(true);},style:{padding:'8px 18px',
                   background:saved?'#16A34A':BB,color:'#fff',
                   border:'none',borderRadius:'8px 0 0 8px',fontSize:12.5,fontWeight:700,
                   cursor:'pointer',fontFamily:'inherit',transition:'background .2s',
-                  boxShadow:'0 1px 4px rgba(27,88,227,.3)'}},
+                  boxShadow:'0 1px 4px rgba(27,88,227,.25)',display:'flex',alignItems:'center',gap:6}},
+                  ce('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},ce('line',{x1:22,y1:2,x2:11,y2:13}),ce('polygon',{points:'22 2 15 22 11 13 2 9 22 2'})),
                   saved?'✓ Saved!':'Publish Agent'),
-                ce('button',{style:{padding:'8px 10px',background:BB_DARK,color:'#fff',
+                ce('button',{onClick:function(e){e.stopPropagation();setPubDropOpen(function(v){return !v;});},
+                  style:{padding:'8px 10px',background:saved?'#15803D':BB_DARK,color:'#fff',
                   border:'none',borderRadius:'0 8px 8px 0',fontSize:12,cursor:'pointer',
-                  fontFamily:'inherit',borderLeft:'1px solid rgba(255,255,255,.15)'}},
-                  ce(ChevDI,{sz:12,cl:'rgba(255,255,255,.7)'}))
+                  fontFamily:'inherit',borderLeft:'1px solid rgba(255,255,255,.15)',transition:'background .2s'}},
+                  ce(ChevDI,{sz:12,cl:'rgba(255,255,255,.7)'})),
+                pubDropOpen?ce('div',{style:{position:'absolute',top:'100%',right:0,marginTop:4,
+                  background:'#fff',border:'1.5px solid #E2E8F0',borderRadius:9,
+                  boxShadow:'0 8px 24px rgba(15,23,42,.12)',zIndex:200,minWidth:150,padding:4}},
+                  ce('button',{onClick:function(e){e.stopPropagation();navCopyScript();},
+                    style:{width:'100%',padding:'8px 12px',background:navCopied?'#ECFDF5':'none',
+                      border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:12.5,fontWeight:600,
+                      color:navCopied?'#16A34A':'#374151',textAlign:'left',display:'flex',
+                      alignItems:'center',gap:7,borderRadius:6,transition:'all .2s'}},
+                    ce('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',
+                      stroke:navCopied?'#16A34A':'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
+                      ce('polyline',{points:'16 18 22 12 16 6'}),ce('polyline',{points:'8 6 2 12 8 18'})),
+                    navCopied?'✓ Copied!':'Copy Script')
+                ):null
               )
             )
           ),
 
-          /* ── SECONDARY TAB NAV — below agent header ── */
+          /* ── TAB NAV — below agent header, full width, no sidebar offset ── */
           ce('div',{style:{height:40,background:'#fff',borderBottom:'1px solid #E2E8F0',
-            display:'flex',alignItems:'center',padding:'0 0 0 72px',gap:0,flexShrink:0}},
+            display:'flex',alignItems:'center',padding:'0 0 0 4px',gap:0,flexShrink:0}},
             tabs.map(function(t){
               var isA=activeTab===t.id;
               return ce('button',{key:t.id,onClick:function(){setActiveTab(t.id);},
@@ -3010,60 +3936,99 @@ function AnalyticsPanel({cfg}){
                   border:'none',borderBottom:isA?'2px solid '+BB:'2px solid transparent',
                   cursor:'pointer',fontSize:12.5,fontWeight:isA?700:500,
                   fontFamily:'inherit',color:isA?BB:'#64748B',
-                  transition:'color .15s,border-color .15s'}},
-              t.label);
+                  transition:'color .15s,border-color .15s',display:'flex',alignItems:'center',gap:5}},
+                t.label
+              );
             })
           ),
 
-          /* ── LEFT ICON SIDEBAR ── */
+          /* ── MAIN CONTENT AREA — full width, no sidebar ── */
           ce('div',{style:{display:'flex',flex:1,overflow:'hidden'}},
-            ce('div',{style:{width:52,flexShrink:0,background:'#0F1117',
-              borderRight:'1px solid rgba(255,255,255,.06)',
-              display:'flex',flexDirection:'column',alignItems:'center',
-              paddingTop:16,gap:8}},
-              ...[
-                {icon:ce('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'#64748B',strokeWidth:2,strokeLinecap:'round'},ce('path',{d:'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'}),ce('polyline',{points:'9 22 9 12 15 12 15 22'})),active:false,tip:'Home',href:null},
-                {icon:ce('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'#64748B',strokeWidth:2,strokeLinecap:'round'},ce('path',{d:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'})),active:false,tip:'Conversations',href:'gallabox-web-inbox.html'},
-                {icon:ce('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'#64748B',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},ce('line',{x1:22,y1:2,x2:11,y2:13}),ce('polygon',{points:'22 2 15 22 11 13 2 9 22 2'})),active:false,tip:'Outbound',href:'gallabox-outbound.html',newTab:true},
-                {icon:ce('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'#60A5FA',strokeWidth:2,strokeLinecap:'round'},ce('circle',{cx:12,cy:12,r:10}),ce('line',{x1:2,y1:12,x2:22,y2:12}),ce('path',{d:'M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z'})),active:true,tip:'Web Agents',href:'gallabox-web-empty.html'},
-                {icon:ce('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'#64748B',strokeWidth:2,strokeLinecap:'round'},ce('circle',{cx:12,cy:12,r:3}),ce('path',{d:'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'})),active:false,tip:'Settings',href:null},
-              ].map((item,i)=>ce('button',{key:i,title:item.tip||'',
-                onClick:item.href?function(){item.newTab?window.open(item.href,'_blank'):window.location.href=item.href;}:undefined,
-                style:{width:36,height:36,borderRadius:9,border:'none',
-                  cursor:item.href?'pointer':'default',
-                  display:'flex',alignItems:'center',justifyContent:'center',
-                  background:item.active?'rgba(27,88,227,.18)':'transparent',
-                  transition:'background .15s'},
-                onMouseEnter:e=>{if(!item.active)e.currentTarget.style.background='rgba(255,255,255,.06)'},
-                onMouseLeave:e=>{if(!item.active)e.currentTarget.style.background='transparent'}},
-                item.icon))
-            ),
-
-            /* ── MAIN CONTENT AREA ── */
-            activeTab==='widget'
+            activeTab==='instructions'
+              ?ce('iframe',{src:'_gb-instructions.html',style:{width:'100%',height:'100%',border:'none',flex:1}})
+            :activeTab==='actions'
+              ?ce('iframe',{src:'_gb-actions.html',style:{width:'100%',height:'100%',border:'none',flex:1}})
+            :activeTab==='knowledge'
+              ?ce(KnowledgePanel,null)
+            :activeTab==='widget'
               ?ce('div',{style:{display:'flex',flex:1,overflow:'hidden'}},
                   ce(FormPanel,{cfg,onChange:setCfg,isPro}),
                   ce(PreviewPanel,{cfg,open,setOpen,isPro,setIsPro})
                 )
-              :activeTab==='analytics'
+            :activeTab==='settings'
+              ?ce('iframe',{src:'_gb-settings.html',style:{width:'100%',height:'100%',border:'none',flex:1}})
+            :activeTab==='analyze'
+              ?ce(AnalyzePanel,{cfg})
+            :activeTab==='analytics'
               ?isNewAgent
                 ?ce('div',{style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#F8FAFC',padding:40,textAlign:'center'}},
                     ce('div',{style:{fontSize:32,marginBottom:16}},'📊'),
                     ce('div',{style:{fontFamily:'var(--fh,sans-serif)',fontSize:18,fontWeight:700,color:'#0F172A',marginBottom:8,letterSpacing:'-.02em'}},'No data yet'),
                     ce('div',{style:{fontSize:14,color:'#64748B',lineHeight:1.6,maxWidth:340,marginBottom:24}},'Deploy your agent and receive at least one session to see Dashboard data.'),
-                    ce('button',{onClick:function(){window.location.href='gallabox-docs.html#deploy';},style:{padding:'9px 20px',background:'#1B58E3',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}},'How to deploy →')
+                    ce('button',{onClick:function(){window.location.href='gallabox-docs.html#deploy';},style:{padding:'9px 20px',background:BB,color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}},'How to deploy →')
                   )
                 :ce(AnalyticsPanel,{cfg})
-              :ce('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',
-                  background:'#F8FAFC',color:'#94A3B8',fontSize:14}},
-                  'Select "Web Widget" tab to edit the widget')
-          )
+            :null
+          ),
+
+          /* ── PUBLISH MODAL ── */
+          pubModal?ce('div',{style:{position:'fixed',inset:0,background:'rgba(15,23,42,.5)',
+            zIndex:300,display:'flex',alignItems:'center',justifyContent:'center'}},
+            ce('div',{style:{background:'#fff',borderRadius:16,padding:32,width:480,
+              boxShadow:'0 24px 64px rgba(15,23,42,.2)',fontFamily:'inherit'}},
+              ce('div',{style:{fontSize:17,fontWeight:700,color:'#0F172A',marginBottom:6,letterSpacing:'-.02em'}},
+                'Send installation guide to your developer'),
+              ce('div',{style:{fontSize:13.5,color:'#64748B',lineHeight:1.6,marginBottom:20}},
+                "We'll email the widget script, embed instructions, and docs."),
+              pubSent
+                ?ce('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',
+                    background:'#F0FDF4',border:'1.5px solid #86EFAC',borderRadius:10,marginBottom:20}},
+                    ce('span',{style:{fontSize:18}},'✓'),
+                    ce('div',{style:{fontSize:14,fontWeight:600,color:'#15803D'}},
+                      'Email sent to '+devEmail))
+                :ce('div',null,
+                    ce('div',{style:{fontSize:12,fontWeight:600,color:'#334155',marginBottom:6}},
+                      'Developer email'),
+                    ce('input',{type:'email',placeholder:'developer@yourcompany.com',
+                      value:devEmail,
+                      onChange:function(e){setDevEmail(e.target.value);},
+                      style:{width:'100%',border:'1.5px solid #E2E8F0',borderRadius:8,
+                        padding:'9px 12px',fontSize:13,outline:'none',fontFamily:'inherit',
+                        color:'#1E293B',marginBottom:16}})),
+              /* Script preview */
+              ce('div',{style:{background:'#0F172A',borderRadius:9,padding:'14px 16px',
+                marginBottom:20,fontFamily:'ui-monospace,Menlo,monospace',
+                fontSize:12,color:'#94A3B8',lineHeight:1.7,overflowX:'auto',
+                whiteSpace:'pre-wrap',userSelect:'all'}},
+                '<script src="https://cdn.gallabox.com/widget.js"\n  data-agent="[agentId]" async><\/script>'),
+              ce('div',{style:{display:'flex',gap:10,justifyContent:'flex-end'}},
+                ce('button',{
+                  onClick:function(){setPubModal(false);setPubSent(false);setDevEmail('');},
+                  style:{padding:'9px 20px',background:'transparent',color:'#64748B',
+                    border:'1.5px solid #E2E8F0',borderRadius:8,fontSize:13,fontWeight:600,
+                    cursor:'pointer',fontFamily:'inherit'}},
+                  'Cancel'),
+                pubSent?null:ce('button',{
+                  onClick:function(){setTimeout(function(){setPubSent(true);},1000);},
+                  style:{padding:'9px 22px',background:BB,color:'#fff',border:'none',
+                    borderRadius:8,fontSize:13,fontWeight:700,cursor:'pointer',
+                    fontFamily:'inherit',display:'flex',alignItems:'center',gap:6}},
+                  ce('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},
+                    ce('line',{x1:22,y1:2,x2:11,y2:13}),ce('polygon',{points:'22 2 15 22 11 13 2 9 22 2'})),
+                  'Send Email →')
+              )
+            )
+          ):null
         );
       }
 
       ReactDOM.createRoot(document.getElementById('root')).render(ce(GallaboxBuilder,null));
     </script>
     <style>
+      @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to   { transform: translateX(0);    opacity: 1; }
+      }
       .b-input,
       .b-textarea {
         width: 100%;

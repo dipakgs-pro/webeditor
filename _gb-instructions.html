@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>Instructions</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',-apple-system,sans-serif;font-size:13px;color:#1E293B;background:#fff;padding:28px 32px}
+.field{margin-bottom:28px}
+.field-label{font-size:14px;font-weight:600;color:#0F172A;margin-bottom:8px;display:block}
+.field-label span{color:#EF4444;margin-left:2px}
+.toolbar{display:flex;align-items:center;gap:2px;background:#F8FAFC;border:1.5px solid #E2E8F0;border-bottom:none;border-radius:8px 8px 0 0;padding:5px 8px}
+.tb-btn{background:none;border:none;cursor:pointer;padding:4px 7px;border-radius:5px;font-size:13px;color:#64748B;font-weight:600;line-height:1}
+.tb-btn:hover{background:#E2E8F0;color:#334155}
+.tb-sep{width:1px;height:16px;background:#E2E8F0;margin:0 4px;flex-shrink:0}
+.field-ta{display:block;width:100%;border:1.5px solid #E2E8F0;border-top:none;border-radius:0 0 8px 8px;padding:12px 14px;min-height:160px;resize:vertical;font-family:inherit;font-size:13px;color:#1E293B;outline:none;line-height:1.6}
+.field-ta:focus{border-color:#1B58E3;box-shadow:0 0 0 3px rgba(27,88,227,.08)}
+.toast{position:fixed;bottom:20px;right:24px;background:#1B58E3;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transform:translateY(6px);transition:all .2s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<div id="fields-root"></div>
+<div class="toast" id="toast">Saved ✓</div>
+
+<script>
+var FIELDS = [
+  {key:'role', label:'Role', ph:'e.g. You are a helpful AI assistant for Acme Inc., a leading e-commerce brand...'},
+  {key:'goal', label:'Goal', ph:'e.g. Your goal is to qualify website visitors, answer product questions, and route hot leads to the sales team via WhatsApp.'},
+  {key:'instructions', label:'Instructions', ph:'e.g. Greet users warmly. Ask for their name and email early in the conversation. Do not discuss competitor products...'}
+];
+
+var saved = JSON.parse(localStorage.getItem('gb_agent_instructions') || '{}');
+var debounceTimer = null;
+
+function toolbar(key) {
+  var btns = [
+    {label:'B',title:'Bold',style:'font-weight:800'},
+    {label:'I',title:'Italic',style:'font-style:italic'},
+    {label:'U',title:'Underline',style:'text-decoration:underline'},
+    {label:'</>',title:'Code'},
+    null,
+    {label:'≡',title:'Bullet list'},
+    {label:'#',title:'Numbered list'},
+    {label:'❝',title:'Quote'}
+  ];
+  return btns.map(function(b) {
+    if (!b) return '<span class="tb-sep"></span>';
+    return '<button class="tb-btn" title="' + b.title + '" style="' + (b.style||'') + '" onclick="fmt(\'' + key + '\',\'' + b.title + '\')">' + b.label + '</button>';
+  }).join('');
+}
+
+function renderField(f) {
+  var val = saved[f.key] || '';
+  return '<div class="field" id="field-' + f.key + '">'
+    + '<label class="field-label" for="ta-' + f.key + '">' + f.label + '<span>*</span></label>'
+    + '<div class="toolbar">' + toolbar(f.key) + '</div>'
+    + '<textarea class="field-ta" id="ta-' + f.key + '" placeholder="' + f.ph + '" oninput="onInput()">' + val + '</textarea>'
+    + '</div>';
+}
+
+function init() {
+  document.getElementById('fields-root').innerHTML = FIELDS.map(renderField).join('');
+}
+
+function onInput() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(saveAll, 800);
+}
+
+function saveAll() {
+  var data = {};
+  FIELDS.forEach(function(f) {
+    var el = document.getElementById('ta-' + f.key);
+    if (el) data[f.key] = el.value;
+  });
+  localStorage.setItem('gb_agent_instructions', JSON.stringify(data));
+  showToast();
+}
+
+function showToast() {
+  var t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 1800);
+}
+
+function fmt(key, action) {
+  var ta = document.getElementById('ta-' + key);
+  if (!ta) return;
+  var s = ta.selectionStart, e = ta.selectionEnd, val = ta.value, sel = val.slice(s, e);
+  var wrap = {'Bold':['**','**'], 'Italic':['_','_'], 'Underline':['__','__'], 'Code':['`','`'], 'Quote':['> ','']}[action];
+  if (wrap) { ta.value = val.slice(0,s) + wrap[0] + sel + wrap[1] + val.slice(e); ta.focus(); }
+}
+
+init();
+</script>
+</body></html>

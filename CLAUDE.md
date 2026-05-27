@@ -10,7 +10,9 @@ Before making any changes, read `ARCHITECTURE.md`. It contains:
 - Assumptions (what's mocked vs real)
 - PRD context and product decisions
 
-This project is a **functional demo / prototype** — no build step, no framework (except React CDN in two files), no backend. All persistence is localStorage.
+This project is a **functional demo / prototype** — no build step, no framework (except React CDN in two files), no backend. All persistence is localStorage. Deployed via Vercel (see `vercel.json`).
+
+**Prototype vs production:** `specs/` directory contains user story briefs for roadmap features visible in this prototype but NOT yet in production. See `ARCHITECTURE.md §12` for the full index and gap analysis.
 
 ---
 
@@ -18,7 +20,7 @@ This project is a **functional demo / prototype** — no build step, no framewor
 
 | I need to... | Go to |
 |---|---|
-| Change the icon sidebar | `_gb.js` → `sidebar()` function |
+| Change the icon sidebar (all list pages) | `_gb.js` → `sidebar()` function |
 | Change shared styles | `_gb.css` |
 | Change campaign data / seed flows | `_outbound-data.js` |
 | Change outbound campaign list UI | `gallabox-outbound.html` |
@@ -26,10 +28,21 @@ This project is a **functional demo / prototype** — no build step, no framewor
 | Change analytics page | `outbound-analytics.html` |
 | Change docs content | `gallabox-docs.html` |
 | Change agent list | `gallabox-web-empty.html` |
-| Change agent builder | `GBWebWidget.html` |
+| Change agent builder top nav / tabs | `GBWebWidget.html` → `GallaboxBuilder` function (~line 3509) |
+| Change Instructions tab content | `_gb-instructions.html` (loaded as iframe) |
+| Change Actions tab content | `_gb-actions.html` (loaded as iframe) |
+| Change AI Settings tab content | `_gb-settings.html` (loaded as iframe) |
+| Change Knowledge tab | `GBWebWidget.html` → `KnowledgePanel` (inline, small) |
+| Change Web Widget appearance/handoff | `GBWebWidget.html` → `FormPanel` |
+| Change Channel Settings / Infusion | `gallabox-web-channel-settings.html` (standalone page via secondary nav) |
+| Change Visitor Analytics | `gallabox-web-visitor-analytics.html` (standalone page via secondary nav) |
+| Change inbox components | `_inbox-components.js` |
+| Change inbox demo data | `_inbox-data.js` |
+| Change inbox icons | `_inbox-icons.js` |
 | Change onboarding wizard | `gallabox-onboarding.html` |
-| Change inbox | `gallabox-web-inbox.html` |
+| Change inbox shell / App | `gallabox-web-inbox.html` (77 lines) |
 | Change landing page | `index.html` |
+| Add/edit a user story spec | `specs/US-XXX-*.md` |
 
 ---
 
@@ -102,6 +115,35 @@ Do NOT create a new node type — all entry sources funnel through `segment-enro
 
 ---
 
+## Agent builder architecture rules
+
+`GBWebWidget.html` is a self-contained React 18 CDN app (~3680 lines). Key rules:
+- **No JSX** — use `ce(ComponentOrTag, props, ...children)` everywhere. `ce = React.createElement`.
+- **Tab components are standalone functions** defined BEFORE `GallaboxBuilder` in the file. Do not inline complex tab content directly in `GallaboxBuilder`.
+- **White top nav** — the agent builder header is `#fff` with `border-bottom: 1px solid #E2E8F0`. Never change it back to dark. The dark nav only belongs on list-page contexts that use `_gb.js` sidebar.
+- **No inline icon sidebar** — the agent builder has no 52px icon sidebar. Content is full-width. Navigation is via the ← back button to `gallabox-web-empty.html`.
+- **Tab ordering** is fixed: Instructions → Actions → Knowledge → Web Widget → Settings → Analyze → Dashboard (SOON). Do not reorder.
+- **Default tab for existing agents** is `'analyze'` — `useState(isNewAgent ? 'instructions' : 'analyze')`. New agents start on Instructions.
+- **Channel Settings is NOT a widget tab** — it was moved to `gallabox-web-channel-settings.html`, accessible from secondary nav (Web > Channel Settings).
+- **Roadmap tabs** (Dashboard) show a "SOON" badge and use `#94A3B8` text color so they're visually distinct from production-parity tabs.
+- **Analyze tab** is production-parity (no SOON badge). It shows: 4 KPI tiles (Total/Ended/Dropped/Successful), sessions table (Contact Name, Contact No, Session ID, Timestamp, Status, Success Evaluation), post-session settings (data extraction fields, outcome evaluation, webhook). Row click opens `SessionOverlay` conversation popup.
+- **SessionOverlay** is the conversation popup for the Analyze tab — inline in `GBWebWidget.html`, NOT imported from `_inbox-components.js`. Has "Jump to conversation" button linking to `gallabox-web-inbox.html`.
+- **Iframe tabs**: Instructions, Actions, and Settings tab content lives in separate HTML files (`_gb-instructions.html`, `_gb-actions.html`, `_gb-settings.html`) loaded as iframes. Knowledge, Web Widget, Analyze, and Dashboard tabs are inline in `GBWebWidget.html`.
+- **`cfg` is the widget config** (brand, colors, messaging, handoff). It does NOT include instructions/actions/knowledge — those have their own local state in each panel component.
+- **`DFLT_CFG` extension:** When adding new cfg fields, add them to the `DFLT_CFG` object at ~line 2216.
+
+## Inbox architecture rules
+
+`gallabox-web-inbox.html` is a 77-line thin shell. ALL logic is in the 3 split files:
+1. `_inbox-data.js` → tokens + demo data (load first)
+2. `_inbox-icons.js` → SVG icon functions (needs `ce` from data file)
+3. `_inbox-components.js` → all React components (needs both above)
+4. `gallabox-web-inbox.html` → App function + `ReactDOM.createRoot().render()`
+
+**Never put component code back in the HTML shell.** If a new component is needed, add it to `_inbox-components.js`.
+
+---
+
 ## Growing the architecture tree
 
 When you discover or create a file not yet listed in `ARCHITECTURE.md`:
@@ -109,8 +151,58 @@ When you discover or create a file not yet listed in `ARCHITECTURE.md`:
 2. If it introduces new data shapes, add to **Data Architecture** (§4)
 3. If it introduces new patterns, add to **Shared UI Patterns** (§8)
 4. If it captures a product decision, add to **PRD Context** (§11)
+5. If it's a roadmap feature spec, add to **Specs Index** (§12)
 
 Keep `ARCHITECTURE.md` as the single source of truth for the entire codebase structure.
+
+---
+
+## New feature requests
+
+Every new feature ask must be logged as a spec file in `specs/` before or alongside implementation:
+1. Create `specs/US-XXX-[feature-name].md` with user stories, acceptance criteria, and trade-offs
+2. Add the file to the §12 Specs Index in `ARCHITECTURE.md`
+3. Reference the spec in the quick lookup table above if it affects file routing
+
+Use the next available `US-NNN` number (check `specs/` for the highest existing number).
+
+---
+
+## Frontend contracts
+
+These rules apply across all HTML pages in the prototype. Violating them causes visual regressions.
+
+### Dropdowns
+- Dropdowns inside `overflow:hidden` containers MUST use `position:fixed` with JS-computed `top/left` from `getBoundingClientRect()`. Never use `position:absolute` inside a clipped parent.
+- Smart flip: if `triggerRect.bottom + menuHeight > window.innerHeight`, open upward; else open downward.
+- Always close on outside click via `document.addEventListener('click', ...)`.
+
+### Table row spacing
+- Agent list rows: `padding:12px 14px` (not `height:52px`). Fixed height can collapse content in wrapped cells.
+- Table footer: `position:sticky; bottom:0` with `background:#fff` so it stays visible above scrolled content.
+
+### Text overflow in flex/grid cells
+- Any flex or grid child that may contain long text MUST have `min-width:0` to allow shrinking.
+- Text that must not overflow: add `overflow:hidden; text-overflow:ellipsis; white-space:nowrap`.
+- Text that must wrap without breaking layout: add `overflow-wrap:break-word; word-break:break-word`.
+- Grid cards (`.card`, `.insight-card`) inside CSS Grid: add `min-width:0; overflow:hidden`.
+
+### One URL = one channel
+- Each website URL maps to exactly one `channelId`. The channel dropdown in visitor analytics and channel settings shows web icon + URL as the identifier.
+- Channels can all be deleted — there is no last-channel guard. The UI handles the zero-channel state gracefully.
+- In `gallabox-web-empty.html`, the last agent also cannot be deleted for the same reason.
+
+### Agent list empty state
+- A "Reset" button (dashed border, muted color) lets devs clear `localStorage` to test the empty state without code changes. It is intentional product testing UX — do not remove.
+
+### CSS variable contract
+Only use variables defined in `_gb.css`. Do NOT use: `--n600`, `--n800`, `--muted`, `--blue`, `--blue-s`, `--border-d`. Substitutions:
+- `--n800` → use `--n700`
+- `--n600` → use `--n500`
+- `--muted` → use `--n400`
+- `--blue` → use `--gb`
+- `--blue-s` → use `--gb-s`
+- `--border-d` → use `--n200`
 
 ---
 
@@ -123,6 +215,14 @@ Keep `ARCHITECTURE.md` as the single source of truth for the entire codebase str
 - Do not change rate calculation denominators back to `sent` — see above
 - Do not mock new data in a way that changes the production data shape (keep it spec-accurate)
 - Do not add comments explaining what code does — only add comments for non-obvious WHY
+- **Do not make the agent builder top nav dark** — it must be white (#fff). Dark top nav = list pages only.
+- **Do not add an inline icon sidebar to `GBWebWidget.html`** — the agent builder is a full-width detail page, not a list page.
+- **Do not put `Ref:XXXXX` or any session token in any customer-facing UI** — this is internal operational metadata only
+- **Do not wire live LLM API calls into the HTML prototype** — LLM integration is spec-only (in `inbox-infusion.md` §9). The prototype stays mock/shareable.
+- **Do not reorder agent builder tabs** without updating both `CLAUDE.md` and `ARCHITECTURE.md`
+- **Do not use `position:absolute` for dropdowns inside `overflow:hidden` containers** — use `position:fixed` with JS positioning (see Frontend contracts above)
+- **Do not use `height:Npx` for table rows** — use `padding` instead; fixed height collapses wrapped text
+- **Do not add flex/grid children that can receive long text without `min-width:0`** — this causes overflow that breaks the layout
 
 ---
 

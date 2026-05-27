@@ -380,6 +380,7 @@ function closeModal() {
   var el = document.getElementById('create-modal');
   if (el) el.classList.remove('open');
 }
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
 function selObj(card) {
   document.querySelectorAll('.obj-card').forEach(function(c){ c.classList.remove('sel'); });
   card.classList.add('sel');
@@ -572,7 +573,7 @@ function movePrio(id, dir) {
 }
 
 /* INIT */
-GB.sidebar('outbound');
+GB.sidebar('campaigns');
 S('campaigns');
 renderCampaigns();
 renderCtrlCampaigns();

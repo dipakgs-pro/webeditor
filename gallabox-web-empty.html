@@ -3,81 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Web Agents — Gallabox</title>
+<title>AI Agents — Gallabox</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="_gb.css">
 <style>
-/* Page-specific styles only */
-.topnav{height:52px;background:var(--ink);border-bottom:1px solid rgba(255,255,255,.08);
-  display:flex;align-items:center;padding:0 16px;gap:0;flex-shrink:0}
-.logo{font-family:var(--fh);font-size:17px;font-weight:800;color:#fff;
-  letter-spacing:-.03em;display:flex;align-items:center;gap:8px;margin-right:20px}
-.nav-tab{background:transparent;border:none;font-size:13px;font-weight:500;
-  color:rgba(255,255,255,.4);border-radius:7px;padding:7px 14px;transition:all .15s}
-.nav-tab:hover{color:rgba(255,255,255,.75);background:rgba(255,255,255,.06)}
-.nav-tab.on{color:#fff;background:rgba(255,255,255,.1)}
-.create-top{padding:7px 16px;background:var(--gb);color:#fff;border:none;
-  border-radius:8px;font-size:13px;font-weight:700;
-  box-shadow:0 1px 4px rgba(27,88,227,.3);transition:all .15s}
-.create-top:hover{background:var(--gb-d)}
-.lp-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;
-  background:var(--err);color:#fff;border-radius:7px;font-size:12px;font-weight:700;
-  text-decoration:none;margin-left:8px}
-.body-shell{display:flex;flex:1;overflow:hidden}
-.section-bar{height:50px;background:var(--white);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0}
-.section-title{font-family:var(--fh);font-size:15px;font-weight:700}
-.section-actions{display:flex;gap:8px;align-items:center}
-.agents-area{padding:24px 28px;flex:1;overflow-y:auto}
-.agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.agent-card{background:var(--white);border:1px solid var(--border);border-radius:14px;
-  overflow:hidden;cursor:pointer;transition:all .14s;display:flex;flex-direction:column;
-  box-shadow:0 1px 3px rgba(15,23,42,.04)}
-.agent-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(15,23,42,.1);border-color:var(--n300)}
-.agent-card-banner{height:68px;position:relative;border-bottom:1px solid var(--border);
-  display:flex;align-items:flex-end;padding:0 16px 0}
-.agent-card-banner.color-1{background:linear-gradient(135deg,#EFF4FF,#DBEAFE)}
-.agent-card-banner.color-2{background:linear-gradient(135deg,#F0FDF4,#DCFCE7)}
-.agent-card-banner.color-3{background:linear-gradient(135deg,#FFF7ED,#FED7AA)}
-.agent-card-banner.color-4{background:linear-gradient(135deg,#FAF5FF,#EDE9FE)}
-.agent-card-banner.color-5{background:linear-gradient(135deg,#FFF1F2,#FFE4E6)}
-.agent-mark{width:48px;height:48px;border-radius:12px;background:var(--white);
-  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.1);
-  font-family:var(--fh);font-size:16px;font-weight:800;color:#fff;
-  transform:translateY(50%);border:1px solid var(--border);flex-shrink:0}
-.agent-card-body{padding:30px 16px 12px;flex:1;display:flex;flex-direction:column}
-.agent-name{font-family:var(--fh);font-size:14.5px;font-weight:700;color:var(--n900);
-  letter-spacing:-.005em;margin-bottom:2px}
-.agent-use{font-size:12px;color:var(--n500);margin-bottom:10px}
-.agent-stats{display:flex;gap:14px;padding-top:10px;border-top:1px solid var(--n100);margin-top:auto}
-.agent-stat-val{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--n900);
-  letter-spacing:-.01em;display:block}
-.agent-stat-lbl{font-size:10.5px;color:var(--n500);margin-top:1px}
-.agent-card-foot{padding:10px 16px;display:flex;align-items:center;justify-content:space-between;
-  border-top:1px solid var(--n100);background:var(--n50)}
-.agent-card-url{font-size:11px;color:var(--n400);font-family:ui-monospace,monospace;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:8px}
-.features{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px}
-.fpill-feat{display:flex;align-items:center;gap:6px;padding:6px 12px;
-  background:var(--white);border:1px solid var(--border);border-radius:20px;
-  font-size:12px;color:var(--n700);font-weight:500}
-/* Delete modal */
-.del-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);
-  z-index:200;align-items:center;justify-content:center}
+.tbl-wrap{width:100%;border-collapse:collapse;font-size:13px}
+.tbl-wrap th{background:#F9FAFB;padding:10px 14px;font-size:11.5px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;border-bottom:2px solid #E2E8F0;position:sticky;top:0;z-index:2}
+.tbl-wrap th:first-child,.tbl-wrap td:first-child{padding-left:24px}
+.tbl-wrap th:last-child,.tbl-wrap td:last-child{padding-right:24px}
+.tbl-wrap td{padding:12px 14px;border-bottom:1px solid #F1F5F9;color:#374151;vertical-align:middle;white-space:nowrap}
+.tbl-wrap tr:hover td{background:#F9FAFB;cursor:pointer}
+.agent-name-cell{max-width:320px;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;font-weight:500;color:#0F172A}
+.type-pill{background:#F1F5F9;color:#374151;font-size:12px;border-radius:20px;padding:3px 10px;display:inline-block}
+.tbl-foot{position:sticky;bottom:0;background:#fff;border-top:1px solid #E2E8F0;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#374151;flex-shrink:0}
+.tbl-foot select{border:1.5px solid #E2E8F0;border-radius:6px;padding:4px 8px;font-size:13px;color:#374151;background:#fff}
+.pg-btn{padding:6px 14px;border:1.5px solid #E2E8F0;border-radius:6px;background:#fff;font-size:13px;color:#374151;cursor:pointer}
+.pg-btn:hover:not(:disabled){background:#F9FAFB}
+.pg-btn:disabled{opacity:.4;cursor:default}
+.del-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:200;align-items:center;justify-content:center}
 .del-modal-bg.vis{display:flex}
-.del-modal{background:var(--white);border-radius:14px;padding:24px;width:360px;
-  box-shadow:0 24px 64px rgba(15,23,42,.18)}
+.del-modal{background:#fff;border-radius:14px;padding:24px;width:360px;box-shadow:0 24px 64px rgba(15,23,42,.18)}
+.act-menu{position:relative;display:inline-block}
+.act-dropdown{display:none;position:fixed;background:#fff;border:1px solid #E2E8F0;border-radius:8px;box-shadow:0 6px 20px rgba(15,23,42,.14);z-index:500;min-width:130px;overflow:hidden}
+.act-dropdown.open{display:block}
+.act-dropdown button{display:block;width:100%;text-align:left;padding:9px 14px;background:transparent;border:none;font-size:13px;color:#374151;cursor:pointer}
+.act-dropdown button:hover{background:#F9FAFB}
+.act-dropdown button.danger{color:#EF4444}
 </style>
 </head>
 <body>
-<div style="display:flex;height:100vh;overflow:hidden">
+<div style="background:#FFFBEB;height:40px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#92400E;flex-shrink:0">
+  <strong>Upgrade your Shopify</strong>&nbsp;plan to unlock advanced AI features.&nbsp;<a href="#" style="color:#1B58E3;font-weight:600">Upgrade now →</a>
+</div>
+
+<div style="display:flex;height:calc(100vh - 40px);overflow:hidden">
   <div id="gb-sb"></div>
-  <div class="gb-main">
-    <div id="main-content" style="display:flex;flex-direction:column;flex:1;overflow:hidden"></div>
+  <div class="gb-main" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">
+    <div class="section-bar">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="section-title">AI Agents &amp; Bots</div>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" title="Watch overview"><circle cx="9" cy="9" r="8" stroke="#CBD5E1" stroke-width="1.5"/><polygon points="7,5.5 14,9 7,12.5" fill="#94A3B8"/></svg>
+      </div>
+    </div>
+    <div id="main-content" style="flex:1;overflow:auto;padding:0"></div>
   </div>
 </div>
 
-<!-- Delete confirm -->
 <div class="del-modal-bg" id="del-bg">
   <div class="del-modal">
     <div style="font-family:var(--fh);font-size:16px;font-weight:700;color:var(--n900);margin-bottom:8px">Delete agent?</div>
@@ -94,110 +65,281 @@
 'use strict';
 GB.sidebar('web');
 
-/* ── AGENT DATA ─────────────────────────────── */
 var LS_KEY = 'gb_agents';
-function loadAgents(){ return GB.ls.get(LS_KEY, []); }
+var SEED = [
+  {id:1,name:'E-Commerce - Lead Qualification',updatedAt:'Yesterday',createdAt:'Yesterday',sessions7d:0,status:'live'},
+  {id:2,name:'Maya Web Channel V2',updatedAt:'21 May',createdAt:'21 May',sessions7d:0,status:'live'},
+  {id:3,name:'Professional Services - Lead Qualification',updatedAt:'13 May',createdAt:'13 May',sessions7d:0,status:'draft'},
+  {id:4,name:'Real Estate - FAQ',updatedAt:'12 May',createdAt:'12 May',sessions7d:0,status:'draft'},
+  {id:5,name:'Finance - Lead Qualification',updatedAt:'7 May',createdAt:'7 May',sessions7d:0,status:'draft'},
+  {id:6,name:'Real Estate - Lead Qualification',updatedAt:'5 May',createdAt:'5 May',sessions7d:0,status:'draft'},
+  {id:7,name:'Professional Services - Lead Qualification (v2)',updatedAt:'27 Apr',createdAt:'27 Apr',sessions7d:0,status:'draft'},
+  {id:8,name:'QA Web Channel',updatedAt:'27 Apr',createdAt:'27 Apr',sessions7d:0,status:'draft'},
+  {id:9,name:'Travel - Post Booking Support',updatedAt:'27 Apr',createdAt:'27 Apr',sessions7d:0,status:'draft'},
+];
+
+function loadAgents() {
+  var stored = GB.ls.get(LS_KEY, null);
+  if (stored === null) { GB.ls.set(LS_KEY, SEED); return SEED.slice(); }  /* first visit only */
+  if (!Array.isArray(stored) || stored.length === 0) return [];           /* deliberately empty (after Reset) */
+  return stored.map(function(a) {
+    return Object.assign({updatedAt:'—',createdAt:'—',sessions7d:0,status:'draft'}, a);
+  });
+}
 function saveAgents(arr){ GB.ls.set(LS_KEY, arr); }
+
 var AGENTS = loadAgents();
 var pendingDel = null;
+var searchQ = '';
+var rowsPerPage = 20;
+var page = 1;
 
-/* ── RENDER ─────────────────────────────────── */
+function filtered() {
+  if (!searchQ) return AGENTS;
+  var q = searchQ.toLowerCase();
+  return AGENTS.filter(function(a){ return a.name.toLowerCase().indexOf(q) !== -1; });
+}
+
 function render() {
-  var wrap = document.getElementById('main-content');
   AGENTS = loadAgents();
+  var wrap = document.getElementById('main-content');
   if (AGENTS.length === 0) { renderEmpty(wrap); } else { renderList(wrap); }
 }
 
-function sectionBar(html) {
-  return '<div class="section-bar"><div class="section-title">Web Agents</div>'
-    + '<div class="section-actions">' + html + '</div></div>';
-}
-
-var BANNER_COLORS = ['color-1','color-2','color-3','color-4','color-5'];
-
 function renderList(wrap) {
-  var cards = AGENTS.map(function (a, idx) {
-    var initials = a.name.split(/[\s\u2014\-]+/).slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase().slice(0,2);
-    var isLive = a.status === 'live';
-    var bannerCls = BANNER_COLORS[idx % BANNER_COLORS.length];
-    var markBg = a.color || 'var(--gb)';
-    return '<div class="agent-card" onclick="window.location.href=\'GBWebWidget.html?mode=manage\'"  >'
-      + '<div class="agent-card-banner ' + bannerCls + '"  >'
-      + '<div class="agent-mark" style="background:' + markBg + '">' + initials + '</div>'
-      + '</div>'
-      + '<div class="agent-card-body">'
-      + '<div class="agent-name">' + GB.esc(a.name) + '</div>'
-      + '<div class="agent-use">' + GB.esc(a.industry) + ' · ' + GB.esc(a.useCase) + '</div>'
-      + '<div class="agent-stats">'
-      + '<div><span class="agent-stat-val">' + GB.fmt(a.sessions) + '</span><div class="agent-stat-lbl">Sessions</div></div>'
-      + '<div><span class="agent-stat-val">' + GB.fmt(a.contacts) + '</span><div class="agent-stat-lbl">Leads</div></div>'
-      + '<div><span class="agent-stat-val">' + GB.fmt(a.cta) + '</span><div class="agent-stat-lbl">CTA clicks</div></div>'
-      + '</div></div>'
-      + '<div class="agent-card-foot">'
-      + '<span class="status ' + (isLive ? 'live' : 'draft') + '"><span class="cdot"></span>' + (isLive ? 'Live' : 'Draft') + '</span>'
-      + '<div style="display:flex;gap:6px">'
-      + '<button class="btn btn-p btn-sm" onclick="event.stopPropagation();window.location.href=\'GBWebWidget.html?mode=manage\'">Manage →</button>'
-      + '<button class="btn btn-d btn-sm" onclick="event.stopPropagation();startDel(' + a.id + ')">Delete</button>'
-      + '</div></div></div>';
+  var rows = filtered();
+  var total = rows.length;
+  var totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
+  if (page > totalPages) page = totalPages;
+  var start = (page - 1) * rowsPerPage;
+  var pageRows = rows.slice(start, start + rowsPerPage);
+
+  var infoSvg = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="vertical-align:middle;margin-left:4px"><circle cx="6.5" cy="6.5" r="5.75" stroke="#CBD5E1" stroke-width="1.5"/><rect x="6" y="5.5" width="1" height="4" rx=".5" fill="#CBD5E1"/><circle cx="6.5" cy="4" r=".6" fill="#CBD5E1"/></svg>';
+  var globeSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#1B58E3" stroke-width="1.5"/><ellipse cx="8" cy="8" rx="2.8" ry="6.5" stroke="#1B58E3" stroke-width="1.5"/><line x1="1.5" y1="8" x2="14.5" y2="8" stroke="#1B58E3" stroke-width="1.5"/></svg>';
+
+  var trs = pageRows.map(function(a) {
+    return '<tr onclick="goManage(event,' + a.id + ')">'
+      + '<td><div class="agent-name-cell">' + GB.esc(a.name) + '</div></td>'
+      + '<td><span class="type-pill">Chat AI Agent</span></td>'
+      + '<td style="text-align:center">' + globeSvg + '</td>'
+      + '<td>' + GB.esc(a.updatedAt) + infoSvg + '</td>'
+      + '<td>' + GB.esc(a.createdAt) + infoSvg + '</td>'
+      + '<td>' + (a.sessions7d || 0) + '</td>'
+      + '<td onclick="event.stopPropagation()" style="text-align:center">'
+      + '<div class="act-menu">'
+      + '<button onclick="toggleMenu(event,\'m' + a.id + '\')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#94A3B8;padding:4px 8px;border-radius:6px;line-height:1">⋮</button>'
+      + '<div class="act-dropdown" id="m' + a.id + '">'
+      + '<button onclick="goManage(event,' + a.id + ')">Manage</button>'
+      + '<button class="danger" onclick="startDel(' + a.id + ')">Delete</button>'
+      + '</div></div></td>'
+      + '</tr>';
   }).join('');
 
-  wrap.innerHTML = sectionBar('<button class="btn btn-p btn-sm" onclick="window.location.href=\'gallabox-onboarding.html\'">+ Create agent</button>')
-    + '<div class="agents-area"><div class="agents-grid">' + cards + '</div></div>';
-}
+  var showing = total === 0 ? 'No results' : 'Showing ' + (start + 1) + ' – ' + Math.min(start + rowsPerPage, total) + ' of ' + total + ' items';
 
-function renderEmpty(wrap) {
-  wrap.innerHTML = sectionBar('<button class="btn btn-p btn-sm" onclick="window.location.href=\'gallabox-onboarding.html\'">+ Create agent</button>')
-    + '<div class="gb-empty">'
-    + '<svg viewBox="0 0 440 180" style="width:420px;max-width:100%;margin-bottom:24px" xmlns="http://www.w3.org/2000/svg">'
-    + '<rect x="20" y="20" width="120" height="80" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1.5"/>'
-    + '<rect x="20" y="20" width="120" height="22" rx="8" fill="#F1F5F9"/><rect x="20" y="32" width="120" height="10" fill="#F1F5F9"/>'
-    + '<circle cx="32" cy="31" r="3" fill="#FF5F57"/><circle cx="42" cy="31" r="3" fill="#FEBC2E"/><circle cx="52" cy="31" r="3" fill="#28C840"/>'
-    + '<rect x="28" y="50" width="60" height="5" rx="2.5" fill="#E2E8F0"/><rect x="28" y="60" width="45" height="4" rx="2" fill="#F1F5F9"/>'
-    + '<rect x="28" y="70" width="32" height="12" rx="4" fill="#1B58E3"/>'
-    + '<rect x="68" y="64" width="58" height="18" rx="9" fill="white" stroke="#E2E8F0" stroke-width="1"/>'
-    + '<circle cx="80" cy="73" r="6" fill="#1B58E3"/><text x="103" y="77" text-anchor="middle" fill="#334155" font-size="6.5" font-family="sans-serif">Chat ✦</text>'
-    + '<line x1="142" y1="60" x2="178" y2="60" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="4 3"/><polygon points="178,56 186,60 178,64" fill="#CBD5E1"/>'
-    + '<rect x="186" y="32" width="80" height="56" rx="10" fill="#EFF4FF" stroke="#BFDBFE" stroke-width="1.5"/>'
-    + '<rect x="194" y="40" width="64" height="6" rx="3" fill="#BFDBFE"/><rect x="194" y="51" width="48" height="4" rx="2" fill="#DBEAFE"/>'
-    + '<rect x="208" y="64" width="36" height="12" rx="4" fill="#1B58E3"/>'
-    + '<text x="226" y="73.5" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="sans-serif">Lead Context</text>'
-    + '<line x1="270" y1="60" x2="306" y2="60" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="4 3"/><polygon points="306,56 314,60 306,64" fill="#CBD5E1"/>'
-    + '<rect x="314" y="14" width="120" height="100" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1.5"/>'
-    + '<rect x="314" y="14" width="120" height="24" rx="8" fill="#F8FAFC"/><rect x="314" y="28" width="120" height="10" fill="#F8FAFC"/>'
-    + '<rect x="322" y="42" width="104" height="40" rx="6" fill="#EFF4FF" stroke="#BFDBFE" stroke-width="1"/>'
-    + '<text x="328" y="52" fill="#1B58E3" font-size="5.5" font-weight="700" font-family="sans-serif">LEAD CONTEXT · AGENT ONLY</text>'
-    + '<rect x="328" y="56" width="40" height="3.5" rx="1.5" fill="#BFDBFE"/><rect x="328" y="62" width="60" height="3.5" rx="1.5" fill="#BFDBFE"/>'
-    + '<text x="80" y="120" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="sans-serif">Your website</text>'
-    + '<text x="226" y="103" text-anchor="middle" fill="#1B58E3" font-size="9" font-weight="600" font-family="sans-serif">AI qualifies</text>'
-    + '<text x="374" y="122" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="sans-serif">Gallabox inbox</text>'
-    + '</svg>'
-    + '<div class="gb-empty-title">No web agents yet.</div>'
-    + '<div class="gb-empty-sub">Create a Web Agent to start capturing leads from your website and routing them to WhatsApp with full context.</div>'
-    + '<div style="display:flex;gap:10px;justify-content:center">'
-    + '<button class="btn btn-p" onclick="window.location.href=\'gallabox-onboarding.html\'">+ Create your first Web Agent</button>'
-    + '<button class="btn btn-s" onclick="window.open(\'gallabox-docs.html\',\'_blank\')">Read the guide</button>'
+  wrap.innerHTML = '<div style="padding:12px 24px;display:flex;align-items:center;gap:10;justify-content:space-between;border-bottom:1px solid #E2E8F0;flex-shrink:0">'
+    + '<input type="search" id="srch" placeholder="Search by agent name" value="' + GB.esc(searchQ) + '" style="width:260px;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;color:#374151;outline:none" oninput="onSearch(this.value)">'
+    + '<div style="display:flex;gap:8px;margin-left:auto">'
+    + '<button onclick="resetAgents()" title="Clear all agents to test empty state" style="padding:8px 14px;background:transparent;color:#94A3B8;border:1.5px dashed #E2E8F0;border-radius:8px;font-size:12px;cursor:pointer">Reset</button>'
+    + '<button onclick="window.location.href=\'gallabox-onboarding.html\'" style="padding:8px 18px;background:#1B58E3;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">+ Create Agent</button>'
     + '</div>'
-    + '<div class="features" style="margin-top:20px">'
-    + '<div class="fpill-feat"><span style="width:7px;height:7px;border-radius:50%;background:var(--gb);display:inline-block"></span>AI-powered qualification</div>'
-    + '<div class="fpill-feat"><span style="width:7px;height:7px;border-radius:50%;background:#25D366;display:inline-block"></span>WhatsApp handoff with context</div>'
-    + '<div class="fpill-feat"><span style="width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block"></span>Lead capture — free on all plans</div>'
+    + '</div>'
+    + '<div style="flex:1;overflow:auto">'
+    + '<table class="tbl-wrap"><thead><tr>'
+    + '<th style="min-width:280px">Agent Name</th>'
+    + '<th style="width:140px">Type</th>'
+    + '<th style="width:100px;text-align:center">Medium</th>'
+    + '<th style="width:130px">Last Updated</th>'
+    + '<th style="width:130px">Created On</th>'
+    + '<th style="width:160px">Last 7 Days Sessions</th>'
+    + '<th style="width:60px"></th>'
+    + '</tr></thead>'
+    + '<tbody>' + (trs || '<tr><td colspan="7" style="text-align:center;color:#94A3B8;padding:32px">No agents found</td></tr>') + '</tbody>'
+    + '</table></div>'
+    + '<div class="tbl-foot">'
+    + '<div style="display:flex;align-items:center;gap:8px">Show rows per page <select onchange="setRows(+this.value)">'
+    + [20,50,100].map(function(n){return '<option value="'+n+'"'+(n===rowsPerPage?' selected':'')+'>'+n+'</option>';}).join('')
+    + '</select></div>'
+    + '<div style="display:flex;align-items:center;gap:12px"><span>' + showing + '</span>'
+    + '<button class="pg-btn" onclick="setPage(' + (page-1) + ')"' + (page<=1?' disabled':'') + '>Previous</button>'
+    + '<button class="pg-btn" onclick="setPage(' + (page+1) + ')"' + (page>=totalPages?' disabled':'') + '>Next</button>'
     + '</div></div>';
 }
 
-/* ── DELETE FLOW ─────────────────────────────── */
+var _ART_PANEL = 'width:190px;background:#fff;border-radius:14px;border:1px solid #E2E8F0;box-shadow:0 2px 10px rgba(15,23,42,.07);overflow:hidden;flex-shrink:0';
+var _ART_LBL = 'padding:8px 12px;border-top:1px solid #F1F5F9;text-align:center;font-size:10.5px;font-weight:700;color:#64748B;letter-spacing:.05em;text-transform:uppercase';
+
+var _artWidget = '<div style="' + _ART_PANEL + '">'
+  /* browser chrome */
+  + '<div style="background:#F1F5F9;padding:8px 10px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #E2E8F0">'
+  + '<div style="width:7px;height:7px;border-radius:50%;background:#EF4444"></div>'
+  + '<div style="width:7px;height:7px;border-radius:50%;background:#F59E0B"></div>'
+  + '<div style="width:7px;height:7px;border-radius:50%;background:#22C55E"></div>'
+  + '<div style="flex:1;background:#fff;border-radius:4px;height:12px;margin-left:6px"></div>'
+  + '</div>'
+  /* page */
+  + '<div style="padding:12px;background:#FAFBFC;position:relative;height:116px">'
+  + '<div style="height:6px;background:#E2E8F0;border-radius:3px;width:78%;margin-bottom:5px"></div>'
+  + '<div style="height:6px;background:#E2E8F0;border-radius:3px;width:58%;margin-bottom:5px"></div>'
+  + '<div style="height:6px;background:#E2E8F0;border-radius:3px;width:68%"></div>'
+  /* nudge popup */
+  + '<div style="position:absolute;bottom:36px;right:8px;background:#fff;border-radius:10px;padding:7px 9px;box-shadow:0 4px 14px rgba(15,23,42,.14);border:1px solid #E2E8F0">'
+  + '<div style="font-size:10px;font-weight:600;color:#0F172A;margin-bottom:3px">&#x1F44B; Ready to help!</div>'
+  + '<div style="display:flex;align-items:center;gap:4px;background:#25D366;border-radius:5px;padding:3px 7px">'
+  + '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>'
+  + '<span style="font-size:9px;color:#fff;font-weight:600">Chat on WA</span>'
+  + '</div></div>'
+  /* widget btn */
+  + '<div style="position:absolute;bottom:8px;right:8px;width:26px;height:26px;border-radius:50%;background:#1B58E3;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(27,88,227,.4)">'
+  + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+  + '</div>'
+  + '</div>'
+  + '<div style="' + _ART_LBL + '">Web Agent</div>'
+  + '</div>';
+
+var _artArrow = '<div style="display:flex;align-items:center;justify-content:center;padding-bottom:28px;flex-shrink:0">'
+  + '<svg width="28" height="16" viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="20" y2="8" stroke="#CBD5E1" stroke-width="1.5"/><path d="M16 4l4 4-4 4" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>'
+  + '</div>';
+
+var _artChat = '<div style="' + _ART_PANEL + '">'
+  /* header */
+  + '<div style="background:#1B58E3;padding:9px 11px;display:flex;align-items:center;gap:7px">'
+  + '<div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+  + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
+  + '</div>'
+  + '<div><div style="font-size:11px;font-weight:700;color:#fff">Maya</div><div style="font-size:9px;color:rgba(255,255,255,.65)">Online</div></div>'
+  + '</div>'
+  /* messages */
+  + '<div style="padding:9px 9px 6px;background:#F8FAFC;display:flex;flex-direction:column;gap:6px;min-height:102px">'
+  + '<div style="display:flex;gap:5px;align-items:flex-end">'
+  + '<div style="width:18px;height:18px;border-radius:50%;background:#EFF4FF;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px">&#x1F916;</div>'
+  + '<div style="background:#fff;border-radius:8px 8px 8px 2px;padding:5px 8px;font-size:10px;color:#374151;box-shadow:0 1px 3px rgba(0,0,0,.06)">How can I help you?</div>'
+  + '</div>'
+  + '<div style="display:flex;justify-content:flex-end">'
+  + '<div style="background:#1B58E3;border-radius:8px 8px 2px 8px;padding:5px 8px;font-size:10px;color:#fff">Looking for pricing</div>'
+  + '</div>'
+  + '<div style="display:flex;gap:5px;align-items:flex-end">'
+  + '<div style="width:18px;height:18px;border-radius:50%;background:#EFF4FF;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px">&#x1F916;</div>'
+  + '<div style="background:#fff;border-radius:8px 8px 8px 2px;padding:5px 8px;font-size:10px;color:#374151;box-shadow:0 1px 3px rgba(0,0,0,.06)">Let me note your details.</div>'
+  + '</div>'
+  + '</div>'
+  /* done */
+  + '<div style="padding:6px 11px;border-top:1px solid #F1F5F9;display:flex;align-items:center;justify-content:center;gap:5px;background:#F0FDF4">'
+  + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+  + '<span style="font-size:10.5px;font-weight:600;color:#16A34A">Session complete</span>'
+  + '</div>'
+  + '<div style="' + _ART_LBL + '">Chat session</div>'
+  + '</div>';
+
+var _artLead = '<div style="' + _ART_PANEL + '">'
+  + '<div style="padding:11px 13px;border-bottom:1px solid #F1F5F9">'
+  + '<div style="font-size:12px;font-weight:700;color:#0F172A;margin-bottom:1px">Lead Summary</div>'
+  + '<div style="font-size:9.5px;color:#94A3B8">Auto-extracted</div>'
+  + '</div>'
+  + '<div style="padding:10px 13px;display:flex;flex-direction:column;gap:7px">'
+  + '<div style="display:flex;align-items:center;justify-content:space-between">'
+  + '<span style="font-size:10.5px;color:#64748B;font-weight:500">Name</span>'
+  + '<span style="font-size:10.5px;color:#0F172A;font-weight:600">Priya Sharma</span>'
+  + '</div>'
+  + '<div style="display:flex;align-items:center;justify-content:space-between">'
+  + '<span style="font-size:10.5px;color:#64748B;font-weight:500">Budget</span>'
+  + '<span style="font-size:10.5px;color:#0F172A;font-weight:600">&#8377;2&#8211;5L / mo</span>'
+  + '</div>'
+  + '<div style="display:flex;align-items:center;justify-content:space-between">'
+  + '<span style="font-size:10.5px;color:#64748B;font-weight:500">Intent</span>'
+  + '<span style="font-size:10px;font-weight:700;color:#16A34A;background:#F0FDF4;border-radius:4px;padding:2px 7px">High</span>'
+  + '</div>'
+  + '<div>'
+  + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">'
+  + '<span style="font-size:10px;color:#94A3B8">Lead score</span>'
+  + '<span style="font-size:10.5px;font-weight:700;color:#1B58E3">87 / 100</span>'
+  + '</div>'
+  + '<div style="height:4px;background:#EFF4FF;border-radius:4px;overflow:hidden">'
+  + '<div style="height:100%;width:87%;background:#1B58E3;border-radius:4px"></div>'
+  + '</div></div>'
+  + '</div>'
+  + '<div style="padding:7px 13px;border-top:1px solid #F1F5F9;display:flex;align-items:center;gap:5px;background:#F0FDF4">'
+  + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>'
+  + '<span style="font-size:10.5px;font-weight:600;color:#15803D">Sent to WhatsApp &#x2713;</span>'
+  + '</div>'
+  + '<div style="' + _ART_LBL + '">Lead summary</div>'
+  + '</div>';
+
+function renderEmpty(wrap) {
+  wrap.innerHTML = '<div style="padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E2E8F0">'
+    + '<input type="search" placeholder="Search by agent name" style="width:280px;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;color:#374151">'
+    + '<button onclick="window.location.href=\'gallabox-onboarding.html\'" style="padding:8px 18px;background:#1B58E3;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">+ Create Agent</button>'
+    + '</div>'
+    + '<div class="gb-empty">'
+    + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">'
+    + _artWidget + _artArrow + _artChat + _artArrow + _artLead
+    + '</div>'
+    + '<div class="gb-empty-title">Create your first Web Agent</div>'
+    + '<div class="gb-empty-sub">Capture leads from your website, run AI conversations, and route qualified contacts to WhatsApp — automatically.</div>'
+    + '<div style="display:flex;gap:10px;justify-content:center">'
+    + '<button class="btn btn-p" onclick="window.location.href=\'gallabox-onboarding.html\'">+ Create Web Agent</button>'
+    + '<button class="btn btn-s" onclick="window.open(\'gallabox-docs.html\',\'_blank\')">Read the guide</button>'
+    + '</div></div>';
+}
+
+function goManage(e, id) { e.stopPropagation(); window.location.href = 'GBWebWidget.html?mode=manage&id=' + id; }
+function onSearch(v) { searchQ = v; page = 1; render(); }
+function setRows(n) { rowsPerPage = n; page = 1; render(); }
+function setPage(n) { page = n; render(); }
+function toggleMenu(e, id) {
+  e.stopPropagation();
+  var allOpen = document.querySelectorAll('.act-dropdown.open');
+  allOpen.forEach(function(d){ d.classList.remove('open'); });
+  var m = document.getElementById(id);
+  if (m.classList.contains('open')) return;
+  var btn = e.currentTarget;
+  var r = btn.getBoundingClientRect();
+  m.style.top  = (r.bottom + 4) + 'px';
+  m.style.left = (r.right - 132) + 'px';
+  m.classList.add('open');
+}
+document.addEventListener('click', function(){ document.querySelectorAll('.act-dropdown.open').forEach(function(d){ d.classList.remove('open'); }); });
+
 function startDel(id) {
   pendingDel = id;
-  var a = AGENTS.find(function(x){return x.id===id;});
-  document.getElementById('del-body').textContent = 'This will permanently delete "' + (a ? a.name : 'this agent') + '" and all its configuration.';
+  var a = AGENTS.find(function(x){ return x.id === id; });
+  var name = a ? a.name : 'this agent';
+  var isLast = AGENTS.length <= 1;
+  var body = document.getElementById('del-body');
+  body.innerHTML = 'This will permanently remove <strong>' + GB.esc(name) + '</strong> and all its configuration.'
+    + '<div style="margin-top:10px;padding:9px 12px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:7px;font-size:12px;color:#92400E;line-height:1.55">'
+    + (isLast ? '⚠️ This is your last agent. The list will show empty after deletion.' : '')
+    + ' Visitor Analytics data attributed to this agent (sessions, chat rate) will no longer update.'
+    + '</div>';
   document.getElementById('del-bg').classList.add('vis');
 }
-function closeDel(){ pendingDel=null; document.getElementById('del-bg').classList.remove('vis'); }
+function closeDel(){ pendingDel = null; document.getElementById('del-bg').classList.remove('vis'); }
 function confirmDel(){
-  if(pendingDel===null)return;
-  AGENTS = AGENTS.filter(function(a){return a.id!==pendingDel;});
+  if (pendingDel === null) return;
+  var delAgent = AGENTS.find(function(a){ return a.id === pendingDel; });
+  AGENTS = AGENTS.filter(function(a){ return a.id !== pendingDel; });
   saveAgents(AGENTS);
+  // Remove the agent's URL from gb_channels if no other agent shares the same domain
+  if (delAgent && delAgent.url && delAgent.url !== '—') {
+    var domain = delAgent.url.replace(/^https?:\/\//,'').split('/')[0].split('?')[0];
+    var stillUsed = AGENTS.some(function(a){
+      return a.url && a.url.replace(/^https?:\/\//,'').split('/')[0].split('?')[0] === domain;
+    });
+    if (!stillUsed && domain) {
+      try {
+        var ch = JSON.parse(localStorage.getItem('gb_channels')||'[]');
+        ch = ch.filter(function(c){ return c !== domain; });
+        localStorage.setItem('gb_channels', JSON.stringify(ch));
+      } catch(e) {}
+    }
+  }
   closeDel(); render();
 }
+
+function resetAgents(){ GB.ls.set(LS_KEY, []); AGENTS=[]; render(); }
+
+document.getElementById('del-bg').addEventListener('click', function(e){ if(e.target===this) closeDel(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDel(); });
 
 render();
 </script>

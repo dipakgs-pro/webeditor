@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>AI Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',-apple-system,sans-serif;font-size:13px;color:#1E293B;background:#F8FAFC;padding:24px 32px}
+.card{background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;margin-bottom:14px;overflow:hidden;max-width:960px}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;user-select:none}
+.card-head-left{display:flex;align-items:center;gap:14px}
+.card-icon{width:40px;height:40px;border-radius:10px;background:#EFF4FF;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-title{font-size:14px;font-weight:700;color:#0F172A}
+.card-desc{font-size:12.5px;color:#64748B;margin-top:2px}
+.chevron{font-size:14px;color:#94A3B8;transition:transform .2s}
+.chevron.open{transform:rotate(180deg)}
+.card-body{display:none;padding:0 20px 20px;border-top:1px solid #F1F5F9}
+.card-body.open{display:block}
+.section-title{font-size:15px;font-weight:700;color:#0F172A;margin:16px 0 12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12.5px;font-weight:600;color:#374151}
+.form-group select,.form-group input[type=text]{border:1.5px solid #E2E8F0;border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;color:#1E293B;background:#fff;outline:none}
+.form-group select:disabled{background:#F8FAFC;color:#94A3B8;cursor:not-allowed}
+.help-note{font-size:11.5px;color:#94A3B8;margin-top:3px}
+.slider-row{margin-bottom:16px}
+.slider-row label{font-size:12.5px;font-weight:600;color:#374151;display:flex;align-items:center;gap:5px;margin-bottom:8px}
+.info-icon{width:14px;height:14px;border-radius:50%;border:1.5px solid #CBD5E1;color:#CBD5E1;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;cursor:default;line-height:1}
+.slider-val{display:inline-block;background:#EFF4FF;color:#1B58E3;font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;margin-left:auto}
+input[type=range]{width:100%;accent-color:#1B58E3;height:4px;cursor:pointer}
+.slider-note{font-size:11.5px;color:#94A3B8;margin-top:4px}
+.reset-btn{padding:7px 14px;background:transparent;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12.5px;font-weight:500;color:#374151;cursor:pointer;margin-top:4px}
+.reset-btn:hover{background:#F9FAFB}
+.toggle-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#E2E8F0;border-radius:20px;cursor:pointer;transition:.2s}
+.toggle input:checked+.toggle-slider{background:#1B58E3}
+.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle input:checked+.toggle-slider:before{transform:translateX(16px)}
+.toggle-label{font-size:13px;color:#374151;font-weight:500}
+</style>
+</head>
+<body>
+
+<!-- Card 1: AI Model & Document Intelligence -->
+<div class="card" id="card1">
+  <div class="card-head" onclick="toggleCard('card1')">
+    <div class="card-head-left">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="10" rx="2" stroke="#1B58E3" stroke-width="1.5"/><line x1="3" y1="8" x2="17" y2="8" stroke="#1B58E3" stroke-width="1.5"/><circle cx="6.5" cy="11.5" r="1" fill="#1B58E3"/></svg>
+      </div>
+      <div>
+        <div class="card-title">AI Model &amp; Document Intelligence</div>
+        <div class="card-desc">Configure your AI bot's core intelligence — choose provider, model, and fine-tune response behaviour.</div>
+      </div>
+    </div>
+    <span class="chevron open" id="chev1">▾</span>
+  </div>
+  <div class="card-body open" id="body1">
+    <div class="section-title">AI Model &amp; Behavior</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>AI Provider</label>
+        <select disabled><option>v2</option></select>
+        <span class="help-note">Provider is set during flow creation and cannot be changed.</span>
+      </div>
+      <div class="form-group">
+        <label>AI Model</label>
+        <select id="s-model" onchange="saveSetting()">
+          <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
+          <option value="gpt-4o">gpt-4o</option>
+          <option value="gpt-4-turbo">gpt-4-turbo</option>
+          <option value="claude-sonnet">claude-3-5-sonnet</option>
+        </select>
+      </div>
+    </div>
+    <div class="slider-row">
+      <label>
+        LLM Temperature
+        <span class="info-icon" title="Controls randomness. Lower = more deterministic.">i</span>
+        <span class="slider-val" id="temp-val">0.10</span>
+      </label>
+      <input type="range" id="s-temp" min="0" max="2" step="0.01" value="0.10" oninput="onTempInput(this.value)" onchange="saveSetting()">
+      <div class="slider-note">Lower value yields better function call results.</div>
+    </div>
+    <button class="reset-btn" onclick="resetDefaults()">Reset to Default</button>
+  </div>
+</div>
+
+<!-- Card 2: AI Processing Message -->
+<div class="card" id="card2">
+  <div class="card-head" onclick="toggleCard('card2')">
+    <div class="card-head-left">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#1B58E3" stroke-width="1.5"/><line x1="10" y1="6" x2="10" y2="10.5" stroke="#1B58E3" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="13" r=".8" fill="#1B58E3"/></svg>
+      </div>
+      <div>
+        <div class="card-title">AI Processing Message Settings</div>
+        <div class="card-desc">Enable and customize the message displayed when AI takes longer than 10 seconds to respond.</div>
+      </div>
+    </div>
+    <span class="chevron" id="chev2">▾</span>
+  </div>
+  <div class="card-body" id="body2">
+    <div style="margin-top:16px">
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="s-proc-enable" onchange="toggleProcMsg()"><span class="toggle-slider"></span></label>
+        <span class="toggle-label">Enable processing message</span>
+      </div>
+      <div id="proc-msg-wrap" style="display:none">
+        <div class="form-group">
+          <label>Processing message</label>
+          <textarea id="s-proc-msg" rows="3" style="border:1.5px solid #E2E8F0;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;outline:none;resize:vertical" oninput="saveSetting()" placeholder="e.g. Our AI is thinking, please wait a moment..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var LS_KEY = 'gb_agent_settings';
+var settings = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+var defaults = { model:'gpt-4o-mini', temp:0.10, procEnable:false, procMsg:'' };
+
+function init() {
+  var s = Object.assign({}, defaults, settings);
+  document.getElementById('s-model').value = s.model;
+  document.getElementById('s-temp').value = s.temp;
+  document.getElementById('temp-val').textContent = parseFloat(s.temp).toFixed(2);
+  document.getElementById('s-proc-enable').checked = s.procEnable;
+  document.getElementById('s-proc-msg').value = s.procMsg;
+  document.getElementById('proc-msg-wrap').style.display = s.procEnable ? '' : 'none';
+}
+
+function onTempInput(v) { document.getElementById('temp-val').textContent = parseFloat(v).toFixed(2); }
+
+function toggleProcMsg() {
+  var on = document.getElementById('s-proc-enable').checked;
+  document.getElementById('proc-msg-wrap').style.display = on ? '' : 'none';
+  saveSetting();
+}
+
+function saveSetting() {
+  var s = {
+    model: document.getElementById('s-model').value,
+    temp: parseFloat(document.getElementById('s-temp').value),
+    procEnable: document.getElementById('s-proc-enable').checked,
+    procMsg: document.getElementById('s-proc-msg').value
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(s));
+}
+
+function resetDefaults() {
+  document.getElementById('s-model').value = defaults.model;
+  document.getElementById('s-temp').value = defaults.temp;
+  document.getElementById('temp-val').textContent = parseFloat(defaults.temp).toFixed(2);
+  saveSetting();
+}
+
+function toggleCard(id) {
+  var num = id.replace('card','');
+  var body = document.getElementById('body'+num);
+  var chev = document.getElementById('chev'+num);
+  var open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+}
+
+init();
+</script>
+</body></html>

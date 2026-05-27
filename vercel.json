@@ -73,10 +73,6 @@
       "destination": "/gallabox-docs.html"
     },
     {
-      "source": "/lp",
-      "destination": "/gallabox-web-lp.html"
-    },
-    {
       "source": "/widget",
       "destination": "/GBWebWidget.html"
     }

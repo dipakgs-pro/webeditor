@@ -29,7 +29,7 @@ The **Docs system** (`gallabox-docs.html`) is a self-contained product guide tha
 - **localStorage** — all data persistence (campaigns, flows, agents)
 - **Google Fonts** — Sora (headings) + DM Sans (body) via CDN
 - **Inline SVG icons** — no icon library dependency
-- **Exception:** `gallabox-web-inbox.html` uses a **mini React 18 runtime** loaded via CDN script tag (UMD), no JSX, createElement API only
+- **Exception:** `gallabox-web-inbox.html` uses a **mini React 18 runtime** loaded via CDN script tag (UMD), no JSX, createElement API only. The inbox file is split into `_inbox-data.js` (tokens + data) → `_inbox-icons.js` (SVG icons) → `_inbox-components.js` (React components) → thin HTML shell (App + render, 77 lines)
 
 ---
 
@@ -62,7 +62,11 @@ Every file in the repo root. Add new files here as they are created.
 |---|---|---|
 | `gallabox-web-empty.html` | `/app`, `/web` | Web Agents list — shows agent cards or empty state. Persists agent data in `gb_agents` localStorage key. Entry point for this module. |
 | `gallabox-onboarding.html` | (linked from `/app`) | 4-step agent creation wizard: industry → use case → name/URL → review. Writes to `gb_agents`. |
-| `GBWebWidget.html` | `/widget` | Full agent builder. Three-panel layout: left config tabs (Instructions / Actions / Knowledge / Web Widget / Settings), centre preview, right Lead Context. Uses React 18 CDN. Does NOT use `GB.sidebar()` — has its own editor chrome. |
+| `GBWebWidget.html` | `/widget` | Full agent builder. **White top nav** (matches production). **No inline sidebar** — content full-width. Seven tabs ordered: Instructions / Actions / Knowledge / Web Widget / Settings (production-parity) + Dashboard / Channel Settings (roadmap — labeled "SOON"). New tab components: `InstructionsPanel` (Role, Goal, Instructions editors), `ActionsPanel` (Create New Action modal: API Call / Code Execution), `KnowledgePanel` (KB multi-select, up to 3), `AISettingsPanel` (AI Provider locked, AI Model dropdown, LLM Temperature slider). Channel Settings tab (`ChannelSettingsPanel`) hosts infusion config. Uses React 18 CDN. `DFLT_CFG` extended with `role`, `goal`, `agentInstructions`. |
+| `gallabox-web-channel-settings.html` | `/web/settings` | Channel Settings — standalone page (Web secondary nav). Web context infusion settings, WhatsApp channel connector, auto-open, nudge rules. |
+| `gallabox-web-visitor-analytics.html` | `/web/visitor-analytics` | Visitor Analytics — standalone page (Web secondary nav). Engagement funnel (visitor→chat), traffic source + attribution model, device/geo breakdown, top pages, visitor journey table, data-gap recommendations. Channel dropdown = website URL from onboarding. Mock data inline. |
+| `inbox-infusion.md` | — | Research + architecture doc for the two-event (create + resolve) chat infusion system. Covers contact mapping methods, 30-day window, tiered credit model, channel settings design, and phased build plan. |
+| `specs/` | — | **User story specs** for roadmap features not yet in production. Each file is a standalone brief for sprint planning. See §12 for index. |
 
 ### Outbound Campaigns Module
 
@@ -82,7 +86,10 @@ Every file in the repo root. Add new files here as they are created.
 
 | File | Route | Purpose |
 |---|---|---|
-| `gallabox-web-inbox.html` | `/inbox` | WhatsApp conversations inbox + Lead Context panel. React 18 CDN. Shows web sessions alongside conversation threads. |
+| `gallabox-web-inbox.html` | `/inbox` | **Thin shell (77 lines).** Loads four external scripts then runs App + render. All components, data, and icons are in the split JS files below. |
+| `_inbox-data.js` | — | Token colors, React shorthands (`useState`, `ce`, etc.), and all demo data: `SESSIONS_INIT`, `SESSION_DONE`, `SESSION_NEW_LIVE`, `CONTACT`, `WA_MSGS`, `WEB_MSGS`, `CONVS`, `VIEWS_DATA`. Sessions include `refExpired: true` for sessions older than 30 min (demo data for s2 Apr 30, s3 Apr 22). |
+| `_inbox-icons.js` | — | All SVG icon functions (`WaI`, `GlobeI`, `ClockI`, `MsgI`, etc.). Requires `ce` from `_inbox-data.js`. |
+| `_inbox-components.js` | — | All React components except `App`: `StatusPill`, `WebSessionCard`, `WebSessionGroup`, `WebChatOverlay`, `ConvRow`, `ConvList`, `ViewContactPanel`, `RightPanel`, `CreateEntry`, `GeneratingStub`, `LeadSummary`, `ResolveCard`, `ContextCard`, `ChatArea`, `LeftSidebar`, `DemoBar`. Key notes: `ContextCard` renders all sessions oldest-first (chronological thread order); `ResolveCard` expanded shows source URL + resolve details only (no create-section duplication); `CreateEntry` shows "Ref · expired" when `sess.infusion.refExpired === true`. |
 
 ---
 
@@ -149,6 +156,69 @@ All entry sources share one node type — `segment-enroll`. Selecting a source t
 ### Analytics Mock Data
 
 `ANA` in `_outbound-data.js` is a plain object keyed by campaign ID. Each entry has: `{enrolled, sent, delivered, read, replied, cold, bounced, ab}`. The `ab` key holds A/B test data when applicable. **This data is fully static** — it does not update when campaigns are edited.
+
+### Inbox Session Object Shape
+
+Used in `gallabox-web-inbox.html` to drive `CreateEntry` + `ResolveCard` rendering.
+
+```js
+{
+  id: 's1',
+  refCode: '100041',              // sequential integer; human-readable for voice handoff
+  status: 'Live' | 'Resolved' | 'Dropped',
+  sourceUrl: 'pricing.gallabox.com/villas',
+  startedAt: '7:27 AM',
+  endedAt:   '7:34 AM',
+  msgCount:  10,
+  durationMin: 7,
+  sessionId: '69f2b713…',
+  contactMapping: {
+    status: 'mapped',             // mapped | anonymous | pending | failed
+    contactId: 'c-8821',
+    method: 'cookie',             // cookie | phone_capture | business_inject | wa_ref | ip_fallback | manual
+    mappedAt: '7:27 AM',
+    retroactive: false
+  },
+  infusion: {
+    createInjectedAt: '7:27 AM',
+    resolveInjectedAt: '7:34 AM',
+    targetThreadId: 'wa-thread-9921',
+    method: 'auto_resolve',       // auto_resolve | wa_ref | manual | queued
+    withinWindow: true,           // session age < 30 days at injection time
+    refExpired: false             // true when fallback token (Ref:XXXXX) has expired (>30 min TTL)
+                                  // cookie/phone matching still works; only real-time token lookup unavailable
+                                  // CreateEntry chip shows "Ref · expired" when true
+  },
+  fields: {                       // populated on resolve
+    intentType: 'Villa Purchase',
+    budget: '50L – 1 Crore',
+    location: 'Chennai',
+    timeline: 'Within 3 months',
+    leadScore: 8,
+    summary: 'Ganesh is actively looking for a villa in Chennai…'
+  },
+  rawLog: [                       // available for LLM context extraction
+    { id:'w1', who:'in',  text:'villas',               time:'7:27 AM' },
+    { id:'w2', who:'bot', text:'What is your budget?', time:'7:27 AM' },
+    // …
+  ]
+}
+```
+
+### Channel Object Shape (Inbox — `webContextEnabled`)
+
+Inbox channels include a `webContextEnabled` flag for Layer B cross-channel injection control:
+
+```js
+{
+  id: 'wa1',
+  name: 'Maya - Dialog360',
+  phone: '+91 98765 43210',
+  webContextEnabled: true    // Layer B: whether this channel shows web context for contacts
+}
+```
+
+When `webContextEnabled = false`, `CreateEntry` and `ResolveCard` are hidden for all threads on this channel, replaced by a greyed note directing to Channel Settings.
 
 ---
 
@@ -460,6 +530,7 @@ Read rate and reply rate on campaign list rows use `delivered` as denominator, f
 | Template library | Hardcoded array `TEMPLATES` in outbound-builder.html |
 | Contact segments | Hardcoded array `SEGMENTS` in outbound-builder.html |
 | Inbox conversations | Static mock conversation data in gallabox-web-inbox.html |
+| Inbox AI summary (resolve card) | Mock `SESSION_DONE.fields` object — `generateSummary()` utility is specced in `inbox-infusion.md` Section 9 but not wired in prototype. Engineering wires it during story run. Supports LM Studio (`localhost:1234`, Qwen 9B) + Ollama (`localhost:11434`, Gemma 4B) + mock fallback. |
 | User authentication | None |
 | Multi-user / team features | None |
 | Pixel tracking | UI only — no actual tracking script |
@@ -510,6 +581,15 @@ These decisions were made during the prototype phase and should inform Linear sp
 - **Widget position and color** are configurable per agent; defaults are bottom-right, Gallabox blue
 - **AI qualification** happens in the widget before handoff — the agent collects name, use case, budget intent
 
+### Inbox Infusion (Chat Infusion System)
+- **Two-event model:** `session.create` (single-line chip at contact mapping moment) + `session.resolve` (compact expandable card when summary ready). Both immutable, append-only.
+- **Append-only:** No indexing cost. Two writes per session, ever. Thread scroll replaces "Previous sessions" accordion.
+- **30-day window:** Checked once at injection time (rolling from session start). No background cleanup jobs.
+- **Tiered credit model:** Basic resolve = free (bot-captured fields). AI summary = 1 credit per resolved session. No charge for dropped, failed, or anonymous sessions.
+- **`refCode` format:** Sequential integer (e.g., `100041`) — human-readable, voice-friendly.
+- **Cross-channel (two-layer model):** Layer A = web agent's primary infusion channel (configured in Channel Settings). Layer B = per-channel opt-in `webContextEnabled` flag on each WA/Instagram/Voice channel. Events generated once at contact level; distribution is a flag check with zero additional cost.
+- **`generateSummary()` spec:** Documented in `inbox-infusion.md` Section 9. Engineering accesses during story run. Prototype stays on mock data (shareable without local LLM server).
+
 ### Outbound Campaigns
 - **Objective sets the primary metric** displayed in analytics (engagement → read/reply; conversion → reply/click; awareness → delivery; re-engagement → any response)
 - **Priority 1 = highest priority** — counterintuitive but aligned with "queue position" mental model
@@ -527,3 +607,48 @@ These decisions were made during the prototype phase and should inform Linear sp
 - **Docs = PRD context repo** — every user-facing feature has a docs section with Why/What/How
 - **Deep-link pattern** (`?page=X&anchor=Y`) enables the product to link directly to relevant docs from `?` buttons
 - **`?` buttons are inline** in every screen where a user might have a question — they don't replace in-product explanations but augment them
+
+### Agent Builder Navigation (production parity)
+- **White top nav** — GBWebWidget.html uses a white (#fff) header bar (not dark). Production screenshots confirm agent builder has a white header.
+- **No inline sidebar in agent builder** — The builder is a full-width drill-down context. Global navigation is via the ← back button to the agent list, which uses the `_gb.js` sidebar.
+- **Tab ordering** — Production order: Instructions → Actions → Knowledge → Web Widget → Settings. Roadmap tabs (Dashboard, Channel Settings) appear after with a "SOON" badge so engineers can see the design intent without confusion.
+- **Default tab** — Opens to "Instructions" (not analytics/widget) to match production on-load behavior.
+
+---
+
+## 12. Specs Index (Roadmap Features)
+
+Features built in this prototype but **not yet in production**. Each file in `specs/` is a user story brief for sprint planning.
+
+| File | Feature | Status |
+|---|---|---|
+| `specs/US-001-agent-dashboard.md` | Agent Dashboard tab (session metrics, chat log, trends) | Prototype only |
+| `specs/US-002-channel-settings-infusion.md` | Chat Infusion / Channel Settings tab (web → WA context injection) | Prototype only |
+| `specs/US-003-widget-auto-open.md` | Auto-open, nudge rules, silent tracking | Prototype only |
+| `specs/US-004-web-agent-analytics.md` | Metric definitions for web agent events (session, lead, CTA, handoff) | Prototype only |
+| `specs/US-005-handoff-channel-selector.md` | Handoff UX: channel selector, display style, pre-fill, CTA vs handoff separation | Prototype only |
+| `specs/US-006-publish-email-modal.md` | Publish / email-share modal for the outbound builder | Prototype only |
+| `specs/US-007-web-channel-nav.md` | Web secondary nav (Channel Settings, Visitor Analytics) | Prototype only |
+| `specs/US-008-visitor-analytics.md` | Visitor Analytics page — funnel, attribution, device/geo, missing tracking events | Prototype only |
+| `specs/US-009-visitor-analytics-funnel.md` | Visitor Analytics conversion uplifts funnel — 6-step funnel, cycling uplift panel, per-step recommendations | Prototype only |
+
+**Prototype vs production gap — currently in prototype, missing in production:**
+1. Dashboard tab (read-only analytics inside agent builder)
+2. Channel Settings tab (Chat Infusion — web context → WhatsApp inbox)
+3. Auto-open widget behavior (delay, scroll depth, exit intent)
+4. Returning visitor detection (cookie-based suppression)
+5. Silent tracking (collect web session without showing widget)
+6. Nudge display rules (conditional nudge triggers)
+7. `?` help links in UI (docs deep-links from agent builder tabs)
+
+**Already in production (prototype matches):**
+- Instructions tab (Role, Goal, Instructions editors)
+- Actions tab (API Call, Code Execution modal)
+- Knowledge tab (Knowledge Base multi-select, up to 3 KBs)
+- Settings tab (AI Provider locked, AI Model dropdown, LLM Temperature slider)
+- Web Widget tab (Appearance, Messaging, Capture Contact, Handoff, Branding)
+- Basic handoff (Channel selector, Display style, Prompt text, Pre-fill message)
+
+**Coming in a future phase (architecture defined, not yet in prototype):**
+- Global settings panel accessible from inbox + agent builder (shared contact data, channel config)
+- Per-channel "Receive web context" toggle (Layer B cross-channel injection) in each channel's own settings page

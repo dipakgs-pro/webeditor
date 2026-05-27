@@ -1198,7 +1198,7 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function pct(n,d){ return d>0 ? Math.round(n/d*10)/10+'%' : '—'; }
 
 /* ── INIT ── */
-GB.sidebar('outbound');
+GB.sidebar('campaigns');
 buildAnaSelect();
 switchAnaCamp(activeCampId);
 initHeader();

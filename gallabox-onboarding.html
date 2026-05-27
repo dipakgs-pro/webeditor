@@ -246,6 +246,18 @@ function autoName(){
   return getIndLabel(S.industry)+' — '+getUcLabel(S.useCase);
 }
 function isValidUrl(v){return /^https?:\/\/.{3,}\..{2,}/.test((v||'').trim());}
+function syncChannelFromUrl(url){
+  var domain=(url||'').trim().replace(/^https?:\/\//,'').split('/')[0].split('?')[0];
+  if(!domain) return;
+  try{
+    var ch=JSON.parse(localStorage.getItem('gb_channels')||'[]');
+    if(!Array.isArray(ch)) ch=[];
+    if(!ch.some(function(c){return c===domain;})){
+      ch.push(domain);
+      localStorage.setItem('gb_channels',JSON.stringify(ch));
+    }
+  }catch(e){}
+}
 function isNameCustomised(){
   return S.name.trim()!=='' && S.name.trim()!==autoName().trim();
 }
@@ -465,6 +477,7 @@ function renderLoading(){
           created:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
         });
         localStorage.setItem(LS_KEY,JSON.stringify(existing));
+        syncChannelFromUrl(S.url);
       }
     } catch(e){}
     window.location.href='GBWebWidget.html?mode=new';
@@ -488,7 +501,7 @@ function renderLoading(){
 function renderDone(){
   var nm=S.name||autoName();
   // Save agent (fallback path)
-  try{var LS_KEY='gb_agents';var ex=JSON.parse(localStorage.getItem(LS_KEY)||'[]');var AV=['#1B58E3','#7C3AED','#059669','#D97706','#DC2626'];if(!ex.some(function(a){return a.name===nm&&a.url===(S.url||'—');})){ex.push({id:Date.now(),name:nm,industry:getIndLabel(S.industry),useCase:getUcLabel(S.useCase),url:S.url||'—',color:AV[ex.length%AV.length],status:'draft',sessions:0,contacts:0,cta:0,created:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})});localStorage.setItem(LS_KEY,JSON.stringify(ex));}}catch(e){}
+  try{var LS_KEY='gb_agents';var ex=JSON.parse(localStorage.getItem(LS_KEY)||'[]');var AV=['#1B58E3','#7C3AED','#059669','#D97706','#DC2626'];if(!ex.some(function(a){return a.name===nm&&a.url===(S.url||'—');})){ex.push({id:Date.now(),name:nm,industry:getIndLabel(S.industry),useCase:getUcLabel(S.useCase),url:S.url||'—',color:AV[ex.length%AV.length],status:'draft',sessions:0,contacts:0,cta:0,created:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})});localStorage.setItem(LS_KEY,JSON.stringify(ex));syncChannelFromUrl(S.url);}}catch(e){}
   var rows=[
     ['Agent name',nm],
     ['Industry',getIndLabel(S.industry)],

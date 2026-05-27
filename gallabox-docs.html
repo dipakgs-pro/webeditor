@@ -212,6 +212,15 @@ code{font-family:ui-monospace,monospace;font-size:11.5px;background:var(--n100);
     <button class="nav-btn" onclick="show('handoff',this)">
       <span class="nav-icon">🔀</span>WhatsApp handoff
     </button>
+    <button class="nav-btn" onclick="show('infusion',this)">
+      <span class="nav-icon">⚡</span>Chat infusion
+    </button>
+    <button class="nav-btn" onclick="show('channel-settings',this)">
+      <span class="nav-icon">🔗</span>Channel Settings
+    </button>
+    <button class="nav-btn" onclick="show('visitor-analytics',this)">
+      <span class="nav-icon">📈</span>Visitor Analytics
+    </button>
     <div class="sb-sect" style="margin-top:10px">Outbound Campaigns</div>
     <button class="nav-btn" onclick="show('ob-why',this)">
       <span class="nav-icon">💡</span>Why campaigns?
@@ -227,9 +236,6 @@ code{font-family:ui-monospace,monospace;font-size:11.5px;background:var(--n100);
     </button>
     <button class="nav-btn" onclick="show('ob-analytics',this)">
       <span class="nav-icon">📊</span>Reading analytics
-    </button>
-    <button class="nav-btn" onclick="window.open('gallabox-web-lp.html','_blank')" style="color:var(--err);">
-      <span class="nav-icon">🌐</span>Landing Page &#8599;
     </button>
     <div class="sb-sect" style="margin-top:10px">Developer &amp; MCP</div>
     <button class="nav-btn" onclick="show('mcp',this)">
@@ -684,6 +690,107 @@ code{font-family:ui-monospace,monospace;font-size:11.5px;background:var(--n100);
       </div>
       <div class="info-box ib-note">
         <span class="ib-label">Context transfer</span>The visitor always just sends "Hi" on WhatsApp. Gallabox adds the context internally — the agent or AI sees the Lead Context, the customer sees a personalised reply. The customer never sees the structured data.
+      </div>
+    </div>
+
+    <!-- CHAT INFUSION -->
+    <div class="page" id="page-infusion">
+      <div class="ph">
+        <div class="ph-title">Chat infusion</div>
+        <div class="ph-sub">How web session context flows into your WhatsApp threads — automatically, without any manual steps from your team.</div>
+      </div>
+
+      <div class="info-box ib-ok">
+        <span class="ok-label">What your agents see</span>When a web visitor moves to WhatsApp, two entries appear in the thread: a single-line chip when the session starts, and a context card when it ends. Your team never has to ask "what were you looking at?" — the answer is already there.
+      </div>
+
+      <h3 id="chat-infusion">How infusion works</h3>
+      <div class="concept-grid">
+        <div class="concept">
+          <div class="c-icon">🌐</div>
+          <div class="c-title">Session started entry</div>
+          <div class="c-body">A single line in the thread marks when the web session was created and the contact was identified. Shows the source URL and how the contact was matched (cookie, phone number, or fallback token).</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">📋</div>
+          <div class="c-title">Session summary entry</div>
+          <div class="c-body">When the session ends (visitor clicks "Continue on WhatsApp" or session times out), a context card is injected. Contains all bot-captured fields, optionally an AI-generated summary and lead score.</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">🤖</div>
+          <div class="c-title">AI context (optional)</div>
+          <div class="c-body">With AI summary enabled, the context card includes: intent type, lead score (0–10), and a natural-language summary written by the LLM. Uses 1 AI credit per resolved session.</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">📅</div>
+          <div class="c-title">Multiple sessions</div>
+          <div class="c-body">If a contact has visited before, all their sessions appear chronologically in the thread. Each has its own context entry. The lead score trend arrow (↑ / ↓) shows whether intent has increased across sessions.</div>
+        </div>
+      </div>
+
+      <h3>Setting it up</h3>
+      <p>Chat infusion is configured per Web Agent in <span class="ui-path">Web Agents → [your agent] → Channel Settings</span>. Turn on <strong>Show web context in inbox</strong>, choose the WhatsApp channel your team works in, and save. No code needed.</p>
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">Open <span class="ui-path">Web Agents → [your agent] → Channel Settings</span>.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">Toggle <strong>Show web context in inbox</strong> to ON.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">Select which WhatsApp channel your team uses (e.g. <em>Maya - Dialog360</em>). Context from this agent flows to that channel's inbox.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">Optionally enable <strong>Add AI-generated summary</strong> for richer context. Uses 1 AI credit per session resolved successfully.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content">Click <strong>Save changes</strong>. New sessions from this agent will now inject context into matching threads automatically.</div>
+        </div>
+      </div>
+
+      <h3 id="ref-expiry">Session matching and the 30-minute window</h3>
+      <p>When a visitor clicks "Continue on WhatsApp," Gallabox needs to link their web session to the new WhatsApp conversation. It uses two methods in sequence:</p>
+      <div class="concept-grid">
+        <div class="concept">
+          <div class="c-icon">🍪</div>
+          <div class="c-title">Primary — cookie or phone</div>
+          <div class="c-body">If the visitor used the same browser (cookie match) or shared their phone number during the web session, the link is instant and permanent. This is the default path for most visitors.</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">🔑</div>
+          <div class="c-title">Fallback — session token</div>
+          <div class="c-body">A short-lived token is embedded in the WhatsApp handoff message (invisible to the customer). If cookie/phone matching fails, this token is used to find the session. <strong>The token expires after 30 minutes.</strong></div>
+        </div>
+      </div>
+
+      <div class="info-box ib-warn" style="margin-top:0">
+        <span class="ib-label">Token expiry</span>The fallback session token is stored in a temporary cache. If the visitor opens WhatsApp more than 30 minutes after clicking the button, the token lookup returns <strong>expired</strong> — shown in the thread entry as <em>Ref · expired</em>. The session record is not deleted; only the real-time matching lookup is unavailable. Cookie-based matching still works even after expiry.
+      </div>
+
+      <div class="info-box ib-note">
+        <span class="ib-label">Reducing expired matches</span>Enable <strong>Fallback session matching</strong> in Channel Settings (on by default) and ensure your WhatsApp handoff template is configured. Most mobile users open WhatsApp within seconds of clicking — the 30-minute window covers nearly all real-world sessions.
+      </div>
+
+      <h3>What agents see per session status</h3>
+      <table class="dt" style="margin-top:8px">
+        <thead><tr><th>Session state</th><th>Thread entry</th><th>Ref display</th></tr></thead>
+        <tbody>
+          <tr><td>Live (visitor still on site)</td><td>Session started chip — no context card yet</td><td>Ref shown (active)</td></tr>
+          <tr><td>Resolved (within 30 min)</td><td>Session started + context card injected</td><td>Ref shown (active)</td></tr>
+          <tr><td>Resolved (after 30 min)</td><td>Session started + context card injected</td><td>Ref · expired (token gone, data intact)</td></tr>
+          <tr><td>Dropped (no handoff)</td><td>Session started chip only — grey, no context card</td><td>Ref · expired</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Which channels see the context?</h3>
+      <p>Context from a Web Agent flows to one primary channel — the one you selected in Channel Settings. Other WhatsApp channels in your account do not receive it by default. This keeps your agent-specific context from cluttering unrelated conversations.</p>
+      <div class="info-box ib-note">
+        <span class="ib-label">Coming soon</span>Per-channel opt-in for web context is on the roadmap. Each channel will have a "Receive web context for this channel" toggle in its own settings — so your Support team can choose to see context even when the primary channel is Sales.
       </div>
     </div>
 
@@ -2449,6 +2556,255 @@ Note: nested conditions require field-value comparison (P1 gap). Today, use sing
       <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
         <a href="gallabox-outbound.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:var(--gb);color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;">Open Campaign Builder &#8599;</a>
         <a href="gallabox-docs.html?page=mcp" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:var(--n100);color:var(--n700);border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;border:1.5px solid var(--n200)">API &amp; MCP Reference &#8599;</a>
+      </div>
+    </div>
+
+    <!-- PAGE: channel-settings -->
+    <div class="page" id="page-channel-settings">
+      <div class="ph">
+        <div class="ph-title">Channel Settings</div>
+        <div class="ph-sub">Configure how your web agent connects to your WhatsApp channel and how visitor context flows into your inbox.</div>
+      </div>
+
+      <div class="location">
+        <div class="location-label">Where to find it</div>
+        <div class="location-path">Left sidebar → <span>Web Agents</span> → select an agent → secondary nav → <span>Channel Settings</span></div>
+      </div>
+
+      <h3 id="cs-web-context">Web Context in Inbox</h3>
+      <p>When a web visitor moves to WhatsApp, the inbox thread for that contact automatically receives a context card — a summary of what happened in the web session. This card is visible only to your team.</p>
+      <p>The <strong>Show web context in inbox</strong> master toggle must be ON for any of the following settings to take effect.</p>
+
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Session started entry</strong> — Inserts a single-line chip in the WhatsApp thread the moment the web session is created and the contact is identified. Shows the source URL and how the contact was matched.
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Session summary</strong> — When the session ends (visitor clicks "Continue on WhatsApp" or the session times out), a structured context card is injected into the thread. Contains all bot-captured fields and conversation key points.
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>AI-generated summary</strong> — With this toggle ON, the context card also includes an LLM-written natural-language summary: intent classification, lead score (0–10), and a brief summary of what the visitor said. <strong>Uses 1 AI credit per resolved session.</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box ib-note">
+        <span class="ib-label">Credit cost</span>The AI summary toggle adds 1 AI credit per session that is resolved successfully (i.e. the visitor continued to WhatsApp and a session summary was injected). Sessions that end without a handoff do not consume credits.
+      </div>
+
+      <h3 id="cs-wa-channel">Connected WhatsApp Channel</h3>
+      <p>Choose which WhatsApp channel receives the context injection from this web agent. Only contacts who message on the selected channel will see the context card in their thread.</p>
+      <p>The dropdown lists all WhatsApp channels connected to your Gallabox workspace. Select the channel your team uses to handle inbound leads (e.g. <em>Maya - Dialog360</em>).</p>
+      <div class="info-box ib-warn">
+        <span class="warn-label">One-to-one binding</span>Context from this agent flows to one primary channel only. Other channels in your workspace will not receive context cards from this agent unless they are configured in their own channel settings.
+      </div>
+
+      <h3 id="cs-contact-matching">Contact Matching</h3>
+      <p>When a visitor clicks "Continue on WhatsApp," Gallabox must link their web session to the resulting WhatsApp conversation. It uses two methods:</p>
+      <div class="concept-grid">
+        <div class="concept">
+          <div class="c-icon">🍪</div>
+          <div class="c-title">Cookie-based matching</div>
+          <div class="c-body">If the visitor's browser has a Gallabox cookie (set on a previous visit) or they shared a phone number or email during the web session, the match is instant and permanent. This is the primary path for most visitors. Enable <strong>Collect contact identifiers</strong> to request phone and email during the session.</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">🔑</div>
+          <div class="c-title">Fallback session matching</div>
+          <div class="c-body">A short-lived session token is embedded invisibly in the WhatsApp handoff message. If cookie or phone matching fails, Gallabox uses this token to find the session. The token expires after 30 minutes — after that, only cookie-based matching still works. Enable <strong>Fallback session matching</strong> to keep this active (it is on by default).</div>
+        </div>
+      </div>
+
+      <h3 id="cs-auto-resolve">Auto-resolve Web Session</h3>
+      <p>When this toggle is ON, the web session is automatically marked as resolved the moment the visitor continues to WhatsApp. The session summary context card is injected immediately.</p>
+      <p>When OFF, the session stays open (e.g. Live badge in the inbox) until it times out or the visitor explicitly closes the widget. Use OFF if your team prefers to see the live-session indicator while the visitor may still be on the site.</p>
+
+      <h3 id="cs-channels-lifecycle">Adding and removing channels</h3>
+      <p>Channels are not created manually — each channel corresponds exactly to one web agent. When you create a web agent and enter a website URL, a channel record is created automatically for that URL.</p>
+      <div class="concept-grid">
+        <div class="concept">
+          <div class="c-icon">➕</div>
+          <div class="c-title">Creating a channel</div>
+          <div class="c-body">Create a new Web Agent (sidebar → Web → + New Agent) and enter the website URL in step 3. The channel appears immediately in the Channel Settings dropdown and in Visitor Analytics.</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">🗑️</div>
+          <div class="c-title">Removing a channel</div>
+          <div class="c-body">Delete the web agent that owns the channel. The channel entry is removed from Channel Settings and Visitor Analytics. There is no standalone "delete channel" action — channels follow their agent.</div>
+        </div>
+      </div>
+      <div class="info-box ib-note">
+        <span class="ib-label">One URL, one channel</span>Each website URL maps to exactly one channel. If you need separate analytics or settings for different sections of your site, create separate agents with distinct URLs (e.g. <code>example.com/pricing</code> vs <code>example.com/blog</code>).
+      </div>
+
+      <h3 id="cs-delete">Removing channel settings</h3>
+      <p>The <strong>Remove</strong> button in the section bar deletes all stored settings for the currently selected channel — connected WA channel, matching preferences, context toggles, and any saved state. This action is permanent.</p>
+      <p>The Remove button only appears when a channel is selected. If no channels are configured (e.g. all agents have been deleted), the section shows an empty state instead.</p>
+    </div>
+
+    <!-- PAGE: visitor-analytics -->
+    <div class="page" id="page-visitor-analytics">
+      <div class="ph">
+        <div class="ph-title">Visitor Analytics</div>
+        <div class="ph-sub">Understand how visitors find, interact with, and convert through your web widget.</div>
+      </div>
+
+      <div class="location">
+        <div class="location-label">Where to find it</div>
+        <div class="location-path">Left sidebar → <span>Web Agents</span> → secondary nav → <span>Visitor Analytics</span></div>
+      </div>
+
+      <h3 id="va-overview">Overview</h3>
+      <p>Visitor Analytics tracks all browser sessions on any website where the Gallabox widget is installed. It covers visitors regardless of whether they opened the widget or started a conversation — giving you a complete picture of your website audience, not just the leads who converted.</p>
+      <p>Use it to understand where visitors drop off, which pages drive the most widget engagement, and which traffic sources produce the highest chat rates.</p>
+
+      <h3 id="va-kpis">KPIs</h3>
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content"><strong>Total Visitors</strong> — Every unique browser session recorded on your site. One visitor opening your site in three tabs across two days counts as three total visitor events.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content"><strong>Unique Visitors</strong> — Sessions deduplicated by cookie. One cookie = one unique visitor, regardless of how many sessions they had in the period.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content"><strong>Chat Sessions</strong> — Sessions where the visitor sent at least one message in the widget. This is your primary conversion point.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content"><strong>Visitor→Chat Rate</strong> — Chat Sessions ÷ Total Visitors. The headline engagement metric for your widget. Industry average for chat widgets is 2–5%; a well-configured Gallabox widget typically achieves 6–12%.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content"><strong>New Visitors</strong> — Visitors whose cookie has never been seen before this period. Measures top-of-funnel reach.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">6</div>
+          <div class="step-content"><strong>Return Visitors</strong> — Visitors with a second or later session (same cookie seen before). Return visitors typically have a significantly higher chat rate than new visitors — they came back because they're interested.</div>
+        </div>
+      </div>
+
+      <h3 id="funnel">Engagement Funnel</h3>
+      <p>The funnel tracks six steps from raw visit to qualified lead. Each step is a subset of the one above. Gaps between steps reveal where you are losing potential conversations.</p>
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content"><strong>Visitors</strong> — Total browser sessions. The top of the funnel.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content"><strong>Widget Visible</strong> — Sessions where the widget launcher rendered on screen. A gap here means your install script is not firing on some pages — check CSP rules and page exclusion settings.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content"><strong>Widget Opened</strong> — Sessions where the visitor expanded the widget (user click or auto-open). A large gap between Widget Visible and Widget Opened means your nudge is not compelling enough, or auto-open is not enabled on high-intent pages.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content"><strong>Chat Started</strong> — Sessions where the visitor sent their first message. A gap here means visitors are opening the widget but not engaging. Review your opening message and quick reply options.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content"><strong>WA Handoff</strong> — Sessions where the visitor tapped "Continue on WhatsApp." The handoff is your primary conversion event. A gap here may indicate your WhatsApp entry point style (header / above quick replies / compose bar) is not prominent enough.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">6</div>
+          <div class="step-content"><strong>Contact Captured</strong> — Sessions where a Gallabox contact record was created (lead form submitted or cookie-matched to an existing contact). This is your qualified lead count.</div>
+        </div>
+      </div>
+
+      <h3 id="va-uplifts">Conversion Uplifts</h3>
+      <p>The uplift panel below the funnel cycles through four actionable improvement areas. Each corresponds to a gap in the funnel.</p>
+      <div class="concept-grid">
+        <div class="concept">
+          <div class="c-icon">👀</div>
+          <div class="c-title">Widget Visible → Opened</div>
+          <div class="c-body">Low open rate: try a more specific nudge text, or enable auto-open on your pricing or demo pages. Nudge text that names the visitor's problem ("Questions about pricing?") outperforms generic prompts ("Chat with us").</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">💬</div>
+          <div class="c-title">Widget Opened → Chat Started</div>
+          <div class="c-body">Visitors are opening but not typing: review your opening message and quick replies. The opening message should be specific to the page intent, and quick replies should match the visitor's most likely first question.</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">📱</div>
+          <div class="c-title">Chat Started → WA Handoff</div>
+          <div class="c-body">Visitors are chatting but not moving to WhatsApp: make the WhatsApp entry point more visible (use "Above quick replies" entry style) or add a fixed action button in the compose bar. Ensure your agent header shows a real name and avatar — trust reduces drop-off.</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">🎯</div>
+          <div class="c-title">WA Handoff → Contact Captured</div>
+          <div class="c-body">Handoffs not creating contacts: ensure the lead capture form is enabled and set to trigger "After 1 reply." Consider enabling force capture (contact form shown before WhatsApp button is revealed) for high-value pages.</div>
+        </div>
+      </div>
+      <div class="info-box ib-note">
+        <span class="ib-label">Roadmap</span>Future widget customisation features (A/B testing nudge text, page-specific auto-open rules, custom handoff messages) will also surface as uplift suggestions here once they are available.
+      </div>
+
+      <h3 id="va-traffic">Traffic Sources</h3>
+      <p>The Traffic Sources section shows which channels are driving visitors to your site and how each source converts through the funnel. Sources are grouped as: Direct, Organic Search, Paid Search, Social, Referral, and Email.</p>
+      <p>Three attribution models are available:</p>
+      <div class="concept-grid">
+        <div class="concept">
+          <div class="c-icon">🥇</div>
+          <div class="c-title">First touch</div>
+          <div class="c-body">Credits the channel that brought the visitor to your site for the very first time (their first-ever browser session). Best for measuring which channels build brand awareness.</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">🔄</div>
+          <div class="c-title">Last non-direct</div>
+          <div class="c-body">Credits the most recent non-direct channel before the converting session. Ignores direct visits that follow a prior referral. Best for measuring which channels close intent.</div>
+        </div>
+        <div class="concept">
+          <div class="c-icon">⚖️</div>
+          <div class="c-title">Linear</div>
+          <div class="c-body">Distributes credit equally across every touchpoint in the visitor's journey. Useful when multiple channels contributed meaningfully before the visitor converted.</div>
+        </div>
+      </div>
+
+      <h3 id="va-breakdowns">Device, Geography, Top Pages</h3>
+      <p><strong>Device</strong> — Splits sessions into Desktop, Mobile, and Tablet. Mobile visitors typically have lower widget open rates but higher intent once they do open — optimise your widget's mobile layout if mobile is your primary traffic source.</p>
+      <p><strong>Geography</strong> — Country-level breakdown of visitor origins. Useful for deciding which languages to configure in your agent's instructions.</p>
+      <p><strong>Top Pages</strong> — The pages on your site that generated the most widget sessions. High-traffic pages with low chat rates are your biggest optimisation opportunities.</p>
+
+      <h3 id="va-journeys">Visitor Journeys</h3>
+      <p>The Visitor Journeys table shows the individual session trail for each visitor: every page they visited, in order, with timestamps and session events (widget opened, chat started, WA handoff). Use it to understand the paths that lead to conversion vs the paths that lead to drop-off.</p>
+      <p>Click any row to expand the full page-by-page trail for that session. Rows are sortable by session duration, pages visited, and outcome.</p>
+
+      <h3 id="va-improve">Improve Analytics</h3>
+      <p>The <strong>Improve Analytics</strong> card lists the three JavaScript events that unlock deeper funnel data. Without these events, some funnel steps fall back to estimated values.</p>
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content"><strong><code>widget_visible</code></strong> — Fire this event when your page layout makes the widget launcher visible to the visitor (e.g. after a cookie banner dismissal). Without it, Widget Visible is inferred from script load, which may overcount on pages where the launcher is conditionally hidden.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content"><strong><code>open_type</code></strong> — Pass <code>"user"</code> or <code>"auto"</code> when the widget opens. This splits the Widget Opened count into User-opened and Auto-opened in the funnel, making it easier to evaluate your auto-open configuration separately from organic interest.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content"><strong><code>session_context</code></strong> — Pass structured data (page category, product ID, campaign source) at session start. This data populates the context card in the inbox and makes the Traffic Source attribution more accurate for custom channels.</div>
+        </div>
+      </div>
+      <div class="info-box ib-note">
+        <span class="ib-label">Implementation</span>These events are fired via the Gallabox widget JS API: <code>window.GallaboxWidget.track('event_name', { key: value })</code>. See the Settings tab → Copy script section for the full API reference.
+      </div>
+
+      <h3 id="va-empty">Empty state</h3>
+      <p>If no web channels are configured in your workspace, Visitor Analytics shows an empty state with no data. This happens when all web agents have been deleted (removing their associated channels) or when you have never created a web agent.</p>
+      <p>To start collecting visitor data, create a web agent and deploy its install script. Visitor data begins appearing within minutes of the first page load with the script present.</p>
+      <div class="info-box ib-note">
+        <span class="ib-label">Go to Channel Settings</span>If you have agents but see no channel in the dropdown, check <span class="ui-path">Web → Channel Settings</span> — the channel may need to be associated with a connected WhatsApp channel before analytics data is attributed correctly.
       </div>
     </div>
 
