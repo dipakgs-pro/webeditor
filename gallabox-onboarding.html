@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Web Agent — Gallabox</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gb:#1B58E3;--gb-d:#1441C4;--gb-s:#EFF4FF;--gb-b:#BFDBFE;
+  --ok:#16A34A;--ok-s:#F0FDF4;
+  --warn:#D97706;--warn-s:#FFFBEB;
+  --err:#DC2626;--err-s:#FEF2F2;
+  --n50:#F8FAFC;--n100:#F1F5F9;--n200:#E2E8F0;--n300:#CBD5E1;
+  --n400:#94A3B8;--n500:#64748B;--n700:#334155;--n900:#0F172A;
+  --fh:'Sora',sans-serif;--fb:'DM Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--fb);background:#fff;color:var(--n900);
+  -webkit-font-smoothing:antialiased;overflow:hidden}
+button{cursor:pointer;font-family:var(--fb)}
+input,textarea{font-family:var(--fb)}
+
+.shell{display:flex;flex-direction:column;height:100vh}
+.topbar{height:52px;border-bottom:1px solid var(--n200);display:flex;
+  align-items:center;justify-content:space-between;padding:0 24px;
+  flex-shrink:0;background:#fff}
+.logo{font-family:var(--fh);font-size:16px;font-weight:800;color:var(--gb);
+  letter-spacing:-.03em;display:flex;align-items:center;gap:8px}
+.logo-box{width:28px;height:28px;background:linear-gradient(135deg,#2E6FFB 0%,var(--gb) 100%);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;color:#fff;
+  box-shadow:0 3px 8px rgba(27,88,227,.35)}
+.topbar-title{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--n700)}
+.close{width:30px;height:30px;border-radius:8px;border:1px solid var(--n200);
+  background:none;color:var(--n400);font-size:18px;
+  display:flex;align-items:center;justify-content:center;transition:all .15s}
+.close:hover{background:var(--n50);color:var(--n700)}
+
+.dots-row{display:flex;justify-content:center;gap:5px;padding:12px 0;flex-shrink:0}
+.dot{height:4px;border-radius:2px;transition:all .32s ease;display:inline-block}
+
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden}
+.inner{display:flex;flex-direction:column;align-items:center;
+  padding:28px 24px 80px;min-height:100%}
+
+.step-tag{font-size:11.5px;font-weight:700;color:var(--gb);letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:8px;text-align:center}
+.step-h{font-family:var(--fh);font-size:20px;font-weight:700;color:var(--n900);
+  letter-spacing:-.025em;margin-bottom:24px;text-align:center}
+
+/* Cards */
+.grid{display:grid;gap:10px;width:100%;max-width:700px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr);max-width:468px}
+.card{border:1.5px solid var(--n200);border-radius:12px;padding:18px 20px;
+  background:#fff;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s;
+  text-align:left;display:flex;flex-direction:column;gap:6px;position:relative;
+  box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.card:hover{border-color:var(--gb);background:var(--gb-s);
+  box-shadow:0 4px 12px rgba(27,88,227,.08)}
+.card.sel{border-color:var(--gb);background:var(--gb-s);
+  box-shadow:0 0 0 3px rgba(27,88,227,.1),0 4px 12px rgba(27,88,227,.08)}
+.card-check{position:absolute;top:10px;right:10px;width:17px;height:17px;
+  border-radius:50%;background:var(--gb);color:#fff;font-size:9px;font-weight:800;
+  display:flex;align-items:center;justify-content:center}
+.card-icon{font-size:20px;line-height:1}
+.card-name{font-size:13px;font-weight:700;color:var(--n900)}
+.card-desc{font-size:12px;color:var(--n500);line-height:1.5}
+.other-row{border:1.5px solid var(--n200);border-radius:11px;padding:12px 18px;
+  width:100%;max-width:700px;display:flex;align-items:center;justify-content:space-between;
+  background:#fff;cursor:pointer;transition:all .15s;margin-top:2px}
+.other-row:hover,.other-row.sel{border-color:var(--gb);background:var(--gb-s)}
+.other-label{font-size:13px;color:var(--n500);font-weight:500}
+.other-expand{display:none;width:100%;max-width:700px;margin-top:6px}
+.other-expand.vis{display:block}
+.other-input{width:100%;padding:10px 13px;border:1.5px solid var(--gb);
+  border-radius:8px;font-size:13.5px;color:var(--n900);outline:none;
+  background:var(--gb-s);font-family:var(--fb)}
+
+/* Form */
+.form-wrap{width:100%;max-width:520px}
+.fld{margin-bottom:20px}
+.flabel{font-size:12px;font-weight:700;color:var(--n700);margin-bottom:6px}
+.fsub{font-size:11.5px;color:var(--n400);margin-top:5px;line-height:1.5}
+.finput{width:100%;padding:10px 13px;border:1.5px solid var(--n200);border-radius:8px;
+  font-size:14px;color:var(--n900);outline:none;transition:border-color .15s;
+  background:#fff;font-family:var(--fb)}
+.finput:focus{border-color:var(--gb);box-shadow:0 0 0 3px rgba(27,88,227,.1)}
+.finput.err{border-color:var(--err);background:var(--err-s)}
+.ferr{font-size:11.5px;color:var(--err);margin-top:5px;display:flex;align-items:center;gap:4px}
+.fname-hint{font-size:11.5px;color:var(--warn);margin-top:5px;
+  display:flex;align-items:center;gap:5px;padding:6px 10px;
+  background:var(--warn-s);border-radius:6px;border:1px solid #FDE68A}
+.medium-pill{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;
+  border:1.5px solid var(--gb);border-radius:8px;background:var(--gb-s);
+  font-size:13px;font-weight:600;color:var(--gb)}
+.med-note{font-size:11.5px;color:var(--n400);margin-top:5px}
+
+/* Loading — looping stages, no fake progress */
+.load-outer{display:flex;flex-direction:column;align-items:center;
+  text-align:center;max-width:440px;width:100%;padding:20px 0}
+.agent-creating-label{font-size:12px;font-weight:700;color:var(--gb);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px}
+/* Rotating stage card */
+.stage-card{background:linear-gradient(160deg,var(--n50) 0%,rgba(239,244,255,.5) 100%);
+  border:1px solid var(--n200);border-radius:16px;
+  padding:28px 24px;width:100%;margin-bottom:24px;position:relative;
+  min-height:160px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;overflow:hidden;
+  box-shadow:0 2px 12px rgba(27,88,227,.06)}
+.stage-icon{font-size:36px;margin-bottom:14px;
+  animation:iconFloat 3s ease-in-out infinite}
+@keyframes iconFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
+}
+.stage-title{font-family:var(--fh);font-size:17px;font-weight:700;
+  color:var(--n900);margin-bottom:6px;letter-spacing:-.02em;line-height:1.3}
+.stage-sub{font-size:13px;color:var(--n500);line-height:1.5}
+/* Fade transition */
+.stage-card.fading{opacity:0;transition:opacity .4s ease}
+.stage-card.visible{opacity:1;transition:opacity .4s ease}
+/* Pulsing dots — shows "working" without fake %" */
+.working-dots{display:flex;gap:5px;justify-content:center;margin-bottom:16px}
+.wd{width:7px;height:7px;border-radius:50%;background:var(--gb);
+  animation:wdPulse 1.4s ease-in-out infinite}
+.wd:nth-child(2){animation-delay:.2s}
+.wd:nth-child(3){animation-delay:.4s}
+@keyframes wdPulse{
+  0%,80%,100%{transform:scale(1);opacity:.4}
+  40%{transform:scale(1.3);opacity:1}
+}
+.agent-name-tag{font-size:12px;font-weight:600;color:var(--n400);
+  background:var(--n100);border-radius:20px;padding:3px 12px;
+  margin-bottom:16px;display:inline-block}
+.long-wait{display:none;margin-top:12px;padding:12px 16px;
+  background:var(--warn-s);border:1px solid #FDE68A;border-radius:9px;
+  font-size:12.5px;color:var(--n700);line-height:1.5;text-align:left;width:100%}
+.long-wait.vis{display:block}
+.skip-link{color:var(--gb);font-weight:600;background:none;border:none;
+  font-size:12.5px;cursor:pointer;padding:0;font-family:var(--fb);text-decoration:underline}
+
+/* Done */
+.done-wrap{display:flex;flex-direction:column;align-items:center;
+  text-align:center;max-width:420px;width:100%;padding:20px 0}
+.done-emoji{font-size:46px;margin-bottom:14px;
+  animation:pop .5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
+.done-title{font-family:var(--fh);font-size:21px;font-weight:800;
+  color:var(--n900);letter-spacing:-.03em;margin-bottom:8px}
+.done-sub{font-size:13.5px;color:var(--n500);line-height:1.65;margin-bottom:18px}
+.summary-card{background:var(--n50);border:1px solid var(--n200);
+  border-radius:12px;padding:12px 16px;margin-bottom:22px;text-align:left;width:100%;
+  box-shadow:0 1px 4px rgba(15,23,42,.04)}
+.sr{display:flex;justify-content:space-between;padding:5px 0;
+  border-bottom:1px solid var(--n100);font-size:12.5px}
+.sr:last-child{border-bottom:none}
+.sk{color:var(--n400)}.sv{color:var(--n900);font-weight:600;
+  max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.done-btns{display:flex;gap:10px;width:100%}
+.btn-open{flex:1;padding:11px;background:linear-gradient(180deg,#2E6FFB 0%,var(--gb) 100%);color:#fff;border-radius:9px;
+  font-size:14px;font-weight:700;border:none;cursor:pointer;
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 1px 3px rgba(20,65,196,.32),0 4px 14px rgba(27,88,227,.28);
+  transition:all .18s}
+.btn-open:hover{background:linear-gradient(180deg,var(--gb) 0%,var(--gb-d) 100%);transform:translateY(-1px)}
+.btn-later{flex:1;padding:11px;background:transparent;color:var(--n500);
+  border-radius:9px;font-size:14px;font-weight:600;
+  border:1.5px solid var(--n200);cursor:pointer;transition:all .18s}
+.btn-later:hover{border-color:var(--n300);background:var(--n50)}
+
+/* Footer */
+.footer{height:64px;border-top:1px solid var(--n200);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;flex-shrink:0;background:#fff}
+.btn-prev{padding:9px 20px;border-radius:8px;font-size:13.5px;font-weight:600;
+  border:1.5px solid var(--n200);background:transparent;color:var(--n700);cursor:pointer;transition:all .15s}
+.btn-prev:hover{border-color:var(--n300);background:var(--n50)}
+.btn-next{padding:9px 22px;border-radius:8px;font-size:13.5px;font-weight:600;
+  border:none;background:linear-gradient(180deg,#2E6FFB 0%,var(--gb) 100%);color:#fff;cursor:pointer;
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 1px 2px rgba(20,65,196,.32),0 4px 12px rgba(27,88,227,.22);
+  transition:all .18s}
+.btn-next:hover:not([disabled]){background:linear-gradient(180deg,var(--gb) 0%,var(--gb-d) 100%);transform:translateY(-1px);
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 2px 6px rgba(20,65,196,.36),0 6px 18px rgba(27,88,227,.28)}
+.btn-next[disabled]{opacity:.38;cursor:default;box-shadow:none;transform:none}
+</style>
+<link rel="stylesheet" href="_gb.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="logo"><div class="logo-box">G</div>gallabox</div>
+    <div class="topbar-title">Create Web Agent</div>
+    <button class="close" onclick="window.location.href='gallabox-web-empty.html'">×</button>
+  </div>
+  <div class="dots-row" id="dots"></div>
+  <div class="scroll"><div class="inner" id="content"></div></div>
+  <div class="footer" id="footer"></div>
+</div>
+<script src="_gb.js"></script>
+<script>
+'use strict';
+
+var INDUSTRIES = [
+  {id:'education',   e:'📚',l:'Education'},
+  {id:'realestate',  e:'🏠',l:'Real Estate'},
+  {id:'travel',      e:'✈️', l:'Travel'},
+  {id:'healthcare',  e:'❤️', l:'Healthcare'},
+  {id:'finance',     e:'💳',l:'Finance'},
+  {id:'automotive',  e:'🚗',l:'Automotive'},
+  {id:'professional',e:'🔧',l:'Professional Services'},
+  {id:'logistics',   e:'🚚',l:'Logistics & Shipping'},
+];
+var USE_CASES = [
+  {id:'booking',e:'📅',l:'Appointment Booking',d:'Schedule viewings, meetings and demos automatically'},
+  {id:'lead',   e:'📞',l:'Lead Qualification',  d:'Qualify and route sales-ready prospects'},
+  {id:'sales',  e:'💼',l:'Sales',               d:'Handle sales queries and convert leads'},
+  {id:'faq',    e:'💬',l:'FAQ',                 d:'Answer common questions instantly, 24/7'},
+  {id:'recep',  e:'🤝',l:'AI Receptionist',     d:'Greet customers and route them instantly'},
+  {id:'scratch',e:'🔨',l:'Build from scratch',  d:'Define your own goal, role and instructions'},
+];
+
+/* Looping stage messages — personalized with industry + use-case labels */
+var STAGE_TEMPLATES = [
+  {icon:'🤖',t:'Building your {ind} agent…',    s:'Configuring AI instructions and personality'},
+  {icon:'💬',t:'Setting up {uc} workflows…',     s:'Preparing how your agent handles conversations'},
+  {icon:'🎨',t:'Designing your widget…',         s:'Customising appearance, nudge and positioning'},
+  {icon:'📋',t:'Preparing the lead form…',       s:'Setting up how visitor details are captured'},
+  {icon:'🔗',t:'Connecting to WhatsApp…',        s:'Configuring the handoff to your Gallabox inbox'},
+  {icon:'✨',t:'Almost there…',                  s:'Your agent is nearly ready for its first visitor'},
+];
+
+var S = {step:1, industry:'', useCase:'', name:'', url:'', otherIndustry:''};
+var loadIntervals = [];
+
+function qs(s){return document.querySelector(s);}
+function qsa(s){return document.querySelectorAll(s);}
+function getIndLabel(id){
+  if(id==='other')return S.otherIndustry||'Other';
+  var x=INDUSTRIES.find(function(i){return i.id===id;});return x?x.l:'';
+}
+function getUcLabel(id){
+  var x=USE_CASES.find(function(u){return u.id===id;});return x?x.l:'';
+}
+function autoName(){
+  return getIndLabel(S.industry)+' — '+getUcLabel(S.useCase);
+}
+function isValidUrl(v){return /^https?:\/\/.{3,}\..{2,}/.test((v||'').trim());}
+function syncChannelFromUrl(url){
+  var domain=(url||'').trim().replace(/^https?:\/\//,'').split('/')[0].split('?')[0];
+  if(!domain) return;
+  try{
+    var ch=JSON.parse(localStorage.getItem('gb_channels')||'[]');
+    if(!Array.isArray(ch)) ch=[];
+    if(!ch.some(function(c){return c===domain;})){
+      ch.push(domain);
+      localStorage.setItem('gb_channels',JSON.stringify(ch));
+    }
+  }catch(e){}
+}
+function isNameCustomised(){
+  return S.name.trim()!=='' && S.name.trim()!==autoName().trim();
+}
+
+/* ── DOTS ── */
+function renderDots(){
+  var n=S.step==='done'?4:Math.min(S.step,4);
+  qs('#dots').innerHTML=[1,2,3,4].map(function(s){
+    var w=s===n?'28px':'14px';
+    var bg=s<n?'var(--gb-b)':s===n?'var(--gb)':'var(--n200)';
+    return '<span class="dot" style="width:'+w+';background:'+bg+'"></span>';
+  }).join('');
+}
+
+/* ── FOOTER ── */
+function canProceed(){
+  if(S.step===1)return!!S.industry;
+  if(S.step===2)return!!S.useCase;
+  if(S.step===3){
+    var n=S.name.trim();
+    var hasName=n.length>0;  /* auto-name counts */
+    return hasName && isValidUrl(S.url);
+  }
+  return false;
+}
+function renderFooter(){
+  var step=S.step;
+  if(step===4||step==='done'){qs('#footer').innerHTML='';return;}
+  var prev=step>1?'<button class="btn-prev" onclick="prevStep()">← Previous</button>':'<span></span>';
+  var lbl=step===3?'Create agent →':'Next →';
+  var dis=canProceed()?'':'disabled';
+  qs('#footer').innerHTML=prev+'<button class="btn-next" '+dis+' onclick="nextStep()">'+lbl+'</button>';
+}
+
+/* ── STEP 1: INDUSTRY ── */
+function renderIndustry(){
+  var h='<div class="step-tag">1/4 — Industry</div>'
+    +'<div class="step-h">What industry are you in?</div>'
+    +'<div class="grid g3">';
+  INDUSTRIES.slice(0,6).forEach(function(ind){
+    var sel=S.industry===ind.id?' sel':'';
+    var chk=sel?'<div class="card-check">✓</div>':'';
+    h+='<button class="card'+sel+'" data-id="'+ind.id+'" data-type="ind">'
+      +chk+'<div class="card-icon">'+ind.e+'</div>'
+      +'<div class="card-name">'+ind.l+'</div></button>';
+  });
+  h+='</div><div class="grid g2" style="margin-top:0">';
+  INDUSTRIES.slice(6).forEach(function(ind){
+    var sel=S.industry===ind.id?' sel':'';
+    var chk=sel?'<div class="card-check">✓</div>':'';
+    h+='<button class="card'+sel+'" data-id="'+ind.id+'" data-type="ind">'
+      +chk+'<div class="card-icon">'+ind.e+'</div>'
+      +'<div class="card-name">'+ind.l+'</div></button>';
+  });
+  var osel=S.industry==='other';
+  h+='</div>'
+    +'<button class="other-row'+(osel?' sel':'')+'" id="other-toggle">'
+    +'<span class="other-label">Other Industry</span>'
+    +'<span style="color:var(--n300);font-size:16px">'+(osel?'–':'+')+'</span></button>'
+    +'<div class="other-expand'+(osel?' vis':'')+'" id="other-expand">'
+    +'<input class="other-input" id="other-input" placeholder="Type your industry…" value="'+(S.otherIndustry||'')+'"></div>';
+  qs('#content').innerHTML=h;
+  qs('#other-toggle').addEventListener('click',function(){
+    S.industry='other';render();
+    setTimeout(function(){var i=qs('#other-input');if(i)i.focus();},40);
+  });
+  var oi=qs('#other-input');
+  if(oi)oi.addEventListener('input',function(){S.otherIndustry=this.value;});
+  qsa('[data-type="ind"]').forEach(function(b){
+    b.addEventListener('click',function(){S.industry=this.dataset.id;render();});
+  });
+}
+
+/* ── STEP 2: USE CASE ── */
+function renderUseCase(){
+  var h='<div class="step-tag">2/4 — Use case</div>'
+    +'<div class="step-h">What should this agent help you with?</div>'
+    +'<div class="grid g3">';
+  USE_CASES.forEach(function(uc){
+    var sel=S.useCase===uc.id?' sel':'';
+    var chk=sel?'<div class="card-check">✓</div>':'';
+    h+='<button class="card'+sel+'" data-id="'+uc.id+'" data-type="uc">'
+      +chk+'<div class="card-icon">'+uc.e+'</div>'
+      +'<div class="card-name">'+uc.l+'</div>'
+      +'<div class="card-desc">'+uc.d+'</div></button>';
+  });
+  h+='</div>';
+  qs('#content').innerHTML=h;
+  qsa('[data-type="uc"]').forEach(function(b){
+    b.addEventListener('click',function(){S.useCase=this.dataset.id;render();});
+  });
+}
+
+/* ── STEP 3: DETAILS ── */
+function renderDetails(){
+  var autoN=autoName();
+  var nameVal=S.name||autoN;
+  var nameCustomised=nameVal!==autoN;
+  var hintHTML=!nameCustomised
+    ?'<div class="fname-hint">💡 This is your agent\'s name as visitors will see it. Tap to personalise it.</div>'
+    :'<div class="fsub">Visitors see this name in the widget header.</div>';
+  var urlErrHTML=S._urlErr
+    ?'<div class="ferr">⚠ '+S._urlErr+'</div>'
+    :'<div class="fsub">Your website URL. We use it to pre-configure your agent\'s knowledge.</div>';
+  var h='<div class="step-tag">3/4 — Agent & business details</div>'
+    +'<div class="step-h">Let\'s make this agent yours.</div>'
+    +'<div class="form-wrap">'
+    +'<div class="fld">'
+    +'<div class="flabel">Agent name</div>'
+    +'<input class="finput" id="inp-name" placeholder="e.g. Rahel, Priya, Sales Assistant" value="'+nameVal+'">'
+    +hintHTML
+    +'</div>'
+    +'<div class="fld">'
+    +'<div class="flabel">Medium</div>'
+    +'<div class="medium-pill">🌐 Web Chat</div>'
+    +'<div class="med-note">WhatsApp and Instagram agents are created separately from the Agents list.</div>'
+    +'</div>'
+    +'<div class="fld">'
+    +'<div class="flabel">Website URL</div>'
+    +'<input class="finput'+(S._urlErr?' err':'')+'" id="inp-url" type="url" placeholder="https://yoursite.com" value="'+(S.url||'')+'">'
+    +urlErrHTML
+    +'</div>'
+    +'</div>';
+  qs('#content').innerHTML=h;
+  var ni=qs('#inp-name');
+  var ui=qs('#inp-url');
+  ni.addEventListener('input',function(){S.name=this.value;renderFooter();});
+  ni.addEventListener('focus',function(){
+    if(this.value===autoName()){this.select();}
+  });
+  ui.addEventListener('input',function(){
+    S.url=this.value;
+    if(S._urlErr&&isValidUrl(this.value)){S._urlErr='';renderDetails();}
+    else renderFooter();
+  });
+  ui.addEventListener('blur',function(){
+    if(this.value&&!isValidUrl(this.value)){
+      S._urlErr='Enter a valid URL starting with https://';
+      renderDetails();
+    }
+  });
+  ni.focus();
+}
+
+/* ── STEP 4: LOADING — honest looping, no fake scraping ── */
+function renderLoading(){
+  var agentLabel=S.name||autoName();
+  var indLabel=getIndLabel(S.industry);
+  var ucLabel=getUcLabel(S.useCase);
+  qs('#content').innerHTML=
+    '<div class="load-outer">'
+    +'<div class="step-tag">4/4 — Creating your agent</div>'
+    +'<div class="agent-name-tag">'+agentLabel+'</div>'
+    +'<div class="stage-card visible" id="stage-card">'
+    +'<div class="stage-icon" id="stage-icon">🤖</div>'
+    +'<div class="stage-title" id="stage-title">Building your '+indLabel+' agent…</div>'
+    +'<div class="stage-sub" id="stage-sub">Configuring AI instructions and personality</div>'
+    +'</div>'
+    +'<div class="working-dots">'
+    +'<div class="wd"></div><div class="wd"></div><div class="wd"></div>'
+    +'</div>'
+    +'<div class="agent-creating-label">Your agent is getting smarter</div>'
+    +'<div class="long-wait" id="long-wait">'
+    +'Still working — this can take a moment depending on your configuration.<br>'
+    +'<button class="skip-link" id="skip-btn">Skip and finish setup in the builder →</button>'
+    +'</div>'
+    +'</div>';
+
+  var si=0;
+  function getStage(i){
+    var tpl=STAGE_TEMPLATES[i%STAGE_TEMPLATES.length];
+    return {
+      icon:tpl.icon,
+      title:tpl.t.replace('{ind}',indLabel).replace('{uc}',ucLabel),
+      sub:tpl.s
+    };
+  }
+
+  function showStage(i){
+    var card=qs('#stage-card');
+    var icon=qs('#stage-icon');
+    var title=qs('#stage-title');
+    var sub=qs('#stage-sub');
+    if(!card)return;
+    card.className='stage-card fading';
+    setTimeout(function(){
+      var st=getStage(i);
+      if(icon)icon.textContent=st.icon;
+      if(title)title.textContent=st.title;
+      if(sub)sub.textContent=st.sub;
+      card.className='stage-card visible';
+    },400);
+  }
+
+  /* Rotate every 8 seconds */
+  var rotateTimer=setInterval(function(){
+    si++;
+    showStage(si);
+  },8000);
+  loadIntervals.push(rotateTimer);
+
+  /* At 20 seconds — redirect to builder */
+  var redirectTimer=setTimeout(function(){
+    // Persist agent before navigating away
+    try {
+      var LS_KEY='gb_agents';
+      var existing=JSON.parse(localStorage.getItem(LS_KEY)||'[]');
+      var AV_COLORS=['#1B58E3','#7C3AED','#059669','#D97706','#DC2626','#0891B2'];
+      var nm=S.name||autoName();
+      var alreadyExists=existing.some(function(a){return a.name===nm&&a.url===(S.url||'—');});
+      if(!alreadyExists){
+        existing.push({
+          id:Date.now(),name:nm,
+          industry:getIndLabel(S.industry),useCase:getUcLabel(S.useCase),
+          url:S.url||'—',color:AV_COLORS[existing.length%AV_COLORS.length],
+          status:'draft',sessions:0,contacts:0,cta:0,
+          created:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+        });
+        localStorage.setItem(LS_KEY,JSON.stringify(existing));
+        syncChannelFromUrl(S.url);
+      }
+    } catch(e){}
+    window.location.href='GBWebWidget.html?mode=new';
+    /* Fallback: if redirect fails (e.g. file not found), show manual link after 1s */
+    setTimeout(function(){
+      var lw=qs('#long-wait');
+      if(lw){
+        lw.innerHTML='Your agent is configured. <a href="'+"GBWebWidget.html?mode=new"+'" style="color:var(--gb);font-weight:700">Open builder →</a>';
+        lw.classList.add('vis');
+      }
+    },1000);
+  },20000);
+  loadIntervals.push(redirectTimer);
+
+  /* Simulate completion — replace with real API callback in production */
+  /* For prototype: complete after one full cycle (~50s) */
+  /* In production: listen for webhook/poll confirming agent is created */
+}
+
+/* ── DONE ── */
+function renderDone(){
+  var nm=S.name||autoName();
+  // Save agent (fallback path)
+  try{var LS_KEY='gb_agents';var ex=JSON.parse(localStorage.getItem(LS_KEY)||'[]');var AV=['#1B58E3','#7C3AED','#059669','#D97706','#DC2626'];if(!ex.some(function(a){return a.name===nm&&a.url===(S.url||'—');})){ex.push({id:Date.now(),name:nm,industry:getIndLabel(S.industry),useCase:getUcLabel(S.useCase),url:S.url||'—',color:AV[ex.length%AV.length],status:'draft',sessions:0,contacts:0,cta:0,created:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})});localStorage.setItem(LS_KEY,JSON.stringify(ex));syncChannelFromUrl(S.url);}}catch(e){}
+  var rows=[
+    ['Agent name',nm],
+    ['Industry',getIndLabel(S.industry)],
+    ['Use case',getUcLabel(S.useCase)],
+    ['Website',(S.url||'—')],
+    ['Medium','Web Chat'],
+    ['Status','Draft — not yet published'],
+  ];
+  qs('#content').innerHTML=
+    '<div class="done-wrap">'
+    +'<div class="done-emoji">🎉</div>'
+    +'<div class="done-title">'+nm+' is ready.</div>'
+    +'<div class="done-sub">Pre-configured for your industry and use case. Open the builder to review, adjust and publish.</div>'
+    +'<div class="summary-card">'
+    +rows.map(function(r){
+      return '<div class="sr"><span class="sk">'+r[0]+'</span><span class="sv">'+r[1]+'</span></div>';
+    }).join('')
+    +'</div>'
+    +'<div class="done-btns">'
+    +'<button class="btn-open" onclick="window.location.href=\'GBWebWidget.html\'">Open builder →</button>'
+    +'<button class="btn-later">Later</button>'
+    +'</div></div>';
+}
+
+/* ── RENDER ── */
+function render(){
+  renderDots();
+  renderFooter();
+  if(S.step===1)renderIndustry();
+  else if(S.step===2)renderUseCase();
+  else if(S.step===3)renderDetails();
+  else if(S.step===4)renderLoading();
+  else if(S.step==='done')renderDone();
+}
+function nextStep(){
+  if(!canProceed())return;
+  if(S.step===3&&!S.name.trim())S.name=autoName();
+  loadIntervals.forEach(function(t){clearTimeout(t);clearInterval(t);});
+  loadIntervals=[];
+  S.step=S.step===3?4:S.step+1;
+  render();
+}
+function prevStep(){
+  if(S.step>1){S.step=S.step-1;render();}
+}
+
+render();
+</script>
+</body>
+</html>

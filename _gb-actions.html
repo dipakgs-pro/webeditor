@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>Actions</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',-apple-system,sans-serif;font-size:13px;color:#1E293B;background:#F8FAFC;padding:28px 32px}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:15px;font-weight:700;color:#0F172A}
+.btn-blue{padding:8px 16px;background:#1B58E3;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-blue:hover{background:#1749c0}
+.action-card{background:#fff;border:1.5px solid #E2E8F0;border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.action-card-name{font-weight:600;color:#0F172A;font-size:13.5px}
+.badge{background:#EFF4FF;color:#1B58E3;font-size:11px;font-weight:600;border-radius:20px;padding:2px 9px;margin-left:8px}
+.empty-state{text-align:center;padding:60px 0;color:#94A3B8;font-size:13.5px}
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100;align-items:center;justify-content:center}
+.modal-bg.vis{display:flex}
+.modal{background:#fff;border-radius:14px;width:860px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(15,23,42,.18)}
+.modal-head{padding:20px 24px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between}
+.modal-head h2{font-size:15px;font-weight:700;color:#0F172A}
+.modal-body{padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+.form-row{display:flex;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1}
+.form-group label{font-size:12.5px;font-weight:600;color:#374151}
+.form-group input,.form-group textarea,.form-group select{border:1.5px solid #E2E8F0;border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;color:#1E293B;outline:none;background:#fff}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:#1B58E3;box-shadow:0 0 0 3px rgba(27,88,227,.08)}
+.toggle-row{display:flex;align-items:center;gap:10px;font-size:13px;color:#374151}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#E2E8F0;border-radius:20px;cursor:pointer;transition:.2s}
+.toggle input:checked+.toggle-slider{background:#1B58E3}
+.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle input:checked+.toggle-slider:before{transform:translateX(16px)}
+.two-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.panel{border:1.5px solid #E2E8F0;border-radius:10px;overflow:hidden}
+.panel-head{background:#F8FAFC;padding:10px 14px;font-size:12.5px;font-weight:600;color:#374151;border-bottom:1px solid #E2E8F0}
+.panel-body{padding:14px}
+.tab-bar{display:flex;gap:0;border-bottom:1px solid #E2E8F0;margin-bottom:12px}
+.tab-btn{padding:6px 14px;font-size:12.5px;font-weight:500;color:#64748B;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab-btn.on{color:#1B58E3;border-bottom-color:#1B58E3;font-weight:600}
+.hdr-row{display:grid;grid-template-columns:1fr 1fr 28px;gap:8px;font-size:11.5px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.hdr-row2{display:grid;grid-template-columns:1fr 1fr 28px;gap:8px}
+.hdr-row2 input{border:1.5px solid #E2E8F0;border-radius:6px;padding:6px 10px;font-size:12.5px;font-family:inherit;outline:none}
+.no-vars{color:#94A3B8;font-size:13px;text-align:center;padding:24px 0}
+.method-sel{padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;background:#F8FAFC;border-right:none;color:#374151;outline:none}
+.url-input{flex:1;padding:8px 12px;border:1.5px solid #E2E8F0;border-radius:0 8px 8px 0;font-size:13px;font-family:inherit;outline:none}
+.modal-foot{padding:16px 24px;border-top:1px solid #E2E8F0;display:flex;justify-content:flex-end}
+.act-menu-wrap{position:relative}
+.act-dd{display:none;position:absolute;right:0;top:100%;background:#fff;border:1px solid #E2E8F0;border-radius:8px;box-shadow:0 4px 16px rgba(15,23,42,.12);z-index:10;min-width:110px}
+.act-dd.open{display:block}
+.act-dd button{display:block;width:100%;text-align:left;padding:8px 14px;background:none;border:none;font-size:13px;color:#374151;cursor:pointer}
+.act-dd button:hover{background:#F9FAFB}
+.act-dd button.danger{color:#EF4444}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-title">Actions</div>
+  <button class="btn-blue" onclick="openModal()">+ Create action</button>
+</div>
+<div id="list-root"></div>
+
+<!-- Create Action Modal -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Create New Action</h2>
+      <button onclick="closeModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:#94A3B8;line-height:1">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label>Action Name</label>
+          <input type="text" id="m-name" placeholder="e.g. Get Order Status">
+        </div>
+        <div class="form-group">
+          <label>Action Type</label>
+          <select id="m-type">
+            <option>API Call</option>
+            <option>Code Execution</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:0 0 auto;justify-content:flex-end">
+          <label>Process in background</label>
+          <label class="toggle"><input type="checkbox" id="m-bg"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Action Description</label>
+        <textarea id="m-desc" rows="3" placeholder="Describe what this action does..."></textarea>
+      </div>
+      <div class="two-panel">
+        <div class="panel">
+          <div class="panel-head">Request Configuration</div>
+          <div class="panel-body">
+            <div style="display:flex;margin-bottom:12px">
+              <select class="method-sel" id="m-method"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select>
+              <input class="url-input" type="text" id="m-url" placeholder="https://api.example.com/endpoint">
+            </div>
+            <div class="tab-bar">
+              <button class="tab-btn on" onclick="switchReqTab(event,'headers')">Headers</button>
+              <button class="tab-btn" onclick="switchReqTab(event,'query')">Query Params</button>
+              <button class="tab-btn" onclick="switchReqTab(event,'params')">Params</button>
+            </div>
+            <div id="req-tab-headers">
+              <div style="margin-bottom:8px;font-size:12.5px;color:#374151">Authentication: <strong>None</strong> &nbsp;|&nbsp; Header (1)</div>
+              <div class="hdr-row"><span>Key</span><span>Value</span><span></span></div>
+              <div class="hdr-row2">
+                <input value="Content-Type" readonly>
+                <input value="application/json" readonly>
+                <span></span>
+              </div>
+            </div>
+            <div id="req-tab-query" style="display:none"><div class="no-vars">No query params added.</div></div>
+            <div id="req-tab-params" style="display:none"><div class="no-vars">No params added.</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">Variable Configuration</div>
+          <div class="panel-body"><div class="no-vars">No Variables Found</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-blue" onclick="saveAction()">Save Action</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var LS_KEY = 'gb_agent_actions';
+var actions = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(actions)); }
+
+function renderList() {
+  var root = document.getElementById('list-root');
+  if (!actions.length) { root.innerHTML = '<div class="empty-state">No actions yet. Create your first action to give your agent API superpowers.</div>'; return; }
+  root.innerHTML = actions.map(function(a,i) {
+    return '<div class="action-card">'
+      + '<div><span class="action-card-name">' + esc(a.name) + '</span><span class="badge">' + esc(a.type) + '</span></div>'
+      + '<div class="act-menu-wrap">'
+      + '<button onclick="toggleAct(event,\'ad'+i+'\')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#94A3B8;padding:4px 8px">⋮</button>'
+      + '<div class="act-dd" id="ad'+i+'">'
+      + '<button onclick="editAction('+i+')">Edit</button>'
+      + '<button class="danger" onclick="deleteAction('+i+')">Delete</button>'
+      + '</div></div></div>';
+  }).join('');
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function openModal(){ document.getElementById('modal-bg').classList.add('vis'); }
+function closeModal(){ document.getElementById('modal-bg').classList.remove('vis'); }
+
+function saveAction() {
+  var name = document.getElementById('m-name').value.trim();
+  if (!name) { document.getElementById('m-name').focus(); return; }
+  actions.push({ name:name, type:document.getElementById('m-type').value, method:document.getElementById('m-method').value, url:document.getElementById('m-url').value, desc:document.getElementById('m-desc').value });
+  save(); closeModal(); renderList();
+}
+
+function deleteAction(i){ actions.splice(i,1); save(); renderList(); }
+function editAction(i){ alert('Edit: ' + actions[i].name + ' (coming soon)'); }
+
+function toggleAct(e, id) {
+  e.stopPropagation();
+  document.querySelectorAll('.act-dd.open').forEach(function(d){ d.classList.remove('open'); });
+  document.getElementById(id).classList.toggle('open');
+}
+document.addEventListener('click', function(){ document.querySelectorAll('.act-dd.open').forEach(function(d){ d.classList.remove('open'); }); });
+
+function switchReqTab(e, tab) {
+  ['headers','query','params'].forEach(function(t){ document.getElementById('req-tab-'+t).style.display = t===tab?'':'none'; });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('on', b===e.target); });
+}
+
+renderList();
+</script>
+</body></html>

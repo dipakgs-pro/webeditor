@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Outbound OS — Gallabox</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_gb.css">
+<style>
+/* Token aliases: _gb.css uses --gb/--ok/--warn/--err/--n* */
+:root{
+  --blue:var(--gb);--blue-d:var(--gb-d);--blue-s:var(--gb-s);--blue-b:var(--gb-b);
+  --green:var(--ok);--green-s:var(--ok-s);
+  --amber:var(--warn);--amber-s:var(--warn-s);
+  --red:var(--err);--red-s:var(--err-s);
+  --navy:var(--n900);--navy-m:var(--n700);
+  --text:var(--ink);--muted:var(--n500);
+  --border-d:var(--n300);
+  --r:10px;--r-sm:8px;
+  --sh:0 1px 4px rgba(15,23,42,.07),0 4px 16px rgba(15,23,42,.06);
+  --sh-m:0 8px 32px rgba(15,23,42,.12);
+
+  --r:var(--r-md);--sh-m:var(--sh-md);--blue-m:var(--gb-d);--blue-g:var(--gb-b);--font-head:var(--fh);--font-body:var(--fb);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--fb);background:var(--off);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden}
+button,select,input{font-family:var(--fb);cursor:pointer}
+.app{display:flex;height:100vh;overflow:hidden}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.screen{display:none;flex-direction:column;height:100%;overflow:hidden}
+.screen.on{display:flex}
+.tb{height:52px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.tb-title{font-family:var(--fh);font-size:15px;font-weight:700;color:var(--navy)}
+.tb-sub{font-size:12px;color:var(--muted)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;border:1.5px solid transparent;transition:all .15s;line-height:1;white-space:nowrap;cursor:pointer}
+.btn-p{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-p:hover{background:var(--blue-d)}
+.btn-s{background:var(--white);color:var(--navy-m);border-color:var(--border-d)}
+.btn-s:hover{background:var(--off)}
+.btn-g{background:transparent;color:var(--muted);border-color:transparent}
+.btn-g:hover{background:var(--off);color:var(--ink)}
+.btn-d{background:var(--red-s);color:var(--red);border-color:#FECACA}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-icon{padding:5px;width:30px;height:30px;justify-content:center;border-radius:7px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700}
+.chip-ok{background:var(--ok-s);color:var(--ok)}
+.chip-warn{background:var(--warn-s);color:var(--warn)}
+.chip-gray{background:var(--n100);color:var(--n500);border:1px solid var(--border)}
+.cdot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+.content{flex:1;overflow-y:auto;padding:22px 24px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat-card{background:var(--white);border-radius:12px;border:1px solid var(--border);
+  padding:16px 18px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+.stat-card::after{content:'';position:absolute;top:-28px;right:-28px;width:80px;height:80px;
+  background:var(--gb-s);border-radius:50%;opacity:.5;pointer-events:none}
+.stat-card.warn::after{background:var(--warn-s)}
+.stat-card.ok::after{background:var(--ok-s)}
+.stat-lbl{font-size:10.5px;font-weight:700;color:var(--n500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;position:relative;z-index:1}
+.stat-val{font-family:var(--fh);font-size:26px;font-weight:800;color:var(--n900);line-height:1.1;
+  margin-bottom:4px;letter-spacing:-.025em;font-feature-settings:"tnum";position:relative;z-index:1}
+.stat-delta{font-size:12px;color:var(--n500);position:relative;z-index:1}
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filter-title{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--n900);margin-right:auto}
+.fbar-seg{display:inline-flex;gap:2px;background:var(--n100);padding:3px;border-radius:8px}
+.fpill{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;background:transparent;
+  border:none;color:var(--n500);cursor:pointer;transition:all .12s}
+.fpill:hover{color:var(--n900)}
+.fpill.on{background:#fff;color:var(--n900);box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.search-wrap{display:flex;align-items:center;gap:7px;padding:6px 11px;border:1px solid var(--border);
+  border-radius:8px;background:var(--white);transition:border-color .12s,box-shadow .12s}
+.search-wrap:focus-within{border-color:var(--gb);box-shadow:0 0 0 3px rgba(27,88,227,.1)}
+.search-wrap input{border:none;outline:none;font-size:13px;color:var(--ink);background:transparent;width:160px}
+.camp-table{background:var(--white);border-radius:12px;border:1px solid var(--border);
+  overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+.camp-head{display:grid;grid-template-columns:2.4fr 110px .9fr .9fr .9fr 140px;padding:9px 16px;
+  background:var(--n50);border-bottom:1px solid var(--border)}
+.camp-hc{font-size:10px;font-weight:700;color:var(--n500);text-transform:uppercase;letter-spacing:.06em}
+.camp-row{display:grid;grid-template-columns:2.4fr 110px .9fr .9fr .9fr 140px;padding:12px 16px;
+  border-bottom:1px solid var(--n100);align-items:center;cursor:pointer;transition:background .1s}
+.camp-row:last-child{border-bottom:none}
+.camp-row:hover{background:#F5F8FF}
+.camp-cell{font-size:13px;color:var(--ink)}
+.c-name-wrap{display:flex;align-items:center;gap:10px}
+.c-obj-ic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.c-name{font-weight:600;font-size:13.5px;color:var(--navy)}
+.c-meta{font-size:11.5px;color:var(--muted);margin-top:2px}
+.m-n{font-weight:700;color:var(--navy);font-size:13.5px}
+.m-ok{color:var(--ok)}.m-warn{color:var(--warn)}.m-gray{color:var(--muted)}
+.act-row{display:flex;gap:3px;align-items:center}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 24px;text-align:center}
+.empty-icon{font-size:44px;margin-bottom:16px}
+.empty-title{font-family:var(--fh);font-size:18px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.empty-sub{font-size:13.5px;color:var(--muted);line-height:1.65;max-width:380px;margin-bottom:24px}
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ctrl-card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:18px}
+.ctrl-title{font-family:var(--fh);font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.prio-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);margin-bottom:6px;background:var(--white)}
+.prio-num{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--muted);width:20px;text-align:center;flex-shrink:0}
+.prio-name{flex:1;font-size:13px;font-weight:600;color:var(--navy)}
+.prio-arrs{display:flex;flex-direction:column;gap:2px}
+.parr{width:20px;height:18px;border:none;background:transparent;color:var(--muted);cursor:pointer;border-radius:4px;font-size:10px;display:flex;align-items:center;justify-content:center}
+.parr:hover{background:var(--off);color:var(--ink)}
+.cs-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:8px;border:1px solid var(--border);margin-bottom:8px;background:var(--white)}
+.cs-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cs-info{flex:1}
+.cs-name{font-size:13.5px;font-weight:600;color:var(--navy)}
+.cs-meta{font-size:11.5px;color:var(--muted);margin-top:2px}
+.cs-actions{display:flex;gap:6px}
+.tog{width:38px;height:21px;border-radius:20px;background:var(--n300);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;border:none}
+.tog.on{background:var(--blue)}
+.tok{position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .18s;pointer-events:none}
+.tog.on .tok{left:20px}
+.fg{margin-bottom:16px}
+.fl{font-size:12px;font-weight:700;color:var(--navy-m);margin-bottom:5px}
+.fi{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);outline:none;transition:border-color .15s;background:var(--white)}
+.fi:focus{border-color:var(--blue)}
+.fs{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);outline:none;background:var(--white)}
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:400;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:14px;width:520px;max-width:94vw;box-shadow:var(--sh-m);display:flex;flex-direction:column;max-height:90vh}
+.modal-hd{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.modal-title{font-family:var(--fh);font-size:17px;font-weight:700;color:var(--navy)}
+.modal-sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+.modal-close{background:none;border:none;color:var(--muted);font-size:18px;padding:4px 6px;border-radius:6px;cursor:pointer}
+.modal-close:hover{background:var(--off)}
+.modal-body{padding:20px 22px;overflow-y:auto;flex:1}
+.modal-ft{padding:14px 22px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.obj-card{padding:10px 12px;border-radius:9px;border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:flex-start;gap:9px;transition:all .14s;background:var(--white)}
+.obj-card:hover{border-color:var(--blue);background:var(--blue-s)}
+.obj-card.sel{border-color:var(--blue);background:var(--blue-s);box-shadow:0 0 0 3px rgba(27,88,227,.1)}
+.obj-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px}
+.obj-name{font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.obj-desc{font-size:11px;color:var(--muted)}
+.obj-chk{margin-left:auto;width:16px;height:16px;border-radius:50%;background:var(--blue);color:#fff;display:none;align-items:center;justify-content:center;font-size:8px;font-weight:900;flex-shrink:0;margin-top:2px}
+.obj-card.sel .obj-chk{display:flex}
+.rules-block{border:1.5px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
+.rule-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--off);gap:14px}
+.rule-row:last-child{border-bottom:none}
+.rule-lbl{font-size:13px;font-weight:600;color:var(--ink)}
+.rule-sub{font-size:11.5px;color:var(--muted);margin-top:1px}
+/* Docs help button */
+.docs-help{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:var(--off);border:1.5px solid var(--border-d);color:var(--muted);font-size:10px;font-weight:800;text-decoration:none;flex-shrink:0;transition:all .14s;cursor:pointer;line-height:1}
+.docs-help:hover{background:var(--blue-s);border-color:var(--blue);color:var(--blue)}
+/* Stat card formula link */
+.stat-formula{font-size:11.5px;color:var(--muted);text-decoration:none;border-bottom:1px dashed rgba(100,116,139,.5)}
+.stat-formula:hover{color:var(--blue);border-color:var(--blue)}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div id="gb-sb"></div>
+  <div class="main">
+
+    <!-- CAMPAIGNS -->
+    <div id="screen-campaigns" class="screen on">
+      <div class="tb">
+        <div><span class="tb-title">Campaigns</span><span class="tb-sub"> · Outbound OS</span></div>
+        <div class="tb-right">
+          <div class="search-wrap">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="search-inp" placeholder="Search…" oninput="filterCamps(this.value)">
+          </div>
+          <button class="btn btn-s btn-sm" onclick="S('controls')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Rules
+          </button>
+          <a class="docs-help" href="gallabox-docs.html?page=ob-why" target="_blank" title="Open Outbound Campaigns docs">?</a>
+          <button class="btn btn-p" onclick="openCreateModal()" style="gap:6px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Campaign
+          </button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-lbl">Active</div><div class="stat-val" id="stat-active">—</div><div class="stat-delta">campaigns running</div></div>
+          <div class="stat-card"><div class="stat-lbl">Total Enrolled</div><div class="stat-val" id="stat-enrolled">—</div><div class="stat-delta" title="Total contacts who entered any campaign flow across all campaigns">across all campaigns</div></div>
+          <div class="stat-card"><div class="stat-lbl">Avg Read Rate</div><div class="stat-val" id="stat-read">—</div><div class="stat-delta"><a class="stat-formula" href="gallabox-docs.html?page=ob-analytics" target="_blank" title="Read ÷ Delivered. Target: 20%+. Below 20% means your opening line or send time needs work.">read ÷ delivered</a></div></div>
+          <div class="stat-card"><div class="stat-lbl">Avg Reply Rate</div><div class="stat-val" id="stat-reply">—</div><div class="stat-delta"><a class="stat-formula" href="gallabox-docs.html?page=ob-analytics" target="_blank" title="Replied ÷ Delivered. Target: 5–15% for promotional, 20–35% for transactional. Low? Make the CTA specific and time-bound.">replied ÷ delivered</a></div></div>
+        </div>
+        <div class="filter-bar">
+          <span class="filter-title">All Campaigns</span>
+          <div class="fbar-seg">
+            <button class="fpill on" data-f="all" onclick="setFilter(this)">All</button>
+            <button class="fpill" data-f="active" onclick="setFilter(this)">Active</button>
+            <button class="fpill" data-f="paused" onclick="setFilter(this)">Paused</button>
+            <button class="fpill" data-f="draft" onclick="setFilter(this)">Draft</button>
+          </div>
+        </div>
+        <div class="camp-table">
+          <div class="camp-head">
+            <div class="camp-hc">Campaign</div>
+            <div class="camp-hc">Status</div>
+            <div class="camp-hc">Enrolled</div>
+            <div class="camp-hc">Read rate</div>
+            <div class="camp-hc">Reply rate</div>
+            <div class="camp-hc">Actions</div>
+          </div>
+          <div id="camp-list"></div>
+          <div id="camp-empty" class="empty-state" style="display:none">
+            <div class="empty-icon">&#128225;</div>
+            <div class="empty-title">No campaigns yet</div>
+            <div class="empty-sub">Create your first campaign. Set an objective, build a flow in the canvas, then activate when ready.</div>
+            <button class="btn btn-p" onclick="openCreateModal()" style="gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Create First Campaign
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div id="screen-controls" class="screen">
+      <div class="tb">
+        <button class="btn btn-g btn-sm" onclick="S('campaigns')" style="gap:4px;color:var(--muted)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Campaigns
+        </button>
+        <div class="tb-sep"></div>
+        <span class="tb-title">Rules &amp; Priority</span>
+        <div class="tb-right">
+          <a class="docs-help" href="gallabox-docs.html?page=ob-setup" target="_blank" title="Learn about priority, DND, and enrollment rules">?</a>
+          <button class="btn btn-p btn-sm">Save Changes</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="ctrl-grid">
+          <div class="ctrl-card">
+            <div class="ctrl-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Campaign Priority
+              <a class="docs-help" href="gallabox-docs.html?page=ob-setup" target="_blank" title="When a contact qualifies for two active campaigns simultaneously, Gallabox sends from the highest-priority (lowest number) campaign first. Drag to reorder.">?</a>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px">1 = highest. Drag to reorder. Wins when two campaigns target the same contact.</div>
+            <div id="priority-list"></div>
+          </div>
+          <div class="ctrl-card">
+            <div class="ctrl-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
+              Global Rules
+              <a class="docs-help" href="gallabox-docs.html?page=ob-setup" target="_blank" title="Global DND applies to all campaigns. Max campaigns per contact prevents a contact from being enrolled in too many flows simultaneously.">?</a>
+            </div>
+            <div class="rules-block">
+              <div class="rule-row">
+                <div><div class="rule-lbl">Global DND</div><div class="rule-sub">9am–9pm IST · messages queue</div></div>
+                <button class="tog on" onclick="this.classList.toggle('on')"><div class="tok"></div></button>
+              </div>
+              <div class="rule-row">
+                <div><div class="rule-lbl">Max campaigns per contact</div><div class="rule-sub">Queue until contact exits one</div></div>
+                <select class="fs" style="width:80px;font-size:12px;padding:5px 8px"><option>3</option><option>2</option><option>5</option><option>No limit</option></select>
+              </div>
+            </div>
+          </div>
+          <div class="ctrl-card" style="grid-column:1/-1">
+            <div class="ctrl-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Active &amp; Paused Campaigns
+            </div>
+            <div id="ctrl-campaigns-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODAL (direct child of body, outside .app) -->
+<div class="modal-bg" id="create-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hd">
+      <div>
+        <div class="modal-title">New Campaign</div>
+        <div class="modal-sub">Name it and set the objective. Entry type, audience, and message nodes are built inside the canvas.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <div class="fl">Campaign name <span style="color:var(--red)">*</span></div>
+        <input class="fi" id="cm-name" placeholder="e.g. Diwali Flash Sale 2025" autocomplete="off">
+      </div>
+      <div class="fg">
+        <div class="fl">Objective <span style="font-size:11px;font-weight:400;color:var(--muted)">· sets which metric is primary in analytics</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="obj-card sel" data-obj="engagement" onclick="selObj(this)">
+            <div class="obj-ic" style="background:var(--gb-s)">&#128065;</div>
+            <div><div class="obj-name">Engagement</div><div class="obj-desc">Read rate + replies</div></div>
+            <div class="obj-chk">&#x2713;</div>
+          </div>
+          <div class="obj-card" data-obj="conversion" onclick="selObj(this)">
+            <div class="obj-ic" style="background:var(--ok-s)">&#128200;</div>
+            <div><div class="obj-name">Conversion</div><div class="obj-desc">Reply + click rate</div></div>
+            <div class="obj-chk">&#x2713;</div>
+          </div>
+          <div class="obj-card" data-obj="awareness" onclick="selObj(this)">
+            <div class="obj-ic" style="background:var(--warn-s)">&#128226;</div>
+            <div><div class="obj-name">Awareness</div><div class="obj-desc">Delivery + reach</div></div>
+            <div class="obj-chk">&#x2713;</div>
+          </div>
+          <div class="obj-card" data-obj="reengagement" onclick="selObj(this)">
+            <div class="obj-ic" style="background:var(--purple-s)">&#9851;</div>
+            <div><div class="obj-name">Re-engagement</div><div class="obj-desc">Reactivate cold contacts</div></div>
+            <div class="obj-chk">&#x2713;</div>
+          </div>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <div class="fl" style="display:flex;align-items:center;gap:6px">Enrollment rules <span style="font-size:11px;font-weight:400;color:var(--muted)">· editable later in campaign settings</span><a class="docs-help" href="gallabox-docs.html?page=ob-setup" target="_blank" title="Learn about enrollment rules, re-entry, DND, and priority">?</a></div>
+        <div class="rules-block">
+          <div class="rule-row">
+            <div><div class="rule-lbl" title="Messages outside 9am–9pm IST are held in a queue and delivered when the window opens. Strongly recommended for all broadcast campaigns.">Respect DND (9am–9pm IST)</div><div class="rule-sub">Messages queue and send when window opens</div></div>
+            <button class="tog on" id="cm-dnd" onclick="this.classList.toggle('on')"><div class="tok"></div></button>
+          </div>
+          <div class="rule-row">
+            <div><div class="rule-lbl" title="When ON: a contact who already completed this campaign cannot enter again. Safest default for most campaigns — prevents duplicates.">Enroll once per contact</div><div class="rule-sub">Contact won't enter this campaign again while active</div></div>
+            <button class="tog on" id="cm-enroll" onclick="this.classList.toggle('on')"><div class="tok"></div></button>
+          </div>
+          <div class="rule-row">
+            <div><div class="rule-lbl" title="Never: contact runs the flow once, ever. After 30 days: useful for recurring monthly campaigns. Always: every qualifying event re-enrolls — use only with API Trigger entry.">Re-entry after exit</div><div class="rule-sub">If enroll-once is off, when can they re-enter?</div></div>
+            <select class="fs" id="cm-reentry" style="width:130px;font-size:12px;padding:5px 9px">
+              <option value="never">Never</option>
+              <option value="30d">After 30 days</option>
+              <option value="always">Always</option>
+            </select>
+          </div>
+          <div class="rule-row">
+            <div><div class="rule-lbl" style="display:flex;align-items:center;gap:5px">Priority <a class="docs-help" href="gallabox-docs.html?page=ob-setup" target="_blank" title="1 = highest priority. When a contact qualifies for two active campaigns at once, Gallabox sends from the higher-priority one first. Use 1–2 for time-sensitive campaigns, 4–5 for awareness or nurture.">?</a></div><div class="rule-sub">1 = highest · wins when two campaigns compete</div></div>
+            <select class="fs" id="cm-priority" style="width:130px;font-size:12px;padding:5px 9px">
+              <option value="1">1 — Highest</option>
+              <option value="2">2</option>
+              <option value="3" selected>3</option>
+              <option value="4">4</option>
+              <option value="5">5 — Lowest</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <span style="font-size:12px;color:var(--muted);margin-right:auto">&#x1F4A1; Entry type &amp; message are set in the canvas</span>
+      <button class="btn btn-g" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-p" onclick="doCreate()">Create &amp; Open Canvas →</button>
+    </div>
+  </div>
+</div>
+
+<script src="_gb.js"></script>
+<script src="_outbound-data.js"></script>
+<script>
+'use strict';
+
+/* NAV */
+function goBuilder(id)   { window.location.href = 'outbound-builder.html?id=' + id; }
+function goAnalytics(id) { window.location.href = 'outbound-analytics.html?id=' + id; }
+function S(name) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); });
+  var t = document.getElementById('screen-' + name);
+  if (t) t.classList.add('on');
+}
+
+/* MODAL */
+function openCreateModal() {
+  var el = document.getElementById('create-modal');
+  if (!el) return;
+  var nm = document.getElementById('cm-name');
+  if (nm) nm.value = '';
+  document.querySelectorAll('.obj-card').forEach(function(c, i){ c.classList.toggle('sel', i === 0); });
+  var d = document.getElementById('cm-dnd'), e = document.getElementById('cm-enroll');
+  if (d) d.classList.add('on');
+  if (e) e.classList.add('on');
+  el.classList.add('open');
+  setTimeout(function(){ if (nm) nm.focus(); }, 80);
+}
+function closeModal() {
+  var el = document.getElementById('create-modal');
+  if (el) el.classList.remove('open');
+}
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+function selObj(card) {
+  document.querySelectorAll('.obj-card').forEach(function(c){ c.classList.remove('sel'); });
+  card.classList.add('sel');
+}
+function doCreate() {
+  var nameEl = document.getElementById('cm-name');
+  var name = nameEl ? nameEl.value.trim() : '';
+  if (!name) {
+    if (nameEl) { nameEl.focus(); nameEl.style.borderColor = 'var(--err)'; }
+    setTimeout(function(){ if(nameEl) nameEl.style.borderColor = ''; }, 2000);
+    return;
+  }
+  var selO = document.querySelector('.obj-card.sel');
+  var reentry = document.getElementById('cm-reentry');
+  var priority = document.getElementById('cm-priority');
+  var dnd = document.getElementById('cm-dnd');
+  var enroll = document.getElementById('cm-enroll');
+  var id = Date.now();
+  CAMPS.push({
+    id: id, name: name,
+    obj: selO ? selO.dataset.obj : 'engagement',
+    type: 'broadcast',
+    status: 'draft',
+    priority: parseInt((priority && priority.value) || '3'),
+    dnd: !dnd || dnd.classList.contains('on'),
+    enrollOnce: !enroll || enroll.classList.contains('on'),
+    reentry: (reentry && reentry.value) || 'never',
+    enrolled: 0, sent: 0, delivered: 0, read: 0, replied: 0, cold: 0, bounced: 0
+  });
+  saveC(CAMPS);
+  closeModal();
+  goBuilder(id);
+}
+
+/* CAMPAIGNS LIST */
+var curFilter = 'all', curSearch = '';
+var OBJ_IC = { engagement:'&#128065;', conversion:'&#128200;', awareness:'&#128226;', reengagement:'&#9851;' };
+var OBJ_L  = { engagement:'Engagement', conversion:'Conversion', awareness:'Awareness', reengagement:'Re-engagement' };
+var OBJ_BG = { engagement:'var(--gb-s)', conversion:'var(--ok-s)', awareness:'var(--warn-s)', reengagement:'var(--purple-s)' };
+var STATUS_L = { active:'Active', paused:'Paused', draft:'Draft' };
+
+function nt(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
+function fmt(n) { return Number(n || 0).toLocaleString(); }
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderCampaigns() {
+  CAMPS = loadC();
+  var q = curSearch.toLowerCase();
+  var shown = CAMPS.filter(function(c) {
+    if (curFilter !== 'all' && c.status !== curFilter) return false;
+    if (q && c.name.toLowerCase().indexOf(q) === -1) return false;
+    return true;
+  }).sort(function(a, b) { return a.priority - b.priority; });
+
+  var el = document.getElementById('camp-list');
+  var em = document.getElementById('camp-empty');
+  if (!el) return;
+
+  nt('stat-active', CAMPS.filter(function(c){ return c.status === 'active'; }).length || '0');
+  var totEnrolled = CAMPS.reduce(function(s, c){ return s + (c.enrolled || 0); }, 0);
+  nt('stat-enrolled', totEnrolled > 0 ? fmt(totEnrolled) : '—');
+  var withData = CAMPS.filter(function(c){ return (c.sent || 0) > 0; });
+  if (withData.length) {
+    var tD = withData.reduce(function(s,c){ return s+(c.delivered||c.sent||0); }, 0);
+    var tR = withData.reduce(function(s,c){ return s+(c.read||0); }, 0);
+    var tRp= withData.reduce(function(s,c){ return s+(c.replied||0); }, 0);
+    nt('stat-read',  tD > 0 ? Math.round(tR/tD*100)+'%' : '—');
+    nt('stat-reply', tD > 0 ? Math.round(tRp/tD*100)+'%' : '—');
+  } else { nt('stat-read','—'); nt('stat-reply','—'); }
+
+  if (!shown.length) { el.innerHTML = ''; if (em) em.style.display = 'flex'; return; }
+  if (em) em.style.display = 'none';
+
+  el.innerHTML = shown.map(function(c) {
+    var stCls = c.status === 'active' ? 'live' : c.status === 'paused' ? 'paused' : 'draft';
+    var s = c.sent || 0;
+    var dl = c.delivered || s;
+    var rp = dl > 0 ? Math.round((c.read||0)/dl*100) : 0;
+    var rep= dl > 0 ? Math.round((c.replied||0)/dl*100) : 0;
+    var rCls = rp>=20?'m-ok':rp>0?'m-warn':'m-gray';
+    var repCls= rep>=15?'m-ok':rep>0?'m-warn':'m-gray';
+    return '<div class="camp-row" onclick="goBuilder('+c.id+')">'
+      +'<div class="camp-cell"><div class="c-name-wrap">'
+      +'<div class="c-obj-ic" style="background:'+(OBJ_BG[c.obj]||'var(--gb-s)')+'">'+OBJ_IC[c.obj]+'</div>'
+      +'<div><div class="c-name">'+esc(c.name)+'</div>'
+      +'<div class="c-meta">'+(OBJ_L[c.obj]||c.obj)+(c.dnd?' · DND on':'')+'</div></div>'
+      +'</div></div>'
+      +'<div class="camp-cell"><span class="status '+stCls+'"><span class="cdot"></span>'+(STATUS_L[c.status]||c.status)+'</span></div>'
+      +'<div class="camp-cell"><span class="m-n">'+(c.enrolled?fmt(c.enrolled):'—')+'</span></div>'
+      +'<div class="camp-cell">'
+      +(s>0?'<span class="m-n '+rCls+'">'+rp+'%</span><span style="font-size:11px;color:var(--muted);margin-left:5px">'+fmt(c.read||0)+'</span>':'<span class="m-gray">—</span>')
+      +'</div>'
+      +'<div class="camp-cell">'
+      +(s>0?'<span class="m-n '+repCls+'">'+rep+'%</span><span style="font-size:11px;color:var(--muted);margin-left:5px">'+fmt(c.replied||0)+'</span>':'<span class="m-gray">—</span>')
+      +'</div>'
+      +'<div class="camp-cell" onclick="event.stopPropagation()"><div class="act-row">'
+      +'<button class="btn btn-g btn-icon btn-sm" title="Edit in canvas" onclick="goBuilder('+c.id+')">'
+      +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+      +'</button>'
+      +'<button class="btn btn-g btn-icon btn-sm" title="View analytics" onclick="goAnalytics('+c.id+')">'
+      +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'
+      +'</button>'
+      +(c.status==='active'
+        ?'<button class="btn btn-g btn-icon btn-sm" title="Pause campaign" onclick="toggleStatus('+c.id+')">'
+         +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+         +'</button>'
+        :c.status==='paused'
+        ?'<button class="btn btn-g btn-icon btn-sm" title="Resume campaign" onclick="toggleStatus('+c.id+')" style="color:var(--ok)">'
+         +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
+         +'</button>'
+        :'')
+      +'<button class="btn btn-g btn-icon btn-sm" title="Duplicate campaign" onclick="dupC('+c.id+')">'
+      +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+      +'</button>'
+      +'<button class="btn btn-g btn-icon btn-sm" title="Delete campaign" onclick="delC('+c.id+')" style="color:var(--err)">'
+      +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+      +'</button>'
+      +'</div></div>'
+      +'</div>';
+  }).join('');
+}
+
+function setFilter(btn) {
+  document.querySelectorAll('.fpill').forEach(function(p){ p.classList.remove('on'); });
+  btn.classList.add('on');
+  curFilter = btn.dataset.f || 'all';
+  renderCampaigns();
+}
+function filterCamps(q) { curSearch = q || ''; renderCampaigns(); }
+function toggleStatus(id) {
+  var c = CAMPS.find(function(x){ return x.id===id; });
+  if (!c) return;
+  c.status = c.status==='active' ? 'paused' : 'active';
+  saveC(CAMPS); renderCampaigns(); renderCtrlCampaigns();
+}
+function delC(id) {
+  if (!confirm('Delete this campaign?')) return;
+  CAMPS = CAMPS.filter(function(c){ return c.id!==id; });
+  saveC(CAMPS); renderCampaigns(); renderCtrlCampaigns(); renderPriority();
+}
+function dupC(id) {
+  var c = CAMPS.find(function(x){ return x.id===id; });
+  if (!c) return;
+  CAMPS.push(Object.assign({},c,{id:Date.now(),name:c.name+' (copy)',status:'draft',enrolled:0,sent:0,delivered:0,read:0,replied:0,cold:0,bounced:0,priority:CAMPS.length+1}));
+  saveC(CAMPS); renderCampaigns();
+}
+
+/* CONTROLS */
+function renderCtrlCampaigns() {
+  var el = document.getElementById('ctrl-campaigns-list');
+  if (!el) return;
+  var live = CAMPS.filter(function(c){ return c.status !== 'draft'; });
+  if (!live.length) { el.innerHTML='<div style="padding:16px;text-align:center;font-size:13px;color:var(--muted)">No active or paused campaigns.</div>'; return; }
+  el.innerHTML = live.map(function(c){
+    return '<div class="cs-item">'
+      +'<div class="cs-dot" style="background:'+(c.status==='active'?'var(--ok)':'var(--warn)')+'"></div>'
+      +'<div class="cs-info"><div class="cs-name">'+esc(c.name)+'</div>'
+      +'<div class="cs-meta">Priority '+c.priority+' · '+fmt(c.enrolled||0)+' enrolled</div></div>'
+      +'<div class="cs-actions">'
+      +(c.status==='active'
+        ?'<button class="btn btn-s btn-sm" onclick="toggleStatus('+c.id+')">&#9646;&#9646; Pause</button>'
+        :'<button class="btn btn-p btn-sm" onclick="toggleStatus('+c.id+')">▶ Resume</button>')
+      +'</div></div>';
+  }).join('');
+}
+
+function renderPriority() {
+  var el = document.getElementById('priority-list');
+  if (!el) return;
+  var sorted = CAMPS.slice().sort(function(a,b){ return a.priority-b.priority; });
+  el.innerHTML = sorted.map(function(c,i){
+    var stCls = c.status==='active'?'live':c.status==='paused'?'paused':'draft';
+    return '<div class="prio-row">'
+      +'<div class="prio-num">'+(i+1)+'</div>'
+      +'<div class="prio-name">'+esc(c.name)+' <span class="status '+stCls+'" style="font-size:10px;padding:1px 7px"><span class="cdot"></span>'+(STATUS_L[c.status]||c.status)+'</span></div>'
+      +'<div class="prio-arrs">'
+      +(i>0?'<button class="parr" onclick="movePrio('+c.id+',-1)">▲</button>':'<button class="parr" style="opacity:.25">▲</button>')
+      +(i<sorted.length-1?'<button class="parr" onclick="movePrio('+c.id+',1)">▼</button>':'<button class="parr" style="opacity:.25">▼</button>')
+      +'</div></div>';
+  }).join('');
+}
+function movePrio(id, dir) {
+  var sorted = CAMPS.slice().sort(function(a,b){ return a.priority-b.priority; });
+  var idx = sorted.findIndex(function(c){ return c.id===id; });
+  var ni = idx+dir;
+  if (ni<0||ni>=sorted.length) return;
+  var tmp=sorted[idx].priority; sorted[idx].priority=sorted[ni].priority; sorted[ni].priority=tmp;
+  sorted.forEach(function(c){ var o=CAMPS.find(function(x){ return x.id===c.id; }); if(o) o.priority=c.priority; });
+  saveC(CAMPS); renderPriority();
+}
+
+/* INIT */
+GB.sidebar('campaigns');
+S('campaigns');
+renderCampaigns();
+renderCtrlCampaigns();
+renderPriority();
+</script>
+</body>
+</html>

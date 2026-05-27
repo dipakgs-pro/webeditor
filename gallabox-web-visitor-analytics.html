@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visitor Analytics — Gallabox</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_gb.css">
+<style>
+/* ── PAGE SHELL ───────────────────────────────────────────── */
+.section-bar{height:50px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;gap:12px}
+.section-title{font-family:var(--fh);font-size:15px;font-weight:700}
+.tb-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.va-scroll{flex:1;overflow-y:auto;background:var(--n50);padding:20px 24px 48px}
+.va-inner{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.docs-help{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--off);border:1.5px solid var(--n200);color:var(--n400);font-size:9.5px;font-weight:800;text-decoration:none;flex-shrink:0;transition:all .14s;cursor:pointer;line-height:1}
+.docs-help:hover{background:var(--gb-s);border-color:var(--gb);color:var(--gb)}
+
+/* ── CONTROLS ─────────────────────────────────────────────── */
+.ctrl-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:var(--white);border:1.5px solid var(--border);border-radius:8px;font-size:12.5px;font-weight:600;color:var(--n700);cursor:pointer;font-family:inherit;transition:border-color .14s;white-space:nowrap}
+.ctrl-btn:hover{border-color:var(--gb)}
+.chan-dot{width:7px;height:7px;border-radius:50%;background:#22C55E;flex-shrink:0}
+.chan-menu{display:none;position:fixed;background:var(--white);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--sh-lg);z-index:300;min-width:210px;padding:5px}
+.chan-opt{padding:8px 13px;font-size:13px;color:var(--n700);cursor:pointer;border-radius:7px;transition:background .1s}
+.chan-opt:hover{background:var(--n50)}
+.chan-opt.on{color:var(--gb);font-weight:700;background:var(--gb-s)}
+
+/* ── KPI CARDS ────────────────────────────────────────────── */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:11px}
+.kpi-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+.kpi-acc{position:absolute;top:-10px;right:-10px;width:52px;height:52px;border-radius:50%;opacity:.10}
+.kpi-label{font-size:9.5px;font-weight:700;color:var(--n400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.kpi-val{font-family:var(--fh);font-size:24px;font-weight:800;color:var(--n900);line-height:1.1;margin-bottom:3px}
+.kpi-delta{font-size:11px;font-weight:600}
+.up{color:var(--ok)}.dn{color:var(--n400)}
+.kpi-sub{font-size:10px;color:var(--n400);margin-top:1px}
+
+/* ── SECTION CARDS ────────────────────────────────────────── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;min-width:0}
+.card-hdr{padding:13px 17px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.card-title{font-family:var(--fh);font-size:13.5px;font-weight:700;color:var(--n900)}
+.card-sub{font-size:11.5px;color:var(--n400);margin-top:2px}
+.card-body{padding:0 17px 15px}
+.grid-6040{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;min-width:0}
+.grid-5050{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── FUNNEL ───────────────────────────────────────────────── */
+.fn-step{display:flex;align-items:center;gap:9px;padding:3px 0}
+.fn-name{font-size:11.5px;font-weight:600;color:var(--n700);width:128px;flex-shrink:0}
+.fn-track{flex:1;height:25px;background:var(--n100);border-radius:5px;overflow:hidden}
+.fn-fill{height:100%;border-radius:5px;display:flex;align-items:center;padding:0 8px;min-width:72px}
+.fn-fill-txt{font-size:10px;font-weight:700;color:rgba(255,255,255,.92);white-space:nowrap}
+.fn-end{width:80px;flex-shrink:0;text-align:right}
+.fn-n{font-size:12.5px;font-weight:700;color:var(--n900)}
+.fn-pct{font-size:10px;font-weight:600;display:block}
+.fn-gap{display:flex;align-items:center;gap:5px;padding:2px 0 2px 137px}
+.gap-arr{font-size:10.5px;color:var(--n400)}
+.gap-txt{font-size:10.5px;color:var(--n500)}
+.gap-warn{font-size:10px;font-weight:700;color:var(--err);background:var(--err-s);border-radius:4px;padding:1px 5px}
+.gap-ok{font-size:10px;font-weight:700;color:var(--ok);background:var(--ok-s);border-radius:4px;padding:1px 5px}
+
+/* ── INSIGHT ──────────────────────────────────────────────── */
+.insight-card{background:linear-gradient(140deg,#EFF6FF 0%,#F0FDF4 100%);border:1.5px solid #BFDBFE;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0;overflow:hidden}
+.insight-badge{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;color:#1D4ED8;background:#DBEAFE;border-radius:20px;padding:3px 9px;width:fit-content}
+.insight-title{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--n900);line-height:1.3}
+.insight-pt{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;color:var(--n700);line-height:1.55;overflow-wrap:break-word;word-break:break-word}
+.insight-impact{background:#DCFCE7;border:1px solid #BBF7D0;border-radius:8px;padding:8px 11px;display:flex;align-items:center;gap:8px;margin-top:auto}
+.insight-cta{padding:7px 14px;background:var(--gb);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .14s}
+.insight-cta:hover{background:var(--gb-d)}
+.insight-ghost{padding:7px 12px;background:var(--white);border:1.5px solid #BFDBFE;color:#1D4ED8;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* ── HORIZONTAL BARS ──────────────────────────────────────── */
+.h-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.h-lbl{font-size:12px;font-weight:600;color:var(--n700);width:70px;flex-shrink:0}
+.h-track{flex:1;height:21px;background:var(--n100);border-radius:5px;overflow:hidden}
+.h-fill{height:100%;border-radius:5px;display:flex;align-items:center;padding:0 6px;min-width:26px}
+.h-fill-txt{font-size:9.5px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap}
+.h-meta{min-width:110px;display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-shrink:0}
+.h-n{font-size:12px;font-weight:700;color:var(--n700)}
+.rate-chip{font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:4px}
+
+/* ── DONUT SVG ────────────────────────────────────────────── */
+.donut-wrap{display:flex;align-items:center;gap:16px;padding:12px 17px}
+.dl-row{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.dl-sq{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.dl-lbl{font-size:12px;font-weight:600;color:var(--n700);flex:1}
+.dl-n{font-size:12px;font-weight:700;color:var(--n900);width:38px;text-align:right}
+.dl-pct{font-size:10.5px;color:var(--n400);width:28px;text-align:right}
+.dl-cr{font-size:9.5px;font-weight:700;padding:2px 5px;border-radius:4px}
+.os-chip{font-size:10.5px;padding:2px 6px;background:var(--n50);border-radius:4px;color:var(--n700);font-weight:600}
+
+/* ── ATTRIBUTION ──────────────────────────────────────────── */
+.attr-tabs{display:flex;gap:2px;background:var(--n100);border-radius:8px;padding:3px;width:fit-content}
+.attr-tab{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;color:var(--n500);cursor:pointer;border:none;background:transparent;font-family:inherit;transition:all .12s}
+.attr-tab.on{background:var(--white);color:var(--n900);box-shadow:var(--sh-sm)}
+.attr-note{font-size:11.5px;color:var(--n500);line-height:1.55;background:var(--n50);border-radius:7px;padding:10px 12px;margin:10px 0 12px}
+
+/* ── GEO ──────────────────────────────────────────────────── */
+.geo-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--n100)}
+.geo-row:last-child{border-bottom:none}
+.geo-flag{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.geo-ctry{font-size:12px;font-weight:600;color:var(--n700);flex:1}
+.geo-bar{width:100px;height:5px;background:var(--n100);border-radius:3px;overflow:hidden}
+.geo-bar-fill{height:100%;border-radius:3px;background:var(--gb)}
+.geo-n{font-size:12px;font-weight:700;color:var(--n900);width:38px;text-align:right;flex-shrink:0}
+
+/* ── TOP PAGES ────────────────────────────────────────────── */
+.pt-head,.pt-row{display:grid;grid-template-columns:2fr 72px 56px 58px;gap:4px;padding:7px 0;border-bottom:1px solid var(--n100)}
+.pt-row{border-bottom:1px solid var(--n50)}
+.pt-row:last-child{border-bottom:none}
+.pt-hc{font-size:9.5px;font-weight:700;color:var(--n400);text-transform:uppercase;letter-spacing:.05em}
+.pt-url{font-family:var(--fmono);font-size:11.5px;color:var(--gb);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-num{font-size:12px;font-weight:600;color:var(--n700)}
+.pt-chat{font-size:12px;font-weight:700;color:var(--n900)}
+.rate-hi{background:var(--ok-s);color:var(--ok);font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+.rate-mid{background:var(--warn-s);color:var(--warn);font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+.rate-lo{background:var(--n100);color:var(--n500);font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+
+/* ── VISITOR TABLE ────────────────────────────────────────── */
+.vt-wrap{overflow-x:auto;padding:0 17px 14px}
+.vt{width:100%;border-collapse:collapse}
+.vt th{font-size:9px;font-weight:700;color:var(--n400);text-transform:uppercase;letter-spacing:.06em;padding:8px 9px;text-align:left;background:var(--n50);border-bottom:1px solid var(--border)}
+.vt td{padding:8px 9px;border-bottom:1px solid var(--n50);vertical-align:middle;font-size:11.5px;color:var(--n700)}
+.vt tr:last-child td{border-bottom:none}
+.vt tr:hover td{background:#FAFBFC}
+.vid{font-family:var(--fmono);font-size:10px;color:var(--n500);background:var(--n50);padding:2px 5px;border-radius:4px}
+.pip{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:1px}
+.chat-y{color:var(--ok);font-weight:700;font-size:10px;background:var(--ok-s);padding:2px 7px;border-radius:4px}
+.chat-n{color:var(--n400);font-size:10px;background:var(--n50);padding:2px 7px;border-radius:4px}
+
+/* ── DATA GAPS ────────────────────────────────────────────── */
+.gap-item{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--n100)}
+.gap-item:last-child{border-bottom:none}
+.gap-ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+.gap-title{font-size:12.5px;font-weight:700;color:var(--n900);margin-bottom:2px}
+.gap-desc{font-size:11.5px;color:var(--n500);line-height:1.55}
+.gap-unlock{font-size:10.5px;font-weight:700;color:var(--ok);margin-top:3px}
+.gap-code{font-family:var(--fmono);font-size:10px;background:var(--n50);border:1px solid var(--n100);border-radius:4px;padding:3px 7px;color:var(--n500);display:inline-block;margin-top:4px;word-break:break-all;line-height:1.6}
+</style>
+</head>
+<body>
+<div style="display:flex;height:100vh;overflow:hidden">
+  <div id="gb-sb"></div>
+  <div class="gb-main">
+
+    <!-- ── SECTION BAR ── -->
+    <div class="section-bar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="section-title">Visitor Analytics</div>
+        <div class="tb-sep"></div>
+        <!-- Channel dropdown -->
+        <div style="position:relative">
+          <button class="ctrl-btn" id="chan-btn" onclick="toggleChanMenu()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span id="chan-name">gallabox.com</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="chan-menu" id="chan-menu"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="ctrl-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          May 1 – 27, 2026
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <button class="ctrl-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- ── CONTENT ── -->
+    <div class="va-scroll">
+      <div class="va-inner">
+
+        <!-- KPI ROW -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-acc" style="background:var(--gb)"></div>
+            <div class="kpi-label">Total Visitors</div>
+            <div class="kpi-val">2,841</div>
+            <div class="kpi-delta up">↑ 12% vs prev period</div>
+            <div class="kpi-sub">Unique browser sessions</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-acc" style="background:var(--ok)"></div>
+            <div class="kpi-label">Chat Sessions</div>
+            <div class="kpi-val">312</div>
+            <div class="kpi-delta up">↑ 8% vs prev period</div>
+            <div class="kpi-sub">First message sent</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-acc" style="background:var(--purple)"></div>
+            <div class="kpi-label">Visitor → Chat Rate</div>
+            <div class="kpi-val">11.0%</div>
+            <div class="kpi-delta dn">Industry avg: 3–8%</div>
+            <div class="kpi-sub">Above benchmark</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-acc" style="background:#0891B2"></div>
+            <div class="kpi-label">New Visitors</div>
+            <div class="kpi-val">2,194</div>
+            <div class="kpi-delta up">↑ 15% vs prev period</div>
+            <div class="kpi-sub">77% of all visitors</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-acc" style="background:var(--warn)"></div>
+            <div class="kpi-label">Return Visitors</div>
+            <div class="kpi-val">647</div>
+            <div class="kpi-delta up">↑ 4% vs prev period</div>
+            <div class="kpi-sub">23% · 2.4× chat rate vs new</div>
+          </div>
+        </div>
+
+        <!-- FUNNEL -->
+        <div class="card">
+            <div class="card-hdr">
+              <div>
+                <div class="card-title">Engagement Funnel</div>
+                <div class="card-sub">From page load to contact captured · May 1–27</div>
+              </div>
+              <a class="docs-help" href="gallabox-docs.html?page=visitor-analytics&anchor=funnel" target="_blank" title="How the visitor funnel is measured">?</a>
+            </div>
+            <div class="card-body" style="padding-top:6px">
+              <div class="fn-step">
+                <div class="fn-name">Visitors</div>
+                <div class="fn-track"><div class="fn-fill" style="width:100%;background:var(--gb)"><span class="fn-fill-txt">all sessions</span></div></div>
+                <div class="fn-end"><span class="fn-n">2,841</span><span class="fn-pct" style="color:var(--gb)">100%</span></div>
+              </div>
+              <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">227 left before widget rendered</span><span class="gap-ok">−8%</span></div>
+
+              <div class="fn-step">
+                <div class="fn-name">Widget Visible</div>
+                <div class="fn-track"><div class="fn-fill" style="width:92%;background:#3B82F6"><span class="fn-fill-txt">widget in viewport</span></div></div>
+                <div class="fn-end"><span class="fn-n">2,614</span><span class="fn-pct" style="color:#3B82F6">92%</span></div>
+              </div>
+              <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">1,723 saw widget, never opened</span><span class="gap-warn">−66% · biggest drop</span></div>
+
+              <div class="fn-step">
+                <div class="fn-name">Widget Opened</div>
+                <div class="fn-track"><div class="fn-fill" style="width:31%;background:var(--purple)"><span class="fn-fill-txt">34% of visible</span></div></div>
+                <div class="fn-end"><span class="fn-n">891</span><span class="fn-pct" style="color:var(--purple)">31%</span></div>
+              </div>
+              <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">579 opened widget, sent no message</span><span class="gap-warn">−65%</span></div>
+
+              <div class="fn-step">
+                <div class="fn-name">Chat Started</div>
+                <div class="fn-track"><div class="fn-fill" style="width:11%;background:var(--ok)"><span class="fn-fill-txt">35% of opened</span></div></div>
+                <div class="fn-end"><span class="fn-n">312</span><span class="fn-pct" style="color:var(--ok)">11%</span></div>
+              </div>
+              <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">32 chats did not move to WhatsApp</span><span class="gap-warn">−10%</span></div>
+
+              <div class="fn-step">
+                <div class="fn-name">WA Handoff</div>
+                <div class="fn-track"><div class="fn-fill" style="width:9.9%;background:#10B981"><span class="fn-fill-txt">90% of chats</span></div></div>
+                <div class="fn-end"><span class="fn-n">280</span><span class="fn-pct" style="color:#10B981">9.9%</span></div>
+              </div>
+              <div class="fn-gap"><span class="gap-arr">↓</span><span class="gap-txt">32 WA sessions without contact captured</span><span class="gap-warn">−11%</span></div>
+
+              <div class="fn-step">
+                <div class="fn-name">Contact Captured</div>
+                <div class="fn-track"><div class="fn-fill" style="width:8.7%;background:#0D9488"><span class="fn-fill-txt">89% of handoffs</span></div></div>
+                <div class="fn-end"><span class="fn-n">248</span><span class="fn-pct" style="color:#0D9488">8.7%</span></div>
+              </div>
+              <!-- Cycling uplift recommendations — one step at a time -->
+              <div style="margin-top:12px;padding-top:11px;border-top:1px solid var(--n100)">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gb)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                    <span style="font-size:10px;font-weight:700;color:var(--n500);text-transform:uppercase;letter-spacing:.07em">Conversion Uplifts</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:5px">
+                    <span id="uplift-pos" style="font-size:10.5px;color:var(--n400)">1 / 4</span>
+                    <button onclick="prevUplift()" style="width:22px;height:22px;border:1px solid var(--border);border-radius:5px;background:var(--white);cursor:pointer;font-size:14px;color:var(--n500);line-height:1;padding:0">‹</button>
+                    <button onclick="nextUplift()" style="width:22px;height:22px;border:1px solid var(--border);border-radius:5px;background:var(--white);cursor:pointer;font-size:14px;color:var(--n500);line-height:1;padding:0">›</button>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+                  <span id="uplift-stage" style="font-size:11.5px;font-weight:600;color:var(--n700)">Widget Visible → Opened</span>
+                  <span id="uplift-drop" style="font-size:9.5px;font-weight:700;color:var(--err);background:var(--err-s);border-radius:4px;padding:2px 7px">−66%</span>
+                </div>
+                <div id="uplift-actions" style="display:flex;flex-direction:column"></div>
+              </div>
+            </div>
+          </div>
+
+        <!-- TRAFFIC + DEVICE -->
+        <div class="grid-6040">
+          <div class="card">
+            <div class="card-hdr">
+              <div>
+                <div class="card-title">Traffic Sources</div>
+                <div class="card-sub">Visitor volume + chat rate per acquisition channel</div>
+              </div>
+            </div>
+            <div class="card-body" style="padding-top:8px">
+              <div class="h-row">
+                <div class="h-lbl">Direct</div>
+                <div class="h-track"><div class="h-fill" style="width:50%;background:#94A3B8"><span class="h-fill-txt">50%</span></div></div>
+                <div class="h-meta"><span class="h-n">1,423</span><span class="rate-chip" style="background:var(--n100);color:var(--n500)">7.0% chat</span></div>
+              </div>
+              <div class="h-row">
+                <div class="h-lbl">Paid Ads</div>
+                <div class="h-track"><div class="h-fill" style="width:30%;background:var(--gb)"><span class="h-fill-txt">30%</span></div></div>
+                <div class="h-meta"><span class="h-n">854</span><span class="rate-chip" style="background:var(--ok-s);color:var(--ok)">17.0% chat</span></div>
+              </div>
+              <div class="h-row">
+                <div class="h-lbl">Organic</div>
+                <div class="h-track"><div class="h-fill" style="width:12%;background:#059669"><span class="h-fill-txt">12%</span></div></div>
+                <div class="h-meta"><span class="h-n">341</span><span class="rate-chip" style="background:#DCFCE7;color:#166534">11.1% chat</span></div>
+              </div>
+              <div class="h-row">
+                <div class="h-lbl">Referral</div>
+                <div class="h-track"><div class="h-fill" style="width:5%;background:var(--purple)"><span class="h-fill-txt">5%</span></div></div>
+                <div class="h-meta"><span class="h-n">142</span><span class="rate-chip" style="background:var(--purple-s);color:var(--purple)">14.1% chat</span></div>
+              </div>
+              <div class="h-row">
+                <div class="h-lbl">Social</div>
+                <div class="h-track"><div class="h-fill" style="width:3%;background:#F59E0B"><span class="h-fill-txt">3%</span></div></div>
+                <div class="h-meta"><span class="h-n">81</span><span class="rate-chip" style="background:var(--warn-s);color:var(--warn)">11.1% chat</span></div>
+              </div>
+              <!-- Top campaign call-out -->
+              <div style="margin-top:12px;padding:10px 11px;background:var(--gb-s);border-radius:8px;border:1px solid var(--gb-b)">
+                <div style="font-size:9.5px;font-weight:700;color:#1D4ED8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Top paid campaign</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                  <div>
+                    <div style="font-size:12px;font-weight:700;color:var(--n900)">salesIN / whatsappchatbot</div>
+                    <div style="font-size:10.5px;color:var(--n400);margin-top:1px">utm_source=google · utm_medium=ads</div>
+                  </div>
+                  <div style="text-align:right;flex-shrink:0">
+                    <div style="font-size:14px;font-weight:800;color:var(--n900)">487</div>
+                    <div style="font-size:10px;color:var(--n400)">visitors</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">Device Breakdown</div></div>
+            <div class="donut-wrap">
+              <!-- Donut: r=42, cx=60, cy=60, strokeWidth=17, circumference≈263.9
+                   Desktop 66%: dash=174.2 gap=89.7 rotate(-90)
+                   Mobile  30%: dash=79.2  gap=184.7 rotate(147.6)
+                   Tablet   4%: dash=10.6  gap=253.3 rotate(255.6) -->
+              <svg width="120" height="120" viewBox="0 0 120 120" style="flex-shrink:0">
+                <circle r="42" cx="60" cy="60" fill="none" stroke="var(--gb)" stroke-width="17"
+                  stroke-dasharray="174.2 89.7" transform="rotate(-90 60 60)"/>
+                <circle r="42" cx="60" cy="60" fill="none" stroke="var(--purple)" stroke-width="17"
+                  stroke-dasharray="79.2 184.7" transform="rotate(147.6 60 60)"/>
+                <circle r="42" cx="60" cy="60" fill="none" stroke="#10B981" stroke-width="17"
+                  stroke-dasharray="10.6 253.3" transform="rotate(255.6 60 60)"/>
+                <text x="60" y="55" text-anchor="middle" font-size="15" font-weight="800" fill="#0F172A" font-family="'Sora',sans-serif">66%</text>
+                <text x="60" y="68" text-anchor="middle" font-size="9" fill="#94A3B8" font-family="'DM Sans',sans-serif">Desktop</text>
+              </svg>
+              <div style="flex:1">
+                <div class="dl-row">
+                  <div class="dl-sq" style="background:var(--gb)"></div>
+                  <span class="dl-lbl">Desktop</span>
+                  <span class="dl-n">1,875</span>
+                  <span class="dl-pct">66%</span>
+                  <span class="dl-cr" style="background:var(--ok-s);color:var(--ok)">13.2%</span>
+                </div>
+                <div class="dl-row">
+                  <div class="dl-sq" style="background:var(--purple)"></div>
+                  <span class="dl-lbl">Mobile</span>
+                  <span class="dl-n">852</span>
+                  <span class="dl-pct">30%</span>
+                  <span class="dl-cr" style="background:var(--warn-s);color:var(--warn)">7.1%</span>
+                </div>
+                <div class="dl-row">
+                  <div class="dl-sq" style="background:#10B981"></div>
+                  <span class="dl-lbl">Tablet</span>
+                  <span class="dl-n">114</span>
+                  <span class="dl-pct">4%</span>
+                  <span class="dl-cr" style="background:var(--n100);color:var(--n500)">9.6%</span>
+                </div>
+                <div style="border-top:1px solid var(--n100);margin-top:6px;padding-top:9px">
+                  <div style="font-size:9px;font-weight:700;color:var(--n400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">OS</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:4px">
+                    <span class="os-chip">macOS 38%</span><span class="os-chip">Android 27%</span>
+                    <span class="os-chip">Windows 22%</span><span class="os-chip">iOS 9%</span><span class="os-chip">Other 4%</span>
+                  </div>
+                </div>
+                <div style="border-top:1px solid var(--n100);margin-top:7px;padding-top:8px">
+                  <div style="font-size:9px;font-weight:700;color:var(--n400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Browser</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:4px">
+                    <span class="os-chip">Chrome 71%</span><span class="os-chip">Safari 18%</span>
+                    <span class="os-chip">Firefox 7%</span><span class="os-chip">Edge 4%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ATTRIBUTION -->
+        <div class="card">
+          <div class="card-hdr">
+            <div>
+              <div class="card-title">Attribution Model</div>
+              <div class="card-sub">Which channel gets credit for each of the 312 chat sessions?</div>
+            </div>
+          </div>
+          <div class="card-body" style="padding-top:4px">
+            <div class="attr-tabs">
+              <button class="attr-tab on" onclick="setAttr('first',this)">First Touch</button>
+              <button class="attr-tab" onclick="setAttr('last',this)">Last Non-Direct</button>
+              <button class="attr-tab" onclick="setAttr('linear',this)">Linear</button>
+            </div>
+            <div id="attr-note" class="attr-note"></div>
+            <div id="attr-bars"></div>
+          </div>
+        </div>
+
+        <!-- GEO + PAGES -->
+        <div class="grid-5050">
+          <div class="card">
+            <div class="card-hdr">
+              <div>
+                <div class="card-title">Geography</div>
+                <div class="card-sub">Visitor distribution by country</div>
+              </div>
+            </div>
+            <div class="card-body" style="padding-top:4px">
+              <div class="geo-row"><span class="geo-flag">🇮🇳</span><span class="geo-ctry">India</span><div class="geo-bar"><div class="geo-bar-fill" style="width:100%"></div></div><span class="geo-n">2,156</span></div>
+              <div class="geo-row"><span class="geo-flag">🇦🇪</span><span class="geo-ctry">UAE</span><div class="geo-bar"><div class="geo-bar-fill" style="width:13%"></div></div><span class="geo-n">284</span></div>
+              <div class="geo-row"><span class="geo-flag">🇺🇸</span><span class="geo-ctry">USA</span><div class="geo-bar"><div class="geo-bar-fill" style="width:9%"></div></div><span class="geo-n">199</span></div>
+              <div class="geo-row"><span class="geo-flag">🇬🇧</span><span class="geo-ctry">UK</span><div class="geo-bar"><div class="geo-bar-fill" style="width:5%"></div></div><span class="geo-n">113</span></div>
+              <div class="geo-row"><span class="geo-flag">🌐</span><span class="geo-ctry">Others</span><div class="geo-bar"><div class="geo-bar-fill" style="width:4%;background:var(--n300)"></div></div><span class="geo-n">89</span></div>
+              <div style="margin-top:12px;padding-top:11px;border-top:1px solid var(--n100)">
+                <div style="font-size:9px;font-weight:700;color:var(--n400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Top Indian cities</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px">
+                  <span style="font-size:10.5px;padding:3px 8px;background:var(--n50);border-radius:5px;color:var(--n700);font-weight:600">Chennai 423</span>
+                  <span style="font-size:10.5px;padding:3px 8px;background:var(--n50);border-radius:5px;color:var(--n700);font-weight:600">Mumbai 389</span>
+                  <span style="font-size:10.5px;padding:3px 8px;background:var(--n50);border-radius:5px;color:var(--n700);font-weight:600">Bengaluru 341</span>
+                  <span style="font-size:10.5px;padding:3px 8px;background:var(--n50);border-radius:5px;color:var(--n700);font-weight:600">Delhi 289</span>
+                  <span style="font-size:10.5px;padding:3px 8px;background:var(--n50);border-radius:5px;color:var(--n700);font-weight:600">Hyderabad 198</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hdr">
+              <div>
+                <div class="card-title">Top Pages by Chat Rate</div>
+                <div class="card-sub">Where visitors most often start a conversation</div>
+              </div>
+            </div>
+            <div class="card-body" style="padding-top:4px">
+              <div class="pt-head">
+                <div class="pt-hc">Page</div>
+                <div class="pt-hc">Visitors</div>
+                <div class="pt-hc">Chats</div>
+                <div class="pt-hc">Rate</div>
+              </div>
+              <div class="pt-row"><div class="pt-url">/pricing</div><div class="pt-num">891</div><div class="pt-chat">87</div><div><span class="rate-hi">9.8%</span></div></div>
+              <div class="pt-row"><div class="pt-url">/features</div><div class="pt-num">634</div><div class="pt-chat">51</div><div><span class="rate-hi">8.0%</span></div></div>
+              <div class="pt-row"><div class="pt-url">/blog/whatsapp-business</div><div class="pt-num">412</div><div class="pt-chat">22</div><div><span class="rate-mid">5.3%</span></div></div>
+              <div class="pt-row"><div class="pt-url">/</div><div class="pt-num">2,841</div><div class="pt-chat">142</div><div><span class="rate-mid">5.0%</span></div></div>
+              <div class="pt-row"><div class="pt-url">/contact</div><div class="pt-num">287</div><div class="pt-chat">10</div><div><span class="rate-lo">3.5%</span></div></div>
+              <div style="margin-top:10px;padding:9px 10px;background:var(--warn-s);border-radius:7px;border:1px solid #FCD34D;font-size:11px;line-height:1.55;color:#92400E">
+                💡 <strong>/pricing</strong> has nearly 2× the homepage chat rate. Consider a proactive message trigger on this page to capture high-intent visitors.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISITOR JOURNEY TABLE -->
+        <div class="card">
+          <div class="card-hdr">
+            <div>
+              <div class="card-title">Recent Visitor Journeys</div>
+              <div class="card-sub">Each pip = one touch · colour = channel (blue=ads, grey=direct, green=organic, purple=referral, amber=social)</div>
+            </div>
+            <button style="font-size:12px;color:var(--gb);font-weight:700;border:none;background:none;cursor:pointer;padding:0;font-family:inherit">View all →</button>
+          </div>
+          <div class="vt-wrap">
+            <table class="vt">
+              <thead>
+                <tr>
+                  <th>Visitor ID</th>
+                  <th>First Seen</th>
+                  <th>Touch Journey</th>
+                  <th>Last Source</th>
+                  <th>Device / OS</th>
+                  <th>Location</th>
+                  <th>Chat</th>
+                </tr>
+              </thead>
+              <tbody id="vt-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- DATA GAPS -->
+        <div class="card" style="border-left:3px solid var(--warn)">
+          <div class="card-hdr">
+            <div>
+              <div class="card-title">Improve Analytics — 3 events missing from the widget script</div>
+              <div class="card-sub">Add these to <code style="font-size:10.5px;background:var(--n50);border:1px solid var(--n100);border-radius:4px;padding:1px 5px">_gb.js</code> to unlock the full engagement picture and enable data-driven auto-open decisions</div>
+            </div>
+            <span style="font-size:9.5px;font-weight:700;color:var(--warn);background:var(--warn-s);border:1px solid #FCD34D;border-radius:20px;padding:3px 10px;flex-shrink:0;white-space:nowrap">Engineering action</span>
+          </div>
+          <div style="padding:0 17px 15px">
+            <div class="gap-item">
+              <div class="gap-ic" style="background:var(--gb-s)">👁</div>
+              <div>
+                <div class="gap-title">widget_visible — widget enters the viewport</div>
+                <div class="gap-desc">Currently "Widget Visible" is estimated from page load. Visitors on long pages who never scroll to the widget are counted as having seen it. Fire this event on <code style="font-size:10px;background:var(--n50);padding:1px 4px;border-radius:3px">IntersectionObserver</code> entry.</div>
+                <div class="gap-unlock">Unlocks: true impression rate · above-vs-below-fold split · scroll depth at widget appearance</div>
+                <code class="gap-code">GB.track('widget_visible', { agent_id, scroll_pct, time_on_page_s })</code>
+              </div>
+            </div>
+            <div class="gap-item">
+              <div class="gap-ic" style="background:var(--purple-s)">⚡</div>
+              <div>
+                <div class="gap-title">open_type — manual click vs auto-open vs proactive message</div>
+                <div class="gap-desc">Without knowing how the widget was opened, the "opened → chat" rate can't be split by trigger type. This split is the core input for evaluating whether to enable auto-open and for A/B testing trigger rules.</div>
+                <div class="gap-unlock">Unlocks: auto-open vs manual conversion rate · proactive message effectiveness · data-driven auto-open on/off decision</div>
+                <code class="gap-code">GB.track('widget_open', { open_type: 'click|auto|proactive', trigger_rule_id })</code>
+              </div>
+            </div>
+            <div class="gap-item">
+              <div class="gap-ic" style="background:var(--ok-s)">⏱</div>
+              <div>
+                <div class="gap-title">session_context — scroll depth + dwell time at first message sent</div>
+                <div class="gap-desc">When a visitor sends their first message, capture how long they spent on the page and how far they scrolled. This reveals the engagement threshold that precedes a chat, directly informing the optimal auto-open delay and scroll trigger.</div>
+                <div class="gap-unlock">Unlocks: optimal dwell time for auto-open · high-intent page sections · bounce signal (chat at scroll &lt; 20% means auto-open triggered too early)</div>
+                <code class="gap-code">GB.track('chat_start', { scroll_pct, dwell_s, page_url, visitor_touch_count })</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="_gb.js"></script>
+<script>
+GB.sidebar('web');
+
+/* ── CHANNELS (shared key with Channel Settings) ─────────── */
+var DEFAULT_CHANNELS = ['gallabox.com', 'docs.gallabox.com', 'app.gallabox.com'];
+var CHANNELS = (function() {
+  try { var d = JSON.parse(localStorage.getItem('gb_channels')); if (Array.isArray(d)) return d; } catch(e) {}
+  return DEFAULT_CHANNELS.slice();
+})();
+var activeChan = CHANNELS[0] || '';
+document.getElementById('chan-name').textContent = activeChan || '— no channels —';
+if (CHANNELS.length === 0) { document.getElementById('chan-btn').disabled = true; }
+
+/* ── CHANNEL DROPDOWN ─────────────────────────────────────── */
+function renderChanMenu() {
+  var m = document.getElementById('chan-menu');
+  m.innerHTML = CHANNELS.length
+    ? CHANNELS.map(function(c) {
+        return '<div class="chan-opt' + (c === activeChan ? ' on' : '') + '" onclick="setChan(\'' + c.replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:6px">'
+          + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
+          + c + '</div>';
+      }).join('')
+    : '<div style="padding:10px 13px;font-size:12.5px;color:var(--n400)">No channels configured</div>';
+}
+function toggleChanMenu() {
+  var m = document.getElementById('chan-menu');
+  var btn = document.getElementById('chan-btn');
+  if (m.style.display === 'block') { m.style.display = 'none'; return; }
+  renderChanMenu();
+  var r = btn.getBoundingClientRect();
+  m.style.left = r.left + 'px';
+  m.style.right = 'auto';
+  var menuH = Math.min(CHANNELS.length * 38 + 10, 180);
+  if (r.bottom + 4 + menuH > window.innerHeight) {
+    m.style.top = 'auto';
+    m.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+  } else {
+    m.style.bottom = 'auto';
+    m.style.top = (r.bottom + 4) + 'px';
+  }
+  m.style.display = 'block';
+}
+function setChan(name) {
+  activeChan = name;
+  document.getElementById('chan-name').textContent = name;
+  document.getElementById('chan-menu').style.display = 'none';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#chan-btn') && !e.target.closest('#chan-menu')) {
+    var m = document.getElementById('chan-menu');
+    if (m) m.style.display = 'none';
+  }
+});
+
+/* ── ATTRIBUTION ──────────────────────────────────────────── */
+var ATTR = {
+  first: {
+    note: '<strong>First touch</strong> credits the channel that first brought the visitor to your site. The landing URL is always from the visitor\'s first-ever browser session, making this model correct for ad attribution. Best for measuring which channels build brand awareness at top of funnel.',
+    rows: [
+      { l:'Paid Ads', pct:46, n:145, c:'var(--gb)' },
+      { l:'Direct',   pct:32, n:100, c:'#94A3B8' },
+      { l:'Organic',  pct:12, n:38,  c:'#059669' },
+      { l:'Referral', pct:6,  n:20,  c:'var(--purple)' },
+      { l:'Social',   pct:4,  n:9,   c:'#F59E0B' }
+    ]
+  },
+  last: {
+    note: '<strong>Last non-direct touch</strong> credits the last paid or earned channel before conversion — ignoring "direct" visits. Reads from <code style="font-size:10.5px;background:#F1F5F9;padding:1px 4px;border-radius:3px">lastNonDirectTouch</code> in the visitor record. Best for campaign ROI: "which campaign drove this lead?"',
+    rows: [
+      { l:'Paid Ads',    pct:52, n:162, c:'var(--gb)' },
+      { l:'Organic',     pct:20, n:62,  c:'#059669' },
+      { l:'Referral',    pct:11, n:34,  c:'var(--purple)' },
+      { l:'Social',      pct:6,  n:19,  c:'#F59E0B' },
+      { l:'Direct only', pct:11, n:35,  c:'#CBD5E1' }
+    ]
+  },
+  linear: {
+    note: '<strong>Linear attribution</strong> splits equal credit across every touch in the visitor\'s <code style="font-size:10.5px;background:#F1F5F9;padding:1px 4px;border-radius:3px">touchHistory</code>. Multi-touch visitors retargeted via ads multiple times show higher ad contribution here than first-touch suggests. Best for understanding full journey influence across channels.',
+    rows: [
+      { l:'Paid Ads', pct:43, n:134, c:'var(--gb)' },
+      { l:'Direct',   pct:28, n:87,  c:'#94A3B8' },
+      { l:'Organic',  pct:16, n:50,  c:'#059669' },
+      { l:'Referral', pct:9,  n:28,  c:'var(--purple)' },
+      { l:'Social',   pct:4,  n:13,  c:'#F59E0B' }
+    ]
+  }
+};
+
+function setAttr(mode, btn) {
+  document.querySelectorAll('.attr-tab').forEach(function(t) { t.classList.remove('on'); });
+  btn.classList.add('on');
+  var d = ATTR[mode];
+  document.getElementById('attr-note').innerHTML = d.note;
+  document.getElementById('attr-bars').innerHTML = d.rows.map(function(r) {
+    return '<div class="h-row">'
+      + '<div class="h-lbl">' + r.l + '</div>'
+      + '<div class="h-track"><div class="h-fill" style="width:' + r.pct + '%;background:' + r.c + '">'
+      + '<span class="h-fill-txt">' + r.pct + '%</span></div></div>'
+      + '<div class="h-meta"><span class="h-n">' + r.n + ' chats</span></div>'
+      + '</div>';
+  }).join('');
+}
+setAttr('first', document.querySelector('.attr-tab.on'));
+
+/* ── VISITOR TABLE ────────────────────────────────────────── */
+var SRC_C = { direct:'#94A3B8', ads:'#1B58E3', organic:'#059669', referral:'#7C3AED', social:'#F59E0B' };
+
+var VISITORS = [
+  { id:'c4e0ed9b-b470', first:'May 26 13:16', touches:['direct','ads','ads','direct','direct'], src:'Paid Ads', dev:'Desktop/macOS',   loc:'Chennai, IN',    chat:true },
+  { id:'a7f2b341-c921', first:'May 27 08:02', touches:['organic','direct'],                    src:'Organic',  dev:'Mobile/Android',   loc:'Mumbai, IN',     chat:true },
+  { id:'e9c84d12-5f73', first:'May 27 07:44', touches:['direct'],                              src:'Direct',   dev:'Desktop/Windows',  loc:'Delhi, IN',      chat:false },
+  { id:'b3a19f77-4d12', first:'May 26 19:31', touches:['ads','direct','direct'],               src:'Paid Ads', dev:'Mobile/iOS',        loc:'Dubai, AE',      chat:true },
+  { id:'f1d65e88-2a09', first:'May 26 14:12', touches:['referral','direct'],                   src:'Referral', dev:'Desktop/macOS',    loc:'Bengaluru, IN',  chat:true },
+  { id:'c8a34b21-8f56', first:'May 25 22:08', touches:['direct'],                              src:'Direct',   dev:'Tablet/iPadOS',    loc:'Hyderabad, IN',  chat:false },
+  { id:'2d7e91ac-b341', first:'May 25 16:55', touches:['organic','social','direct'],           src:'Social',   dev:'Mobile/Android',   loc:'New York, US',   chat:false },
+  { id:'88f4c053-7e23', first:'May 27 06:11', touches:['ads','direct'],                        src:'Paid Ads', dev:'Desktop/Windows',  loc:'London, GB',     chat:true }
+];
+
+document.getElementById('vt-body').innerHTML = VISITORS.map(function(v) {
+  var pips = v.touches.map(function(t) {
+    return '<span class="pip" style="background:' + (SRC_C[t] || '#CBD5E1') + '" title="' + t + '"></span>';
+  }).join('') + '<span style="font-size:10px;color:var(--n400);margin-left:3px">' + v.touches.length + '</span>';
+  return '<tr>'
+    + '<td><span class="vid">' + v.id + '</span></td>'
+    + '<td style="color:var(--n500)">' + v.first + '</td>'
+    + '<td><div style="display:flex;align-items:center;gap:1px">' + pips + '</div></td>'
+    + '<td style="font-weight:600">' + v.src + '</td>'
+    + '<td>' + v.dev + '</td>'
+    + '<td>' + v.loc + '</td>'
+    + '<td><span class="' + (v.chat ? 'chat-y' : 'chat-n') + '">' + (v.chat ? '✓ Chat' : 'No chat') + '</span></td>'
+    + '</tr>';
+}).join('');
+
+/* ── CONVERSION UPLIFTS CYCLING ───────────────────────────── */
+var UPLIFTS = [
+  { stage:'Widget Visible → Opened', drop:'−66%', critical:true,
+    actions:[
+      {label:'Enable nudge',      cta:'Configure', href:'gallabox-web-empty.html'},
+      {label:'Customize nudge',   cta:'Configure', href:'gallabox-web-empty.html'},
+      {label:'Auto-open',         cta:'Configure', href:'gallabox-web-channel-settings.html'}
+    ]
+  },
+  { stage:'Widget Opened → Chat Started', drop:'−65%', critical:true,
+    actions:[
+      {label:'Welcome message',       cta:'Edit', href:'gallabox-web-empty.html'},
+      {label:'Conversation starters', cta:'Edit', href:'gallabox-web-empty.html'}
+    ]
+  },
+  { stage:'Chat Started → WA Handoff', drop:'−10%', critical:false,
+    actions:[
+      {label:'Handoff button copy',  cta:'Customize', href:'gallabox-web-empty.html'},
+      {label:'Conversation starter', cta:'Customize', href:'gallabox-web-empty.html'},
+      {label:'Agent header',         cta:'Customize', href:'gallabox-web-empty.html'}
+    ]
+  },
+  { stage:'WA Handoff → Contact Captured', drop:'−11%', critical:false,
+    actions:[
+      {label:'Contact capture journey', cta:'Enable', href:'gallabox-web-empty.html'},
+      {label:'Force capture',           cta:'Enable', href:'gallabox-web-channel-settings.html'}
+    ]
+  }
+];
+var upliftIdx = 0;
+function renderUplift() {
+  var u = UPLIFTS[upliftIdx];
+  var pos = document.getElementById('uplift-pos');
+  var stage = document.getElementById('uplift-stage');
+  var drop = document.getElementById('uplift-drop');
+  var acts = document.getElementById('uplift-actions');
+  if (!pos) return;
+  pos.textContent = (upliftIdx + 1) + ' / ' + UPLIFTS.length;
+  stage.textContent = u.stage;
+  drop.textContent = u.drop;
+  drop.style.cssText = 'font-size:9.5px;font-weight:700;border-radius:4px;padding:2px 7px;' +
+    (u.critical ? 'color:var(--err);background:var(--err-s)' : 'color:var(--warn);background:var(--warn-s)');
+  acts.innerHTML = u.actions.map(function(a) {
+    return '<a href="' + a.href + '" style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:11.5px;color:var(--n700);text-decoration:none;border-bottom:1px solid var(--n50)">'
+      + '<span>↳ ' + a.label + '</span>'
+      + '<span style="font-size:10.5px;color:var(--gb);font-weight:700">' + a.cta + ' →</span>'
+      + '</a>';
+  }).join('');
+}
+function nextUplift() { upliftIdx = (upliftIdx + 1) % UPLIFTS.length; renderUplift(); }
+function prevUplift() { upliftIdx = (upliftIdx - 1 + UPLIFTS.length) % UPLIFTS.length; renderUplift(); }
+renderUplift();
+
+/* ── EMPTY STATE ──────────────────────────────────────────── */
+if (CHANNELS.length === 0) {
+  document.querySelector('.va-scroll').innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;text-align:center;padding:48px">'
+    + '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
+    + '<div style="font-family:var(--fh);font-size:16px;font-weight:700;color:var(--n700)">No web channels configured</div>'
+    + '<div style="font-size:13px;color:var(--n400);max-width:380px;line-height:1.65">Create a Web Agent to start tracking visitors, chat sessions, and conversion data across your site.</div>'
+    + '<a href="gallabox-web-empty.html" style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;background:var(--gb);color:#fff;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none">Create Web Agent →</a>'
+    + '<a href="gallabox-web-channel-settings.html" style="font-size:12px;color:var(--gb);font-weight:600;text-decoration:none">Go to Channel Settings →</a>'
+    + '</div>';
+}
+</script>
+</body>
+</html>
