@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>Gallabox Inbox v4</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;color:#1E293B;background:#fff;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-thumb{background:#E2E8F0;border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:#CBD5E1}
+::-webkit-scrollbar-track{background:transparent}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideR{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideL{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+@keyframes stubIn{from{opacity:0;transform:scaleY(.75)}to{opacity:1;transform:scaleY(1)}}
+@keyframes fullIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.45)}70%{box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+@keyframes shimmer{0%{left:-120%}100%{left:120%}}
+@keyframes msgIn{from{opacity:0;transform:translateY(3px)}
+@keyframes fieldIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes countIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ctx-card{animation:slideUp .28s cubic-bezier(.2,1,.4,1) both}
+.f1{animation:fieldIn .3s cubic-bezier(.2,1,.4,1) both}
+.f2{animation:fieldIn .3s cubic-bezier(.2,1,.4,1) .06s both}
+.f3{animation:fieldIn .3s cubic-bezier(.2,1,.4,1) .12s both}
+.f4{animation:fieldIn .3s cubic-bezier(.2,1,.4,1) .18s both}to{opacity:1;transform:translateY(0)}}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_gb.css">
+</head><body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="_gb.js"></script>
+<script src="_inbox-data.js"></script>
+<script src="_inbox-icons.js"></script>
+<script src="_inbox-components.js"></script>
+<script>
+// APP ROOT
+function App(){
+  var ss=useState(SESSIONS_INIT),sessions=ss[0],setSessions=ss[1];
+  var gs=useState(false),generating=gs[0],setGenerating=gs[1];
+  var os=useState(false),overlayOpen=os[0],setOverlayOpen=os[1];
+  var oss=useState(null),overlaySess=oss[0],setOverlaySess=oss[1];
+  var cs=useState(1),activeConv=cs[0],setActiveConv=cs[1];
+  var bs=useState(true),banner=bs[0],setBanner=bs[1];
+  var vp=useState(null),vcPanel=vp[0],setVcPanel=vp[1];
+  function endSession(){
+    setGenerating(true);
+    setOverlayOpen(false);
+    setTimeout(function(){
+      setSessions(function(prev){return [SESSION_DONE].concat(prev.slice(1));});
+      setGenerating(false);
+    },2000);
+  }
+  function resetSession(){setSessions(SESSIONS_INIT);setOverlayOpen(false);setGenerating(false);}
+  function newSession(){setSessions(function(prev){return [SESSION_NEW_LIVE].concat(prev);});setGenerating(false);}
+  function handleView(session){setOverlaySess(session);setOverlayOpen(true);}
+  return ce('div',{style:{display:'flex',flexDirection:'column',height:'100vh',overflow:'hidden'}},
+    banner?ce('div',{style:{background:'#FFFBEB',height:32,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',gap:10,fontSize:11.5,color:'#92400E',position:'relative'}},
+      ce('span',null,'Upgrade your Shopify integration to the latest version to ensure seamless functionality, if not done already.'),
+      ce('button',{style:{padding:'2px 10px',background:'#1E293B',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontFamily:'inherit',fontSize:11,fontWeight:700}},'Upgrade'),
+      ce('button',{onClick:function(){setBanner(false);},style:{position:'absolute',right:12,background:'none',border:'none',cursor:'pointer',color:'#B45309',fontSize:15,lineHeight:1}},'x')):null,
+    ce(DemoBar,{status:sessions[0].status,generating:generating,onEnd:endSession,onReset:resetSession,onNewSess:newSession}),
+    ce('div',{style:{display:'flex',flex:1,overflow:'hidden'}},
+      ce(LeftSidebar,null),
+      ce(ConvList,{activeId:activeConv,onSelect:setActiveConv,vcPanel:vcPanel,setVcPanel:setVcPanel}),
+      vcPanel?ce(ViewContactPanel,{contact:vcPanel,onClose:function(){setVcPanel(null);}}):null,
+      ce(ChatArea,{sessions:sessions,onView:handleView,compact:!!vcPanel,generating:generating}),
+      ce(RightPanel,{sessions:sessions,overlayOpen:overlayOpen,overlaySess:overlaySess,onClose:function(){setOverlayOpen(false);}})));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(ce(App,null));
+
+</script>
+</body></html>

@@ -1,0 +1,80 @@
+{
+  "cleanUrls": false,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    {
+      "source": "/_gb.css",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
+      "source": "/_gb.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
+      "source": "/_outbound-data.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/app",
+      "destination": "/gallabox-web-empty.html"
+    },
+    {
+      "source": "/outbound",
+      "destination": "/gallabox-outbound.html"
+    },
+    {
+      "source": "/outbound/builder",
+      "destination": "/outbound-builder.html"
+    },
+    {
+      "source": "/outbound/analytics",
+      "destination": "/outbound-analytics.html"
+    },
+    {
+      "source": "/web",
+      "destination": "/gallabox-web-empty.html"
+    },
+    {
+      "source": "/inbox",
+      "destination": "/gallabox-web-inbox.html"
+    },
+    {
+      "source": "/docs",
+      "destination": "/gallabox-docs.html"
+    },
+    {
+      "source": "/widget",
+      "destination": "/GBWebWidget.html"
+    }
+  ]
+}
